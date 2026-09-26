@@ -1,0 +1,93 @@
+[
+    {
+        "name": "Goblin",
+        "armor_class": 15,
+        "hit_points": 7,
+        "strength": 8,
+        "dexterity": 14,
+        "constitution": 10,
+        "intelligence": 10,
+        "wisdom": 8,
+        "charisma": 8,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            "Scimitar",
+            "Shortbow"
+        ]
+    },
+    {
+        "name": "Hobgoblin",
+        "armor_class": 18,
+        "hit_points": 11,
+        "strength": 13,
+        "dexterity": 12,
+        "constitution": 12,
+        "intelligence": 10,
+        "wisdom": 10,
+        "charisma": 9,
+        "challenge_rating": 0.5,
+        "attack_count": 1,
+        "attack_bonus": 3,
+        "weapons": [
+            "Longsword",
+            "Longbow"
+        ]
+    },
+    {
+        "name": "Bugbear",
+        "armor_class": 16,
+        "hit_points": 27,
+        "strength": 15,
+        "dexterity": 14,
+        "constitution": 13,
+        "intelligence": 8,
+        "wisdom": 11,
+        "charisma": 9,
+        "challenge_rating": 1,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            "Morningstar",
+            "Javelin"
+        ]
+    },
+    {
+        "name": "Gnoll",
+        "armor_class": 15,
+        "hit_points": 22,
+        "strength": 14,
+        "dexterity": 12,
+        "constitution": 11,
+        "intelligence": 6,
+        "wisdom": 10,
+        "charisma": 7,
+        "challenge_rating": 0.5,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            "Bite",
+            "Spear",
+            "Longbow"
+        ]
+    },
+    {
+        "name": "Minotaur",
+        "armor_class": 14,
+        "hit_points": 76,
+        "strength": 18,
+        "dexterity": 11,
+        "constitution": 16,
+        "intelligence": 6,
+        "wisdom": 16,
+        "charisma": 9,
+        "challenge_rating": 3,
+        "attack_count": 1,
+        "attack_bonus": 6,
+        "weapons": [
+            "Greataxe",
+            "Gore"
+        ]
+    }
+]

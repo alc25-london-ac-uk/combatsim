@@ -1,0 +1,49 @@
+[
+    {
+        "name": "Fighter",
+        "character_class": "fighter",
+        "level": 5,
+        "armor_class": 18,
+        "strength": 16,
+        "dexterity": 14,
+        "constitution": 14,
+        "intelligence": 8,
+        "wisdom": 10,
+        "charisma": 8,
+        "attack_count": 2,
+        "spell_slots": {
+            "1": 0,
+            "2": 0,
+            "3": 0
+        },
+        "weapons": [
+            "Longsword"
+        ]
+    },
+    {
+        "name": "Cleric",
+        "character_class": "cleric",
+        "level": 5,
+        "armor_class": 18,
+        "strength": 12,
+        "dexterity": 10,
+        "constitution": 16,
+        "intelligence": 12,
+        "wisdom": 16,
+        "charisma": 12,
+        "attack_count": 1,
+        "spellcasting_ability": "wisdom",
+        "spell_slots": {
+            "1": 4,
+            "2": 3,
+            "3": 2
+        },
+        "weapons": [
+            "Mace"
+        ],
+        "spells": [
+            "Sacred Flame",
+            "Hold Person"
+        ]
+    }
+]

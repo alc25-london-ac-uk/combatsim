@@ -1,0 +1,78 @@
+[
+    {
+        "name": "Acid Arrow",
+        "level": 2,
+        "target_type": "Enemy",
+        "damage_type": "Acid",
+        "damage_dice": 4,
+        "damage_sides": 4,
+        "effect": "Acid Arrow",
+        "range": 90,
+        "requires_attack_roll": true,
+        "save_allowed": false,
+        "save_attribute": "dexterity",
+        "damage_dice_on_miss": 2,
+        "concentration": false,
+        "upcastable_extra_damage_die": true
+    },
+    {
+        "name": "Barkskin",
+        "level": 2,
+        "target_type": "Ally",
+        "effect": "Barkskin",
+        "range": 5,
+        "save_allowed": false,
+        "concentration": true
+    },
+    {
+        "name": "Blindness",
+        "level": 2,
+        "target_type": "Enemy",
+        "effect": "Blind",
+        "range": 30,
+        "save_allowed": true,
+        "save_attribute": "constitution",
+        "concentration": false,
+        "upcastable_extra_target": true
+    },
+    {
+        "name": "Hold Person",
+        "level": 2,
+        "target_type": "Enemy",
+        "effect": "Paralysed",
+        "range": 60,
+        "requires_attack_roll": false,
+        "save_allowed": true,
+        "save_attribute": "wisdom",
+        "concentration": true,
+        "upcastable_extra_target": true
+    },
+    {
+        "name": "Inflict Wounds",
+        "level": 1,
+        "target_type": "Enemy",
+        "damage_type": "Necrotic",
+        "damage_dice": 3,
+        "damage_sides": 10,
+        "range": 5,
+        "requires_attack_roll": true,
+        "save_allowed": false,
+        "concentration": false,
+        "upcastable_extra_damage_die": true
+    },
+    {
+        "name": "Sacred Flame",
+        "level": 0,
+        "target_type": "Enemy",
+        "damage_type": "Radiant",
+        "damage_dice": 1,
+        "damage_sides": 8,
+        "range": 60,
+        "requires_attack_roll": false,
+        "save_allowed": true,
+        "save_attribute": "dexterity",
+        "damage_pct_on_save": 0,
+        "concentration": false,
+        "upcastable_extra_damage_die": true
+    }
+]
