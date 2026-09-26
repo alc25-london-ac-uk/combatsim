@@ -6,57 +6,14 @@ from dataclasses import dataclass, field
 from combatant import Combatant, Weapon, MeleeWeapon, RangedWeapon, Spell, Ability
 from effects import Effect, AcidArrow, Barkskin, Blind, Concentrating, Paralysed
 from world import CombatState, Position
-
-@dataclass
-class Action:
-    action_type: ActionType
-    target: Combatant
-    weapon: Optional[Weapon] = None
-    spell: Optional[Spell] = None
-    rationale: str = ""
-
-    @property
-    def required_range(self) -> int:
-        if self.weapon is not None:
-            return self.weapon.range
-        if self.spell is not None:
-            return self.spell.range
-        return 5
-
-class AttackResult(Enum):
-    MISS = auto()
-    HIT = auto()
-    CRIT = auto()
-
-class ActionType(Enum):
-    ATTACK = auto()
-    HEAL = auto()
-    SPELL = auto()
-    MOVE = auto()
-    NONE = auto()
-
-@dataclass
-class ActionResult:
-    action_type: ActionType
-    target: Combatant
-    weapon: str = ""
-    spell: str = ""
-    amount: int = 0
-    attack_result: AttackResult = AttackResult.MISS
-    target_hp_after_action: int = 0
-    combatant_x: int = 0
-    combatant_y: int = 0
-    target_x: int = 0
-    target_y: int = 0
-    save_made: bool = False
-    effect_applied: str = ""
-    rationale: str = ""
+from actions import Action, ActionType, ActionResult, AttackResult, move_towards_target, attack, heal, cast_spell
 
 class CombatantAI:
     combatant: Combatant
 
     def __init__(self, combatant: Combatant):
         self.combatant = combatant
+
     # TODO: bonus actions
     # TODO: reactions
     def take_turn(self, combat_state: CombatState) -> list[ActionResult]:
@@ -74,7 +31,7 @@ class CombatantAI:
 
         while (self.combatant.movement > 0 and
                 combat_state.grid.distance(self.combatant, action.target) > action.required_range):
-            results.append(self.move_towards_target(action.target, combat_state))
+            results.append(move_towards_target(self.combatant, action.target, combat_state))
         
         if combat_state.grid.distance(self.combatant, action.target) <= action.required_range:
             results.extend(self.execute(action, combat_state))
@@ -215,7 +172,7 @@ class CombatantAI:
         match action.action_type:
             case ActionType.HEAL:
                 if combat_state.grid.distance(self.combatant, action.target) <= 5:            
-                    amount = self.heal(action.target)
+                    amount = heal(self.combatant, action.target)
                     results.append(self.make_result(action, AttackResult.HIT, amount, combat_state))
 
             case ActionType.SPELL:
@@ -223,7 +180,7 @@ class CombatantAI:
                     return results
                 
                 if combat_state.grid.distance(self.combatant, action.target) <= action.required_range:
-                    attack_result, amount, save_made, effect_applied = self.cast_spell(action.target, action.spell)
+                    attack_result, amount, save_made, effect_applied = cast_spell(self.combatant, action.target, action.spell)
                     results.append(self.make_result(action, attack_result, amount, combat_state, save_made = save_made))
 
             case ActionType.ATTACK:
@@ -234,13 +191,13 @@ class CombatantAI:
                             break
                         action = new_action
                         while self.combatant.movement > 0 and combat_state.grid.distance(self.combatant, action.target) > action.required_range:
-                            results.append(self.move_towards_target(action.target, combat_state))
+                            results.append(move_towards_target(self.combatant, action.target, combat_state))
 
                     if action.weapon is None:
                         return results
          
                     if combat_state.grid.distance(self.combatant, action.target) <= action.required_range:
-                        attack_result, amount = self.attack(action.target, action.weapon)
+                        attack_result, amount = attack(self.combatant, action.target, action.weapon)
                         results.append(self.make_result(action, attack_result, amount, combat_state))
 
             case ActionType.NONE:
@@ -271,106 +228,3 @@ class CombatantAI:
             effect_applied = effect_applied,
             rationale = action.rationale
         )
-
-    def move_towards_target(self, target: Combatant, combat_state: CombatState) -> ActionResult:
-        new_position = combat_state.grid.move_towards(self.combatant, target)
-        self.combatant.movement -= 5
-        return ActionResult(
-            action_type = ActionType.MOVE,
-            target = target,
-            combatant_x = new_position.x,
-            combatant_y = new_position.y
-        )
-    
-    def attack(self, target: 'Combatant', weapon: Weapon) -> tuple[AttackResult, int]:
-        attack_bonus = self.combatant.get_attack_bonus(weapon)
-        damage = 0
-        
-        if target.has_effect(Paralysed) and isinstance(weapon, MeleeWeapon):
-            attack_roll = AttackResult.CRIT
-        else:
-            attack_roll = self.attack_roll(attack_bonus, target.ac)
-        
-        if attack_roll == AttackResult.MISS:
-            return attack_roll, damage
-        
-        damage = self.damage_roll(weapon.damage_dice, weapon.damage_sides, self.combatant.get_damage_bonus(weapon), attack_roll == AttackResult.CRIT)
-
-        target.hp -= damage
-
-        for effect in target.effects:
-            effect.on_damage_taken(target, damage)
-
-        return attack_roll, damage
-    
-    def heal(self, target: 'Combatant') -> int:
-        self.combatant.spell_slots[1] -= 1
-        roll = random.randint(1, 8)
-        healing = roll + self.combatant.ability_scores.modifier_for(self.combatant.spellcasting_ability)
-        target.hp += healing
-        return healing
-    
-    def cast_spell(self, target: 'Combatant', spell: Spell) -> tuple[AttackResult, int, bool, str]:
-        attack_bonus = self.combatant.get_spell_attack_bonus()
-        damage = 0
-        save_made = False
-        effect_applied = ""
-
-        if spell.level > 0:
-            self.combatant.spell_slots[spell.level] -= 1
-
-        if spell.requires_attack_roll:
-            attack_roll = self.attack_roll(attack_bonus, target.ac)
-        else:
-            attack_roll = AttackResult.HIT
-
-        if attack_roll != AttackResult.MISS:
-            damage_dice_used = spell.damage_dice
-        else:
-            damage_dice_used = spell.damage_dice_on_miss
-
-        damage = self.damage_roll(damage_dice_used, spell.damage_sides, attack_bonus, attack_roll == AttackResult.CRIT)
-
-        if spell.save_allowed:
-            if random.randint(1, 20) + target.ability_scores.modifier_for(spell.save_attribute) > self.combatant.spell_save_dc:
-                save_made = True
-                damage = int(damage * spell.damage_pct_on_save)
-                
-        if damage > 0:
-            target.take_damage(damage)
-
-        if spell.effect is not None:
-            if (not spell.requires_attack_roll or attack_roll != AttackResult.MISS) and (not spell.save_allowed or not save_made):
-                target.add_effect(spell.effect(save_dc = self.combatant.spell_save_dc))
-                effect_applied = spell.effect.name
-                if spell.concentration:
-                    self.combatant.add_effect(Concentrating())
-            else:
-                save_made = True
-
-        return attack_roll, damage, save_made, effect_applied
-    
-    def attack_roll(self, bonus: int, target_ac: int) -> AttackResult:
-        roll = random.randint(1, 20)
-        
-        if roll == 20:
-            return AttackResult.CRIT
-        
-        if roll + bonus > target_ac:
-            return AttackResult.HIT
-        
-        return AttackResult.MISS
-    
-    def damage_roll(self, damage_dice: int, damage_sides: int, bonus: int, is_crit: bool) -> int:
-        damage = 0
-        
-        if damage_dice > 0:
-            for _ in range(damage_dice):
-                damage += random.randint(1, damage_sides)
-
-            if is_crit:
-                damage *= 2
-
-            damage += bonus
-
-        return damage
