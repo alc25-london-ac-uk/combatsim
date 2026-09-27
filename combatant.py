@@ -4,103 +4,14 @@ from typing import TYPE_CHECKING, Optional
 import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from enum import Enum, auto
 
+from enums import Ability, DamageType, TargetType
+from weapon import Weapon, MeleeWeapon, RangedWeapon
+from spell import Spell
 from effects import Effect
 
 if TYPE_CHECKING:
     from ai import CombatantAI
-
-class TargetType(Enum):
-    ALLY = auto()
-    ENEMY = auto()
-
-class DamageType(Enum):
-    ACID = auto()
-    BLUDGEONING = auto()
-    COLD = auto()
-    FIRE = auto()
-    FORCE = auto()
-    LIGHTNING = auto()
-    NECROTIC = auto()
-    PIERCING = auto()
-    POISON = auto()
-    PSYCHIC = auto()
-    RADIANT = auto()
-    SLASHING = auto()
-    THUNDER = auto()
-
-# TODO: area-effect spells
-# TODO: delayed-effect spells
-# TODO: control spells
-# TODO: concentration
-# TODO: levelled cantrips
-# TODO: upcasting
-# TODO: healing spells
-# TODO: Summons
-# TODO: Buffs
-@dataclass
-class Spell:
-    name: str
-    level: int
-    target_type: Optional[TargetType]
-    damage_type: Optional[DamageType]
-    damage_dice: int
-    damage_sides: int
-    range: int
-    requires_attack_roll: bool
-    save_allowed: bool
-    save_attribute: Ability
-    damage_dice_on_miss: int = 0
-    damage_pct_on_save: float = 0
-    concentration: bool = False
-    effect: Optional[type[Effect]] = None
-    upcastable_extra_damage_die: bool = False
-    upcastable_extra_target: bool = False
-
-    @property
-    def is_cantrip(self) -> bool:
-        return self.level == 0
-
-# TODO: magical
-@dataclass
-class Weapon(ABC):
-    name: str
-    damage_dice: int
-    damage_sides: int
-    damage_type: DamageType
-
-    @property
-    @abstractmethod
-    def range(self) -> int:
-        pass
-
-# TODO: natural weapons (disarming)
-@dataclass
-class MeleeWeapon(Weapon):
-    reach: int
-    finesse: bool
-
-    @property
-    def range(self) -> int:
-        return self.reach
-
-@dataclass
-class RangedWeapon(Weapon):
-    optimal_distance: int
-    maximum_distance: int
-
-    @property
-    def range(self) -> int:
-        return self.maximum_distance
-
-class Ability(Enum):
-    STRENGTH = "strength"
-    DEXTERITY = "dexterity"
-    CONSTITUTION = "constitution"
-    INTELLIGENCE = "intelligence"
-    WISDOM = "wisdom"
-    CHARISMA = "charisma"
 
 @dataclass
 class AbilityScores:

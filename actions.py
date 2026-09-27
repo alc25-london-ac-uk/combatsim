@@ -3,7 +3,9 @@ import random
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from combatant import Combatant, Weapon, MeleeWeapon, RangedWeapon, Spell
+from enums import AttackResult, ActionType
+from dice import roll_d20, saving_throw
+from combatant import Combatant, Weapon, MeleeWeapon, RangedWeapon, Spell, Ability
 from effects import Effect, AcidArrow, Barkskin, Blind, Concentrating, Paralysed
 from world import CombatState, Position
 
@@ -22,18 +24,6 @@ class Action:
         if self.spell is not None:
             return self.spell.range
         return 5
-
-class AttackResult(Enum):
-    MISS = auto()
-    HIT = auto()
-    CRIT = auto()
-
-class ActionType(Enum):
-    ATTACK = auto()
-    HEAL = auto()
-    SPELL = auto()
-    MOVE = auto()
-    NONE = auto()
 
 @dataclass
 class ActionResult:
@@ -112,7 +102,7 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell) -> tuple[Attac
     damage = damage_roll(damage_dice_used, spell.damage_sides, attack_bonus, attack_result == AttackResult.CRIT)
 
     if spell.save_allowed:
-        if random.randint(1, 20) + target.ability_scores.modifier_for(spell.save_attribute) > actor.spell_save_dc:
+        if saving_throw(target, spell.save_attribute, actor.spell_save_dc):
             save_made = True
             damage = int(damage * spell.damage_pct_on_save)
             
@@ -131,7 +121,7 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell) -> tuple[Attac
     return attack_result, damage, save_made, effect_applied
 
 def attack_roll(bonus: int, target_ac: int) -> AttackResult:
-    roll = random.randint(1, 20)
+    roll = roll_d20()
     
     if roll == 20:
         return AttackResult.CRIT

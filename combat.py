@@ -1,7 +1,8 @@
 import random
 
+from enums import AttackResult, ActionType
 from combatant import Combatant
-from ai import ActionType, ActionResult, AttackResult
+from ai import ActionResult
 from world import CombatState, Grid
 
 def log_action(combatant: Combatant, results: list[ActionResult]) -> list[str]:

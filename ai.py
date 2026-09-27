@@ -3,10 +3,11 @@ import random
 from enum import Enum, auto
 from dataclasses import dataclass, field
 
+from enums import AttackResult, ActionType
 from combatant import Combatant, Weapon, MeleeWeapon, RangedWeapon, Spell, Ability
 from effects import Effect, AcidArrow, Barkskin, Blind, Concentrating, Paralysed
 from world import CombatState, Position
-from actions import Action, ActionType, ActionResult, AttackResult, move_towards_target, attack, heal, cast_spell
+from actions import Action, ActionResult, move_towards_target, attack, heal, cast_spell
 
 class CombatantAI:
     combatant: Combatant

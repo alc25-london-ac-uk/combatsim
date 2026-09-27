@@ -5,8 +5,11 @@ import random
 from dataclasses import dataclass
 from abc import ABC
 
+from dice import saving_throw
+from enums import Ability
+
 if TYPE_CHECKING:
-    from combatant import Combatant
+    from combatant import Combatant, Ability
 
 @dataclass
 class Effect(ABC):
@@ -75,9 +78,7 @@ class Concentrating(Effect):
     maintained_target: Optional[Combatant] = None
 
     def on_damage_taken(self, target: Combatant, amount: int) -> None:
-        dc = max(10, amount // 2)
-        save_roll = random.randint(1, 20) + target.ability_scores.con_mod
-        if save_roll < dc:
+        if not saving_throw(target, Ability.CONSTITUTION, max(10, amount // 2)):
             target.remove_effect(self)
             if self.maintained_target is not None and self.maintained_effect is not None:
                 self.maintained_target.remove_effect(self.maintained_effect)
@@ -87,8 +88,7 @@ class Paralysed(Effect):
     name: str = "Paralysed"
 
     def on_turn_end(self, target: Combatant) -> None:
-        save_roll = random.randint(1, 20) + target.ability_scores.wis_mod
-        if save_roll > self.save_dc:
+        if saving_throw(target, Ability.WISDOM, self.save_dc):
             target.remove_effect(self)
 
 EFFECT_REGISTRY: dict[str, type[Effect]] = {
