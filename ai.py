@@ -133,6 +133,8 @@ class CombatantAI:
         if self.combatant.spell_slots.get(spell.level, 0) == 0:
             return -1.0
 
+        concentration_penalty = 3.0 if spell.concentration and self.combatant.has_effect(Concentrating) else 0.0
+
         # healing spells
         if spell.is_healing:
             expected_healing = (1 + 8) / 2 + self.combatant.ability_scores.modifier_for(self.combatant.spellcasting_ability)
@@ -176,7 +178,7 @@ class CombatantAI:
         if any(e.forbids_approaching(target) for e in self.combatant.effects):
             movement_penalty = 100
 
-        return expected_damage + kill_bonus - movement_penalty
+        return expected_damage + kill_bonus - movement_penalty - concentration_penalty
 
     def execute(self, action: Action, combat_state: CombatState, bonus_action: bool = False) -> list[ActionResult]:
         results = []

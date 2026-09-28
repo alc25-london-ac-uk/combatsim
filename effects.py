@@ -99,6 +99,10 @@ class Concentrating(Effect):
     maintained_effect: Optional[Effect] = None
     maintained_target: Optional[Combatant] = None
 
+    def on_remove(self, target: Combatant) -> None:
+        if self.maintained_target is not None and self.maintained_effect is not None:
+            self.maintained_target.remove_effect(self.maintained_effect)
+
     def on_damage_taken(self, target: Combatant, amount: int) -> None:
         advantage, disadvantage = resolve_advantage(target, RollType.SAVE, ability = Ability.CONSTITUTION)
         if not saving_throw(target, Ability.CONSTITUTION, max(10, amount // 2), advantage, disadvantage):

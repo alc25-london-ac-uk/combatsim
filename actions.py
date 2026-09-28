@@ -153,10 +153,14 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: 
 
     if spell.effect is not None:
         if (not spell.requires_attack_roll or attack_result != AttackResult.MISS) and (not spell.save_allowed or not save_made):
-            target.add_effect(spell.effect(save_dc = actor.spell_save_dc, source = actor))
+            new_effect = spell.effect(save_dc = actor.spell_save_dc, source = actor)
+            target.add_effect(new_effect)
             effect_applied = spell.effect.name
             if spell.concentration:
-                actor.add_effect(Concentrating())
+                for existing in list(actor.effects):
+                    if isinstance(existing, Concentrating):
+                        actor.remove_effect(existing)
+                actor.add_effect(Concentrating(maintained_effect = new_effect, maintained_target = target))
         else:
             save_made = True
 
