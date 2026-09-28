@@ -1,6 +1,7 @@
 import json
 import copy
 
+from enums import TargetType, DamageType
 from combatant import Combatant, PlayerCharacter, Monster, AbilityScores, Weapon, MeleeWeapon, RangedWeapon, Spell, Ability
 from effects import Effect, EFFECT_REGISTRY, AcidArrow, Barkskin, Blind, Concentrating, Paralysed
 from ai import CombatantAI
@@ -67,7 +68,7 @@ def parse_weapon(entry: dict) -> Weapon:
             name = entry["name"],
             damage_dice = entry["damage_dice"],
             damage_sides = entry["damage_sides"],
-            damage_type = entry["damage_type"],
+            damage_type = DamageType[entry["damage_type"]],
             reach = entry["reach"],
             finesse = entry["finesse"]
         )
@@ -76,7 +77,7 @@ def parse_weapon(entry: dict) -> Weapon:
             name = entry["name"],
             damage_dice = entry["damage_dice"],
             damage_sides = entry["damage_sides"],
-            damage_type = entry["damage_type"],
+            damage_type = DamageType[entry["damage_type"]],
             optimal_distance = entry["optimal_distance"],
             maximum_distance = entry["maximum_distance"]
         )
@@ -88,7 +89,7 @@ def parse_spell(entry: dict) -> Spell:
     return Spell(
         name = entry["name"],
         level = entry["level"],
-        damage_type = entry.get("damage_type"),
+        damage_type = DamageType[entry["damage_type"]] if entry.get("damage_type") else None,
         damage_dice = entry.get("damage_dice", 0),
         damage_sides = entry.get("damage_sides", 0),
         effect = effect_class,
@@ -101,7 +102,7 @@ def parse_spell(entry: dict) -> Spell:
         concentration = entry["concentration"],
         upcastable_extra_damage_die = entry.get("upcastable_extra_damage_die", False),
         upcastable_extra_target = entry.get("upcastable_extra_target", False),
-        target_type = entry.get("target_type"),
+        target_type = TargetType(entry.get("target_type")) if entry.get("target_type") else None,
         is_healing = entry.get("is_healing", False)
     )
 

@@ -22,7 +22,7 @@ def log_action(combatant: Combatant, results: list[ActionResult]) -> list[str]:
     return log
 
 def format_attack_result(combatant: Combatant, result: ActionResult) -> str:
-    prefix = f"{combatant.name} attacks {result.target.name} with {result.weapon} - "
+    prefix = f"{result.actor} attacks {result.target.name} with {result.weapon} - "
 
     if result.attack_result != AttackResult.MISS:
         return f"{prefix}{result.amount} damage. {result.target.name} has {result.target_hp_after_action} HP remaining."

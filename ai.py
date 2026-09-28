@@ -50,7 +50,7 @@ class CombatantAI:
         while (self.combatant.movement > 0 and
                combat_state.grid.distance(self.combatant, action.target) > action.required_range
                and not any(e.forbids_approaching(action.target) for e in self.combatant.effects)):
-            results.append(move_towards_target(self.combatant, action.target, combat_state))
+            results.extend(move_towards_target(self.combatant, action.target, combat_state))
 
         if combat_state.grid.distance(self.combatant, action.target) <= action.required_range:
             results.extend(self.execute(action, combat_state, bonus_action))
@@ -202,7 +202,7 @@ class CombatantAI:
                             break
                         action = new_action
                         while self.combatant.movement > 0 and combat_state.grid.distance(self.combatant, action.target) > action.required_range:
-                            results.append(move_towards_target(self.combatant, action.target, combat_state))
+                            results.extend(move_towards_target(self.combatant, action.target, combat_state))
 
                     if action.weapon is None:
                         return results
@@ -226,6 +226,7 @@ class CombatantAI:
         return ActionResult(
             action_type = action.action_type,
             target = action.target,
+            actor = self.combatant.name,
             spell = action.spell.name if action.spell else "",
             weapon = action.weapon.name if action.weapon else "",
             amount = amount,

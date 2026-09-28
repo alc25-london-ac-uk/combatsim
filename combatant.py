@@ -60,6 +60,7 @@ class Combatant(ABC):
     attack_count: int = 1
     has_action: bool = True
     has_bonus_action: bool = True
+    has_reaction: bool = True
 
     def __post_init__(self):
         self.movement = self.speed
@@ -101,6 +102,7 @@ class Combatant(ABC):
 
         self.has_action = True
         self.has_bonus_action = True
+        self.has_reaction = True
 
         for e in list(self.effects):
             self.remove_effect(e)
@@ -110,6 +112,7 @@ class Combatant(ABC):
 
         self.has_action = True
         self.has_bonus_action = True
+        self.has_reaction = True
 
         for e in self.effects:
             e.on_turn_start(self)

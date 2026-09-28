@@ -35,8 +35,8 @@ class ActionType(Enum):
     NONE = auto()
 
 class TargetType(Enum):
-    ALLY = auto()
-    ENEMY = auto()
+    ALLY = "Ally"
+    ENEMY = "Enemy"
 
 class RollType(Enum):
     ATTACK = auto()
