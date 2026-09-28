@@ -122,10 +122,13 @@ class Combatant(ABC):
         effect.on_remove(self)
         self.effects = [e for e in self.effects if e is not effect]
 
-    def take_damage(self, damage: int) -> None:
-        self.hp -= damage
+    def take_damage(self, amount: int) -> None:
+        self.hp -= amount
         for effect in self.effects:
-            effect.on_damage_taken(self, damage)
+            effect.on_damage_taken(self, amount)
+
+    def heal(self, amount: int) -> None:
+        self.hp = min(self.hp + amount, self.max_hp)
 
 # TODO: Class features (e.g. turn undead)
 @dataclass(eq=False)

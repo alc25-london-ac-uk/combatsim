@@ -30,7 +30,6 @@ class AttackResult(Enum):
 
 class ActionType(Enum):
     ATTACK = auto()
-    HEAL = auto()
     SPELL = auto()
     MOVE = auto()
     NONE = auto()

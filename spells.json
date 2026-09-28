@@ -38,6 +38,19 @@
         "upcastable_extra_target": true
     },
     {
+        "name": "Cure Wounds",
+        "level": 1,
+        "target_type": "Ally",
+        "is_healing": true,
+        "damage_dice": 1,
+        "damage_sides": 8,
+        "range": 5,
+        "requires_attack_roll": false,
+        "save_allowed": false,
+        "concentration": false,
+        "upcastable_extra_damage_die": true
+    },
+    {
         "name": "Hold Person",
         "level": 2,
         "target_type": "Enemy",

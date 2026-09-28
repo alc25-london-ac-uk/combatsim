@@ -31,6 +31,7 @@ class ActionResult:
     weapon: str = ""
     spell: str = ""
     amount: int = 0
+    is_healing: bool = False
     attack_result: AttackResult = AttackResult.MISS
     target_hp_after_action: int = 0
     combatant_x: int = 0
@@ -74,13 +75,6 @@ def attack(actor: Combatant, target: 'Combatant', weapon: Weapon, combat_state: 
 
     return attack_result, damage
 
-def heal(actor: Combatant, target: 'Combatant') -> int:
-    actor.spell_slots[1] -= 1
-    roll = random.randint(1, 8)
-    healing = roll + actor.ability_scores.modifier_for(actor.spellcasting_ability)
-    target.hp += healing
-    return healing
-
 def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: CombatState) -> tuple[AttackResult, int, bool, str]:
     attack_bonus = actor.get_spell_attack_bonus()
     damage = 0
@@ -110,7 +104,10 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: 
             damage = int(damage * spell.damage_pct_on_save)
             
     if damage > 0:
-        target.take_damage(damage)
+        if spell.is_healing:
+            target.heal(damage)
+        else:
+            target.take_damage(damage)
 
     if spell.effect is not None:
         if (not spell.requires_attack_roll or attack_result != AttackResult.MISS) and (not spell.save_allowed or not save_made):

@@ -11,8 +11,6 @@ def log_action(combatant: Combatant, results: list[ActionResult]) -> list[str]:
         match result.action_type:
             case ActionType.MOVE:
                 log.append(f"{combatant.name} moved to {result.combatant_x},{result.combatant_y}")
-            case ActionType.HEAL:
-                log.append(f"{combatant.name} at {result.combatant_x},{result.combatant_y} heals {result.target.name} at {result.combatant_x},{result.combatant_y} for {result.amount}. {result.target.name} now has {result.target_hp_after_action} HP. Rationale: {result.rationale}")
             case ActionType.SPELL:
                 log.append(format_spell_result(combatant, result))
                 log.append(f" -> {result.rationale}")
@@ -33,6 +31,10 @@ def format_attack_result(combatant: Combatant, result: ActionResult) -> str:
 
 def format_spell_result(combatant: Combatant, result: ActionResult) -> str:
     prefix = f"{combatant.name} casts {result.spell} on {result.target.name} - "
+
+    # healing spells
+    if result.is_healing:
+        return f"{prefix}heals {result.amount}. {result.target.name} has {result.target_hp_after_action} HP remaining."
     
     # control spells
     if result.amount == 0:

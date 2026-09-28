@@ -3,11 +3,11 @@ import random
 from enum import Enum, auto
 from dataclasses import dataclass, field
 
-from enums import AttackResult, ActionType
+from enums import AttackResult, ActionType, TargetType
 from combatant import Combatant, Weapon, MeleeWeapon, RangedWeapon, Spell, Ability
 from effects import Effect, AcidArrow, Barkskin, Blind, Concentrating, Paralysed
 from world import CombatState, Position
-from actions import Action, ActionResult, move_towards_target, attack, heal, cast_spell
+from actions import Action, ActionResult, move_towards_target, attack, cast_spell
 
 class CombatantAI:
     combatant: Combatant
@@ -44,7 +44,6 @@ class CombatantAI:
         best_action = None
 
         action_candidates = [
-            self.best_heal(combat_state),
             self.best_spell(combat_state),
             self.best_attack(combat_state)
         ]
@@ -60,20 +59,6 @@ class CombatantAI:
             best_action.rationale = f"{best_action.rationale} [vs: {combined_rationale}]"
 
         return best_action or Action(ActionType.NONE, self.combatant)
-    
-    def best_heal(self, combat_state: CombatState) -> tuple[float, Optional[Action]]:
-        best_score = -1.0
-        best_action = None
-
-        for target in combat_state.initiative_order:
-            if target.alive:
-                if target.team == self.combatant.team:
-                    score = self.score_heal(target, combat_state)
-                    if score > best_score:
-                        best_score = score
-                        best_action = Action(ActionType.HEAL, target, rationale = f"heal score: {score:.2f}")
-        
-        return best_score, best_action
 
     def best_spell(self, combat_state: CombatState) -> tuple[float, Optional[Action]]:
         best_score = -1.0
@@ -81,8 +66,8 @@ class CombatantAI:
 
         for target in combat_state.initiative_order:
             if target.alive:
-                if target.team != self.combatant.team:
-                    for spell in self.combatant.spells:
+                for spell in self.combatant.spells:
+                    if (spell.target_type == TargetType.ENEMY and target.team != self.combatant.team) or (spell.target_type == TargetType.ALLY and target.team == self.combatant.team):
                         score = self.score_spell(target, spell, combat_state)
                         if score > best_score:
                             best_score = score
@@ -104,17 +89,6 @@ class CombatantAI:
                             best_action = Action(ActionType.ATTACK, target, rationale = f"attack score: {score:.2f}", weapon = weapon)
         
         return best_score, best_action
-
-    def score_heal(self, target: Combatant, combat_state: CombatState) -> float:
-        if self.combatant.spell_slots.get(1, 0) == 0:
-            return -1.0
-
-        expected_healing = (1 + 8) / 2 + self.combatant.ability_scores.modifier_for(self.combatant.spellcasting_ability)
-        urgency = 1 - (target.hp / target.max_hp)
-        distance = combat_state.grid.distance(self.combatant, target)
-        movement_penalty = max(0, distance - 5) / self.combatant.speed
-
-        return (expected_healing * urgency) - movement_penalty
     
     def score_attack(self, target: Combatant, weapon: Weapon, combat_state: CombatState) -> float:
         hit_probability = max(0, min(1,
@@ -138,6 +112,15 @@ class CombatantAI:
     def score_spell(self, target: Combatant, spell: Spell, combat_state: CombatState) -> float:
         if self.combatant.spell_slots.get(spell.level, 0) == 0:
             return -1.0
+
+        # healing spells
+        if spell.is_healing:
+            expected_healing = (1 + 8) / 2 + self.combatant.ability_scores.modifier_for(self.combatant.spellcasting_ability)
+            urgency = 1 - (target.hp / target.max_hp)
+            distance = combat_state.grid.distance(self.combatant, target)
+            movement_penalty = max(0, distance - 5) / self.combatant.speed
+
+            return (expected_healing * urgency) - movement_penalty
 
         # control spells
         if spell.effect is not None and spell.damage_dice == 0:
@@ -176,11 +159,6 @@ class CombatantAI:
         results = []
 
         match action.action_type:
-            case ActionType.HEAL:
-                if combat_state.grid.distance(self.combatant, action.target) <= 5:            
-                    amount = heal(self.combatant, action.target)
-                    results.append(self.make_result(action, AttackResult.HIT, amount, combat_state))
-
             case ActionType.SPELL:
                 if action.spell is None:
                     return results
@@ -224,6 +202,7 @@ class CombatantAI:
             spell = action.spell.name if action.spell else "",
             weapon = action.weapon.name if action.weapon else "",
             amount = amount,
+            is_healing = action.spell.is_healing if action.spell else False,
             attack_result = attack_result,
             target_hp_after_action = action.target.hp,
             combatant_x = combatant_position.x,

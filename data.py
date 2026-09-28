@@ -101,7 +101,8 @@ def parse_spell(entry: dict) -> Spell:
         concentration = entry["concentration"],
         upcastable_extra_damage_die = entry.get("upcastable_extra_damage_die", False),
         upcastable_extra_target = entry.get("upcastable_extra_target", False),
-        target_type = entry.get("target_type")
+        target_type = entry.get("target_type"),
+        is_healing = entry.get("is_healing", False)
     )
 
 def parse_monster(entry: dict, weapon_registry: dict[str, Weapon], spell_registry: dict[str, Spell]) -> Monster:
