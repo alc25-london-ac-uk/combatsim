@@ -1,0 +1,109 @@
+import json
+from pathlib import Path
+
+import pytest
+
+from data import load_weapons, load_spells, load_monsters, load_players, parse_player_character, parse_monster
+from enums import DamageType, TargetType
+from weapon import MeleeWeapon
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+def _load_json(filename):
+    with open(REPO_ROOT / filename) as f:
+        return json.load(f)
+
+@pytest.fixture
+def weapon_registry():
+    return load_weapons(str(REPO_ROOT / "weapons.json"))
+
+@pytest.fixture
+def spell_registry():
+    return load_spells(str(REPO_ROOT / "spells.json"))
+
+@pytest.fixture
+def monster_registry(weapon_registry, spell_registry):
+    return load_monsters(str(REPO_ROOT / "monsters.json"), weapon_registry, spell_registry)
+
+@pytest.fixture
+def player_registry(weapon_registry, spell_registry):
+    return load_players(str(REPO_ROOT / "players.json"), weapon_registry, spell_registry)
+
+def test_all_weapons_parse_without_skipping(capsys, weapon_registry):
+    assert "Skipping" not in capsys.readouterr().out
+    assert len(weapon_registry) == len(_load_json("weapons.json"))
+
+def test_all_spells_parse_without_skipping(capsys, spell_registry):
+    assert "Skipping" not in capsys.readouterr().out
+    assert len(spell_registry) == len(_load_json("spells.json"))
+
+def test_all_monsters_parse_without_skipping(capsys, monster_registry):
+    assert "Skipping" not in capsys.readouterr().out
+    assert len(monster_registry) == len(_load_json("monsters.json"))
+
+def test_all_players_parse_without_skipping(capsys, player_registry):
+    assert "Skipping" not in capsys.readouterr().out
+    assert len(player_registry) == len(_load_json("players.json"))
+
+def test_weapon_damage_type_is_a_real_enum_member(weapon_registry):
+    assert weapon_registry["Longsword"].damage_type == DamageType.SLASHING
+
+def test_cure_wounds_is_flagged_as_healing_and_ally_targeted(spell_registry):
+    cure_wounds = spell_registry["Cure Wounds"]
+    assert cure_wounds.is_healing is True
+    assert cure_wounds.target_type == TargetType.ALLY
+
+def test_player_spell_slots_use_integer_levels_as_keys(player_registry):
+    cleric = player_registry["Cleric"]
+    assert cleric.spell_slots == {1: 4, 2: 3, 3: 2}
+    assert all(isinstance(level, int) for level in cleric.spell_slots)
+
+def test_monster_spellcaster_level_defaults_to_zero(monster_registry):
+    assert monster_registry["Goblin"].spellcaster_level == 0
+
+def test_duplicate_weapon_names_produce_independent_objects_for_players(weapon_registry, spell_registry):
+    entry = {
+        "name": "Test Dual Wielder",
+        "character_class": "rogue",
+        "level": 1,
+        "armor_class": 12,
+        "strength": 10, "dexterity": 16, "constitution": 12,
+        "intelligence": 10, "wisdom": 10, "charisma": 10,
+        "weapons": [
+            {"name": "Scimitar", "is_off_hand": False},
+            {"name": "Scimitar", "is_off_hand": True}
+        ]
+    }
+
+    player = parse_player_character(entry, weapon_registry, spell_registry)
+    first_weapon, second_weapon = player.weapons
+    assert isinstance(first_weapon, MeleeWeapon)
+    assert isinstance(second_weapon, MeleeWeapon)
+
+    assert first_weapon is not second_weapon
+    assert first_weapon.is_off_hand is False
+    assert second_weapon.is_off_hand is True
+
+def test_duplicate_weapon_names_produce_independent_objects_for_monsters(weapon_registry, spell_registry):
+    entry = {
+        "name": "Test Dual Wielding Monster",
+        "hit_points": 10,
+        "armor_class": 12,
+        "strength": 10, "dexterity": 16, "constitution": 12,
+        "intelligence": 10, "wisdom": 10, "charisma": 10,
+        "attack_count": 2,
+        "attack_bonus": 3,
+        "weapons": [
+            {"name": "Scimitar", "is_off_hand": False},
+            {"name": "Scimitar", "is_off_hand": True}
+        ]
+    }
+
+    monster = parse_monster(entry, weapon_registry, spell_registry)
+    first_weapon, second_weapon = monster.weapons
+    assert isinstance(first_weapon, MeleeWeapon)
+    assert isinstance(second_weapon, MeleeWeapon)
+
+    assert first_weapon is not second_weapon
+    assert first_weapon.is_off_hand is False
+    assert second_weapon.is_off_hand is True

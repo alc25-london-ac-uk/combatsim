@@ -30,7 +30,7 @@ def format_attack_result(combatant: Combatant, result: ActionResult) -> str:
         return f"{prefix}miss."
 
 def format_spell_result(combatant: Combatant, result: ActionResult) -> str:
-    prefix = f"{combatant.name} casts {result.spell} on {result.target.name} - "
+    prefix = f"{result.actor} casts {result.spell} on {result.target.name} - "
 
     # healing spells
     if result.is_healing:
