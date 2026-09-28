@@ -72,6 +72,7 @@ class AcidArrow(Effect):
 class Barkskin(Effect):
     name: str = "Barkskin"
     previous_ac: int = 0
+    duration = 10
 
     def on_apply(self, target: Combatant) -> None:
         self.previous_ac = target.ac
@@ -134,6 +135,7 @@ class Invisible(Effect):
 @dataclass
 class Paralysed(Effect):
     name: str = "Paralysed"
+    duration = 10
     prevent_turn: bool = True
     auto_crit_in_melee: bool = True
 
