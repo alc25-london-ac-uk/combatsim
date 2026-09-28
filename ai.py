@@ -120,6 +120,11 @@ class CombatantAI:
         hit_probability = max(0, min(1,
             (21 - (target.ac - self.combatant.get_attack_bonus(weapon))) / 20
         ))
+
+        # Low-complexity penalty for using ranged weapons in melee combat as advantage / disadvantage isn't yet modelled in scoring
+        if isinstance(weapon, RangedWeapon) and combat_state.grid.enemies_in_melee_range(self.combatant):
+            hit_probability *= 0.5
+
         expected_damage = hit_probability * (
             weapon.damage_dice * (weapon.damage_sides + 1) / 2
             + self.combatant.get_damage_bonus(weapon)
@@ -181,7 +186,7 @@ class CombatantAI:
                     return results
                 
                 if combat_state.grid.distance(self.combatant, action.target) <= action.required_range:
-                    attack_result, amount, save_made, effect_applied = cast_spell(self.combatant, action.target, action.spell)
+                    attack_result, amount, save_made, effect_applied = cast_spell(self.combatant, action.target, action.spell, combat_state)
                     results.append(self.make_result(action, attack_result, amount, combat_state, save_made = save_made))
 
             case ActionType.ATTACK:
@@ -198,7 +203,7 @@ class CombatantAI:
                         return results
          
                     if combat_state.grid.distance(self.combatant, action.target) <= action.required_range:
-                        attack_result, amount = attack(self.combatant, action.target, action.weapon)
+                        attack_result, amount = attack(self.combatant, action.target, action.weapon, combat_state)
                         results.append(self.make_result(action, attack_result, amount, combat_state))
 
             case ActionType.NONE:

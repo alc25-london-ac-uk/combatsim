@@ -1,10 +1,9 @@
 from typing import Optional
 import random
 from dataclasses import dataclass
-from enum import Enum, auto
 
-from enums import AttackResult, ActionType
-from dice import roll_d20, saving_throw
+from enums import AttackResult, ActionType, RollType
+from dice import saving_throw, attack_roll, damage_roll, resolve_advantage
 from combatant import Combatant, Weapon, MeleeWeapon, RangedWeapon, Spell, Ability
 from effects import Effect, AcidArrow, Barkskin, Blind, Concentrating, Paralysed
 from world import CombatState, Position
@@ -52,14 +51,16 @@ def move_towards_target(actor: Combatant, target: Combatant, combat_state: Comba
         combatant_y = new_position.y
     )
 
-def attack(actor: Combatant, target: 'Combatant', weapon: Weapon) -> tuple[AttackResult, int]:
+def attack(actor: Combatant, target: 'Combatant', weapon: Weapon, combat_state: CombatState) -> tuple[AttackResult, int]:
     attack_bonus = actor.get_attack_bonus(weapon)
     damage = 0
+
+    advantage, disadvantage = resolve_advantage(actor, RollType.ATTACK, other = target, weapon = weapon, combat_state = combat_state)
     
     if target.has_effect(Paralysed) and isinstance(weapon, MeleeWeapon):
         attack_result = AttackResult.CRIT
     else:
-        attack_result = attack_roll(attack_bonus, target.ac)
+        attack_result = attack_roll(attack_bonus, target.ac, advantage, disadvantage)
     
     if attack_result == AttackResult.MISS:
         return attack_result, damage
@@ -80,7 +81,7 @@ def heal(actor: Combatant, target: 'Combatant') -> int:
     target.hp += healing
     return healing
 
-def cast_spell(actor: Combatant, target: Combatant, spell: Spell) -> tuple[AttackResult, int, bool, str]:
+def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: CombatState) -> tuple[AttackResult, int, bool, str]:
     attack_bonus = actor.get_spell_attack_bonus()
     damage = 0
     save_made = False
@@ -90,7 +91,8 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell) -> tuple[Attac
         actor.spell_slots[spell.level] -= 1
 
     if spell.requires_attack_roll:
-        attack_result = attack_roll(attack_bonus, target.ac)
+        advantage, disadvantage = resolve_advantage(actor, RollType.ATTACK, other = target, combat_state = combat_state)
+        attack_result = attack_roll(attack_bonus, target.ac, advantage, disadvantage)
     else:
         attack_result = AttackResult.HIT
 
@@ -102,7 +104,8 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell) -> tuple[Attac
     damage = damage_roll(damage_dice_used, spell.damage_sides, attack_bonus, attack_result == AttackResult.CRIT)
 
     if spell.save_allowed:
-        if saving_throw(target, spell.save_attribute, actor.spell_save_dc):
+        advantage, disadvantage = resolve_advantage(target, RollType.SAVE, other = actor, ability = spell.save_attribute, spell = spell, combat_state = combat_state)
+        if saving_throw(target, spell.save_attribute, actor.spell_save_dc, advantage, disadvantage):
             save_made = True
             damage = int(damage * spell.damage_pct_on_save)
             
@@ -119,28 +122,3 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell) -> tuple[Attac
             save_made = True
 
     return attack_result, damage, save_made, effect_applied
-
-def attack_roll(bonus: int, target_ac: int) -> AttackResult:
-    roll = roll_d20()
-    
-    if roll == 20:
-        return AttackResult.CRIT
-    
-    if roll + bonus > target_ac:
-        return AttackResult.HIT
-    
-    return AttackResult.MISS
-
-def damage_roll(damage_dice: int, damage_sides: int, bonus: int, is_crit: bool) -> int:
-    damage = 0
-    
-    if damage_dice > 0:
-        for _ in range(damage_dice):
-            damage += random.randint(1, damage_sides)
-
-        if is_crit:
-            damage *= 2
-
-        damage += bonus
-
-    return damage

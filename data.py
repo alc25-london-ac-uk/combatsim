@@ -28,8 +28,8 @@ def load_spells(filepath: str) -> dict[str, Spell]:
         try:
             spell = parse_spell(entry)
             spells[entry["name"]] = spell
-        except (KeyError, ValueError):
-            print(f"Skipping {entry.get('name', 'unknown')}")
+        except (KeyError, ValueError) as e:
+            print(f"Skipping {entry.get('name', 'unknown')}: {e}")
 
     return spells
 

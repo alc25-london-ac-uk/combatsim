@@ -38,3 +38,7 @@ class ActionType(Enum):
 class TargetType(Enum):
     ALLY = auto()
     ENEMY = auto()
+
+class RollType(Enum):
+    ATTACK = auto()
+    SAVE = auto()

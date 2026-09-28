@@ -5,7 +5,7 @@ import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
-from enums import Ability, DamageType, TargetType
+from enums import Ability
 from weapon import Weapon, MeleeWeapon, RangedWeapon
 from spell import Spell
 from effects import Effect
@@ -105,11 +105,17 @@ class Combatant(ABC):
     def end_turn(self) -> None:
         for e in self.effects:
             e.on_turn_end(self)
+        for e in self.effects:
+            e.tick()
+        for e in list(self.effects):
+            if e.expired:
+                self.remove_effect(e)
 
     def has_effect(self, effect_type: type) -> bool:
         return any(isinstance(e, effect_type) for e in self.effects)
 
     def add_effect(self, effect: Effect) -> None:
+        effect.on_apply(self)
         self.effects.append(effect)
 
     def remove_effect(self, effect: Effect) -> None:

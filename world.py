@@ -1,6 +1,8 @@
+from typing import TYPE_CHECKING
 from dataclasses import dataclass, field
 
-from combatant import Combatant
+if TYPE_CHECKING:
+    from combatant import Combatant
 
 @dataclass
 class Position:
