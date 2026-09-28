@@ -13,8 +13,8 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            "Scimitar",
-            "Shortbow"
+            {"name": "Scimitar"},
+            {"name": "Shortbow"}
         ]
     },
     {
@@ -31,8 +31,8 @@
         "attack_count": 1,
         "attack_bonus": 3,
         "weapons": [
-            "Longsword",
-            "Longbow"
+            {"name": "Longsword"},
+            {"name": "Longbow"}
         ]
     },
     {
@@ -49,8 +49,8 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            "Morningstar",
-            "Javelin"
+            {"name": "Morningstar"},
+            {"name": "Javelin"}
         ]
     },
     {
@@ -67,9 +67,9 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            "Bite",
-            "Spear",
-            "Longbow"
+            {"name": "Bite"},
+            {"name": "Spear"},
+            {"name": "Longbow"}
         ]
     },
     {
@@ -86,8 +86,8 @@
         "attack_count": 1,
         "attack_bonus": 6,
         "weapons": [
-            "Greataxe",
-            "Gore"
+            {"name": "Greataxe"},
+            {"name": "Gore"}
         ]
     }
 ]

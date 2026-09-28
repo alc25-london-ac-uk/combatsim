@@ -32,6 +32,7 @@ class Spell:
     effect: Optional[type[Effect]] = None
     upcastable_extra_damage_die: bool = False
     upcastable_extra_target: bool = False
+    is_bonus_action: bool = False
 
     @property
     def is_cantrip(self) -> bool:

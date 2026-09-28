@@ -106,7 +106,13 @@ def parse_spell(entry: dict) -> Spell:
     )
 
 def parse_monster(entry: dict, weapon_registry: dict[str, Weapon], spell_registry: dict[str, Spell]) -> Monster:
-    weapons = [weapon_registry[name] for name in entry.get("weapons", [])]
+    weapons = []
+    for w in entry.get("weapons", []):
+        weapon = copy.deepcopy(weapon_registry[w["name"]])
+        if isinstance(weapon, MeleeWeapon):
+            weapon.is_off_hand = w.get("is_off_hand", False)
+        weapons.append(weapon)
+    
     spells = [spell_registry[name] for name in entry.get("spells", [])]
 
     return Monster(
@@ -129,7 +135,13 @@ def parse_monster(entry: dict, weapon_registry: dict[str, Weapon], spell_registr
     )
 
 def parse_player_character(entry: dict, weapon_registry: dict[str, Weapon], spell_registry: dict[str, Spell]) -> PlayerCharacter:
-    weapons = [weapon_registry[name] for name in entry.get("weapons", [])]
+    weapons = []
+    for w in entry.get("weapons", []):
+        weapon = copy.deepcopy(weapon_registry[w["name"]])
+        if isinstance(weapon, MeleeWeapon):
+            weapon.is_off_hand = w.get("is_off_hand", False)
+        weapons.append(weapon)
+        
     spells = [spell_registry[name] for name in entry.get("spells", [])]
 
     return PlayerCharacter(

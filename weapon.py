@@ -21,6 +21,7 @@ class Weapon(ABC):
 class MeleeWeapon(Weapon):
     reach: int
     finesse: bool
+    is_off_hand: bool = False
 
     @property
     def range(self) -> int:

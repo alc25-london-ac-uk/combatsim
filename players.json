@@ -17,7 +17,7 @@
             "3": 0
         },
         "weapons": [
-            "Longsword"
+            {"name": "Longsword", "is_off_hand": false}
         ]
     },
     {
@@ -39,7 +39,7 @@
             "3": 2
         },
         "weapons": [
-            "Mace"
+            {"name": "Mace", "is_off_hand": false}
         ],
         "spells": [
             "Blindness",

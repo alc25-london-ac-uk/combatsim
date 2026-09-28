@@ -15,7 +15,6 @@ class CombatantAI:
     def __init__(self, combatant: Combatant):
         self.combatant = combatant
 
-    # TODO: bonus actions
     # TODO: reactions
     def take_turn(self, combat_state: CombatState) -> list[ActionResult]:
         results = []
@@ -25,29 +24,44 @@ class CombatantAI:
                 results.append(self.make_result(Action(ActionType.NONE, self.combatant, rationale = e.name), AttackResult.MISS, 0, combat_state))
                 return results
 
-        action = self.decide(combat_state)
+        if self.combatant.has_action:
+            action = self.decide(combat_state, bonus_action = False)
 
-        if action.action_type == ActionType.NONE:
-            results.append(self.make_result(Action(ActionType.NONE, self.combatant, rationale = ""), AttackResult.MISS, 0, combat_state))
-            return results
+            if action.action_type == ActionType.NONE:
+                results.append(self.make_result(Action(ActionType.NONE, self.combatant, rationale = ""), AttackResult.MISS, 0, combat_state))
+            else:
+                self.move_and_execute(action, combat_state, results, bonus_action = False)
 
-        while (self.combatant.movement > 0 and
-                combat_state.grid.distance(self.combatant, action.target) > action.required_range
-                and not any(e.forbids_approaching(action.target) for e in self.combatant.effects)):
-            results.append(move_towards_target(self.combatant, action.target, combat_state))
-        
-        if combat_state.grid.distance(self.combatant, action.target) <= action.required_range:
-            results.extend(self.execute(action, combat_state))
+            self.combatant.has_action = False
+
+        if self.combatant.has_bonus_action:
+            bonus_action = self.decide(combat_state, bonus_action = True)
+
+            if bonus_action.action_type == ActionType.NONE:
+                results.append(self.make_result(Action(ActionType.NONE, self.combatant, rationale = ""), AttackResult.MISS, 0, combat_state))
+            else:
+                self.move_and_execute(bonus_action, combat_state, results, bonus_action = True)
+
+            self.combatant.has_bonus_action = False
 
         return results
+
+    def move_and_execute(self, action: Action, combat_state: CombatState, results: list, bonus_action: bool) -> None:
+        while (self.combatant.movement > 0 and
+               combat_state.grid.distance(self.combatant, action.target) > action.required_range
+               and not any(e.forbids_approaching(action.target) for e in self.combatant.effects)):
+            results.append(move_towards_target(self.combatant, action.target, combat_state))
+
+        if combat_state.grid.distance(self.combatant, action.target) <= action.required_range:
+            results.extend(self.execute(action, combat_state, bonus_action))
     
-    def decide(self, combat_state: CombatState) -> Action:
+    def decide(self, combat_state: CombatState, bonus_action: bool = False) -> Action:
         best_score = -1.0
         best_action = None
 
         action_candidates = [
-            self.best_spell(combat_state),
-            self.best_attack(combat_state)
+            self.best_spell(combat_state, bonus_action),
+            self.best_attack(combat_state, bonus_action)
         ]
 
         best_score, best_action = max(action_candidates, key = lambda c: c[0])
@@ -62,22 +76,23 @@ class CombatantAI:
 
         return best_action or Action(ActionType.NONE, self.combatant)
 
-    def best_spell(self, combat_state: CombatState) -> tuple[float, Optional[Action]]:
+    def best_spell(self, combat_state: CombatState, bonus_action: bool = False) -> tuple[float, Optional[Action]]:
         best_score = -1.0
         best_action = None
 
         for target in combat_state.initiative_order:
             if target.alive:
                 for spell in self.combatant.spells:
-                    if (spell.target_type == TargetType.ENEMY and target.team != self.combatant.team) or (spell.target_type == TargetType.ALLY and target.team == self.combatant.team):
-                        score = self.score_spell(target, spell, combat_state)
-                        if score > best_score:
-                            best_score = score
-                            best_action = Action(ActionType.SPELL, target, rationale = f"spell score: {score:.2f}", spell = spell)
+                    if spell.is_bonus_action == bonus_action:
+                        if (spell.target_type == TargetType.ENEMY and target.team != self.combatant.team) or (spell.target_type == TargetType.ALLY and target.team == self.combatant.team):
+                            score = self.score_spell(target, spell, combat_state)
+                            if score > best_score:
+                                best_score = score
+                                best_action = Action(ActionType.SPELL, target, rationale = f"spell score: {score:.2f}", spell = spell)
 
         return best_score, best_action
 
-    def best_attack(self, combat_state: CombatState) -> tuple[float, Optional[Action]]:
+    def best_attack(self, combat_state: CombatState, bonus_action: bool = False) -> tuple[float, Optional[Action]]:
         best_score = -1.0
         best_action = None
 
@@ -85,10 +100,11 @@ class CombatantAI:
             if target.alive:
                 if target.team != self.combatant.team:
                     for weapon in self.combatant.weapons:
-                        score = self.score_attack(target, weapon, combat_state)
-                        if score > best_score:
-                            best_score = score
-                            best_action = Action(ActionType.ATTACK, target, rationale = f"attack score: {score:.2f}", weapon = weapon)
+                        if (isinstance(weapon, MeleeWeapon) and weapon.is_off_hand) == bonus_action:
+                            score = self.score_attack(target, weapon, combat_state)
+                            if score > best_score:
+                                best_score = score
+                                best_action = Action(ActionType.ATTACK, target, rationale = f"attack score: {score:.2f}", weapon = weapon)
         
         return best_score, best_action
     
@@ -162,7 +178,7 @@ class CombatantAI:
 
         return expected_damage + kill_bonus - movement_penalty
 
-    def execute(self, action: Action, combat_state: CombatState) -> list[ActionResult]:
+    def execute(self, action: Action, combat_state: CombatState, bonus_action: bool = False) -> list[ActionResult]:
         results = []
 
         match action.action_type:
@@ -175,9 +191,13 @@ class CombatantAI:
                     results.append(self.make_result(action, attack_result, amount, combat_state, save_made = save_made))
 
             case ActionType.ATTACK:
-                for _ in range(self.combatant.attack_count):
+                number_of_attacks = 1
+                if not bonus_action:
+                    number_of_attacks = self.combatant.attack_count
+
+                for _ in range(number_of_attacks):
                     if not action.target.alive:
-                        _, new_action = self.best_attack(combat_state)
+                        _, new_action = self.best_attack(combat_state, bonus_action)
                         if new_action is None:
                             break
                         action = new_action

@@ -58,6 +58,8 @@ class Combatant(ABC):
     hp: int = 1
     movement: int = field(init = False)
     attack_count: int = 1
+    has_action: bool = True
+    has_bonus_action: bool = True
 
     def __post_init__(self):
         self.movement = self.speed
@@ -97,8 +99,18 @@ class Combatant(ABC):
         self.hp = self.max_hp
         self.movement = self.speed
 
+        self.has_action = True
+        self.has_bonus_action = True
+
+        for e in list(self.effects):
+            self.remove_effect(e)
+
     def start_turn(self) -> None:
         self.movement = self.speed
+
+        self.has_action = True
+        self.has_bonus_action = True
+
         for e in self.effects:
             e.on_turn_start(self)
 
