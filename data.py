@@ -131,6 +131,7 @@ def parse_monster(entry: dict, weapon_registry: dict[str, Weapon], spell_registr
         attack_count = entry["attack_count"],
         attack_bonus = entry["attack_bonus"],
         spell_bonus = entry.get("spell_bonus", 0),
+        spellcaster_level = entry.get("spellcaster_level", 0),
         weapons = weapons,
         spells = spells
     )

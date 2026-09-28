@@ -87,7 +87,6 @@
         "save_allowed": true,
         "save_attribute": "dexterity",
         "damage_pct_on_save": 0,
-        "concentration": false,
-        "upcastable_extra_damage_die": true
+        "concentration": false
     }
 ]

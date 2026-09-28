@@ -79,6 +79,11 @@ class Combatant(ABC):
 
     @property
     @abstractmethod
+    def caster_level(self) -> int:
+        pass
+
+    @property
+    @abstractmethod
     def spell_save_dc(self) -> int:
         pass
 
@@ -170,6 +175,10 @@ class PlayerCharacter(Combatant):
         subsequent_levels = (hit_dice // 2 + 1 + con_mod) * (self.level - 1)
         return max(first_level + subsequent_levels, 1)
 
+    @property
+    def caster_level(self) -> int:
+        return self.level
+
     def _compute_attack_count(self) -> int:
         match self.character_class:
             case "fighter":
@@ -203,9 +212,14 @@ class Monster(Combatant):
     attack_count: int = 1
     attack_bonus: int = 0
     spell_bonus: int = 0
+    spellcaster_level: int = 0
 
     def get_attack_bonus(self, weapon: Weapon) -> int:
         return self.attack_bonus
+
+    @property
+    def caster_level(self) -> int:
+        return self.spellcaster_level
     
     @property
     def spell_save_dc(self) -> int:

@@ -134,6 +134,9 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: 
 
     if attack_result != AttackResult.MISS:
         damage_dice_used = spell.damage_dice
+
+        if spell.level == 0:
+            damage_dice_used += 1 if actor.caster_level >=5 else 0
     else:
         damage_dice_used = spell.damage_dice_on_miss
 

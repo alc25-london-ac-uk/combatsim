@@ -159,7 +159,7 @@ class CombatantAI:
                 (21 - (target.ac - self.combatant.get_spell_attack_bonus())) / 20
             ))
         expected_damage = hit_probability * (
-            spell.damage_dice * (spell.damage_sides + 1) / 2
+            (spell.damage_dice + 1 if self.combatant.caster_level >= 5 else 0) * (spell.damage_sides + 1) / 2
             + self.combatant.ability_scores.modifier_for(self.combatant.spellcasting_ability)
         )
         if spell.save_allowed:
