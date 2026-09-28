@@ -7,6 +7,7 @@ from abc import ABC
 
 from dice import saving_throw, RollContext, resolve_advantage
 from enums import Ability, RollType
+from weapon import Weapon, MeleeWeapon, RangedWeapon
 
 if TYPE_CHECKING:
     from combatant import Combatant
@@ -14,9 +15,12 @@ if TYPE_CHECKING:
 @dataclass
 class Effect(ABC):
     name: str = ""
+    source: Optional[Combatant] = None
     duration: Optional[int] = None
     save_dc: int = 0
     levels_upcast: int = 0
+    prevent_turn: bool = False
+    auto_crit_in_melee: bool = False
 
     def on_apply(self, target: Combatant) -> None:
         pass
@@ -45,6 +49,12 @@ class Effect(ABC):
         return False
 
     def grants_disadvantage(self, roll_context: RollContext) -> bool:
+        return False
+
+    def auto_fails_save(self, ability: Ability) -> bool:
+        return False
+
+    def forbids_approaching(self, other: Combatant) -> bool:
         return False
 
 @dataclass
@@ -96,57 +106,93 @@ class Concentrating(Effect):
             if self.maintained_target is not None and self.maintained_effect is not None:
                 self.maintained_target.remove_effect(self.maintained_effect)
 
-# TODO: implement
 @dataclass
 class Frightened(Effect):
     name: str = "Frightened"
-    # Disadvantage on attack rolls
+    source: Optional[Combatant] = None
 
-# TODO: implmement
+    def grants_disadvantage(self, roll_context: RollContext) -> bool:
+        return roll_context.roll_type == RollType.ATTACK and roll_context.is_roller
+
+    def forbids_approaching(self, other: Combatant) -> bool:
+        return other is self.source
+
 @dataclass
 class Invisible(Effect):
     name: str = "Invisible"
-    # Advantage on attack rolls, disadvantage on being attacked
+    
+    def grants_advantage(self, roll_context: RollContext) -> bool:
+        return roll_context.roll_type == RollType.ATTACK and roll_context.is_roller
+
+    def grants_disadvantage(self, roll_context: RollContext) -> bool:
+        return roll_context.roll_type == RollType.ATTACK and not roll_context.is_roller
 
 @dataclass
 class Paralysed(Effect):
     name: str = "Paralysed"
+    prevent_turn: bool = True
+    auto_crit_in_melee: bool = True
+
+    def auto_fails_save(self, ability: Ability) -> bool:
+        return ability in (Ability.STRENGTH, Ability.DEXTERITY)
+
+    def grants_advantage(self, roll_context: RollContext) -> bool:
+        return roll_context.roll_type == RollType.ATTACK and not roll_context.is_roller
 
     def on_turn_end(self, target: Combatant) -> None:
         advantage, disadvantage = resolve_advantage(target, RollType.SAVE, ability = Ability.WISDOM)
         if saving_throw(target, Ability.WISDOM, self.save_dc, advantage, disadvantage):
             target.remove_effect(self)
 
-# TODO: implmement
 @dataclass
 class Poisoned(Effect):
     name: str = "Poisoned"
-    # Disadvantage on attack rolls
 
-# TODO: implmement
+    def grants_disadvantage(self, roll_context: RollContext) -> bool:
+        return roll_context.roll_type == RollType.ATTACK and roll_context.is_roller
+
 @dataclass
 class Prone(Effect):
     name: str = "Prone"
-    # Attacks have disadvantage, melee attacks against have advantage, ranged attacks against have disadvantage
 
-# TODO: implement
+    def grants_disadvantage(self, roll_context: RollContext) -> bool:
+        return (roll_context.roll_type == RollType.ATTACK and roll_context.is_roller) or (roll_context.roll_type == RollType.ATTACK and not roll_context.is_roller and isinstance(roll_context.weapon, RangedWeapon))
+
+    def grants_advantage(self, roll_context: RollContext) -> bool:
+        return roll_context.roll_type == RollType.ATTACK and not roll_context.is_roller and isinstance(roll_context.weapon, MeleeWeapon)
+
 @dataclass
 class Restrained(Effect):
     name: str = "Restrained"
-    # Same advantage / disadvantage as blind
 
-# TODO: immplement
+    def grants_advantage(self, roll_context: RollContext) -> bool:
+        return roll_context.roll_type == RollType.ATTACK and not roll_context.is_roller
+    
+    def grants_disadvantage(self, roll_context: RollContext) -> bool:
+        return roll_context.roll_type == RollType.ATTACK and roll_context.is_roller
+
 @dataclass
 class Stunned(Effect):
     name: str = "Stunned"
-    # Same as paralysed but without auto-crit
+    prevent_turn: bool = True
 
-# TODO: implement
+    def auto_fails_save(self, ability: Ability) -> bool:
+        return ability in (Ability.STRENGTH, Ability.DEXTERITY)
+
+    def grants_advantage(self, roll_context: RollContext) -> bool:
+        return roll_context.roll_type == RollType.ATTACK and not roll_context.is_roller
+
 @dataclass
 class Unconscious(Effect):
     name: str = "Unconscious"
-    # Same as paralysed
+    prevent_turn: bool = True
+    auto_crit_in_melee: bool = True
 
+    def auto_fails_save(self, ability: Ability) -> bool:
+        return ability in (Ability.STRENGTH, Ability.DEXTERITY)
+
+    def grants_advantage(self, roll_context: RollContext) -> bool:
+        return roll_context.roll_type == RollType.ATTACK and not roll_context.is_roller
 
 EFFECT_REGISTRY: dict[str, type[Effect]] = {
     cls.name: cls for cls in Effect.__subclasses__()

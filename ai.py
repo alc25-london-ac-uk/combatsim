@@ -20,9 +20,10 @@ class CombatantAI:
     def take_turn(self, combat_state: CombatState) -> list[ActionResult]:
         results = []
 
-        if self.combatant.has_effect(Paralysed):
-            results.append(self.make_result(Action(ActionType.NONE, self.combatant, rationale = "Paralysed"), AttackResult.MISS, 0, combat_state))
-            return results
+        for e in self.combatant.effects:
+            if e.prevent_turn:
+                results.append(self.make_result(Action(ActionType.NONE, self.combatant, rationale = e.name), AttackResult.MISS, 0, combat_state))
+                return results
 
         action = self.decide(combat_state)
 
@@ -31,7 +32,8 @@ class CombatantAI:
             return results
 
         while (self.combatant.movement > 0 and
-                combat_state.grid.distance(self.combatant, action.target) > action.required_range):
+                combat_state.grid.distance(self.combatant, action.target) > action.required_range
+                and not any(e.forbids_approaching(action.target) for e in self.combatant.effects)):
             results.append(move_towards_target(self.combatant, action.target, combat_state))
         
         if combat_state.grid.distance(self.combatant, action.target) <= action.required_range:
@@ -106,6 +108,8 @@ class CombatantAI:
         kill_bonus = min(1, expected_damage / max(1, target.hp)) * 2.0
         distance = combat_state.grid.distance(self.combatant, target)
         movement_penalty = max(0, distance - weapon.range) / self.combatant.speed
+        if any(e.forbids_approaching(target) for e in self.combatant.effects):
+            movement_penalty = 100
 
         return expected_damage + kill_bonus - movement_penalty
     
@@ -152,6 +156,9 @@ class CombatantAI:
         kill_bonus = min(1, expected_damage / max(1, target.hp)) * 2.0
         distance = combat_state.grid.distance(self.combatant, target)
         movement_penalty = max(0, distance - spell.range) / self.combatant.speed
+
+        if any(e.forbids_approaching(target) for e in self.combatant.effects):
+            movement_penalty = 100
 
         return expected_damage + kill_bonus - movement_penalty
 

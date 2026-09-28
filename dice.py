@@ -67,8 +67,12 @@ def roll_d20(advantage: bool = False, disadvantage: bool = False) -> int:
             return min(roll_1, roll_2)
 
 def saving_throw(combatant: Combatant, ability: Ability, difficulty: int, advantage: bool = False, disadvantage: bool = False) -> bool:
+    if any(e.auto_fails_save(ability) for e in combatant.effects):
+        return False
+    
     roll = roll_d20(advantage, disadvantage) + combatant.ability_scores.modifier_for(ability)
-    return roll >= difficulty 
+    
+    return roll >= difficulty
 
 def attack_roll(bonus: int, target_ac: int, advantage: bool = False, disadvantage: bool = False) -> AttackResult:
     roll = roll_d20(advantage, disadvantage)

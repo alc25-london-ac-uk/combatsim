@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from enums import AttackResult, ActionType, RollType
 from dice import saving_throw, attack_roll, damage_roll, resolve_advantage
 from combatant import Combatant, Weapon, MeleeWeapon, RangedWeapon, Spell, Ability
-from effects import Effect, AcidArrow, Barkskin, Blind, Concentrating, Paralysed
+from effects import Concentrating
 from world import CombatState, Position
 
 @dataclass
@@ -58,7 +58,7 @@ def attack(actor: Combatant, target: 'Combatant', weapon: Weapon, combat_state: 
 
     advantage, disadvantage = resolve_advantage(actor, RollType.ATTACK, other = target, weapon = weapon, combat_state = combat_state)
     
-    if target.has_effect(Paralysed) and isinstance(weapon, MeleeWeapon):
+    if isinstance(weapon, MeleeWeapon) and any(e.auto_crit_in_melee for e in target.effects):
         attack_result = AttackResult.CRIT
     else:
         attack_result = attack_roll(attack_bonus, target.ac, advantage, disadvantage)
@@ -111,7 +111,7 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: 
 
     if spell.effect is not None:
         if (not spell.requires_attack_roll or attack_result != AttackResult.MISS) and (not spell.save_allowed or not save_made):
-            target.add_effect(spell.effect(save_dc = actor.spell_save_dc))
+            target.add_effect(spell.effect(save_dc = actor.spell_save_dc, source = actor))
             effect_applied = spell.effect.name
             if spell.concentration:
                 actor.add_effect(Concentrating())
