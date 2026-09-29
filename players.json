@@ -47,5 +47,33 @@
             "Sacred Flame",
             "Hold Person"
         ]
+    },
+    {
+        "name": "Wizard",
+        "character_class": "wizard",
+        "level": 5,
+        "armor_class": 10,
+        "strength": 8,
+        "dexterity": 12,
+        "constitution": 14,
+        "intelligence": 18,
+        "wisdom": 12,
+        "charisma": 12,
+        "attack_count": 1,
+        "spellcasting_ability": "intelligence",
+        "spell_slots": {
+            "1": 4,
+            "2": 3,
+            "3": 2
+        },
+        "weapons": [
+            {"name": "Quarterstaff"}
+        ],
+        "spells": [
+            "Acid Arrow",
+            "Blindness",
+            "Fireball",
+            "Hold Person"
+        ]
     }
 ]

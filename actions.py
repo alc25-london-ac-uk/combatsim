@@ -43,6 +43,14 @@ class ActionResult:
     effect_applied: str = ""
     rationale: str = ""
 
+@dataclass
+class SpellHitResult:
+    target: Combatant
+    attack_result: AttackResult
+    amount: int
+    save_made: bool = False
+    effect_applied: str = ""
+
 def move_towards_target(actor: Combatant, target: Combatant, combat_state: CombatState) -> list[ActionResult]:
     results = []
 
@@ -110,21 +118,44 @@ def attack(actor: Combatant, target: 'Combatant', weapon: Weapon, combat_state: 
     
     damage = damage_roll(weapon.damage_dice, weapon.damage_sides, actor.get_damage_bonus(weapon), attack_result == AttackResult.CRIT)
 
-    target.hp -= damage
-
-    for effect in target.effects:
-        effect.on_damage_taken(target, damage)
+    target.take_damage(damage)
 
     return attack_result, damage
 
-def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: CombatState) -> tuple[AttackResult, int, bool, str]:
+def determine_targets(target: Combatant, spell: Spell, combat_state: CombatState) -> list[Combatant]:
+    combatants = []
+
+    combatants.append(target)
+
+    if spell.aoe_radius > 0:
+        combatants.extend(combat_state.grid.combatants_in_range(target, spell.aoe_radius))
+
+    return combatants
+
+def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: CombatState) -> list[SpellHitResult]:
+    if spell.level > 0:
+        actor.spell_slots[spell.level] -= 1
+    
+    results = []
+
+    targets = determine_targets(target, spell, combat_state)
+
+    if spell.requires_attack_roll:
+        for t in targets:
+            results.append(resolve_spell_against_target(actor, t, spell, combat_state))
+    else:
+        damage_dice_used = spell.damage_dice + (1 if spell.level == 0 and actor.caster_level >= 5 else 0)
+        amount = damage_roll(damage_dice_used, spell.damage_sides, actor.get_spell_attack_bonus(), is_crit = False)
+        for t in targets:
+            results.append(resolve_spell_against_target(actor, t, spell, combat_state, amount))
+
+    return results
+
+def resolve_spell_against_target(actor: Combatant, target: Combatant, spell: Spell, combat_state: CombatState, amount: int = 0) -> SpellHitResult:
     attack_bonus = actor.get_spell_attack_bonus()
     damage = 0
     save_made = False
     effect_applied = ""
-
-    if spell.level > 0:
-        actor.spell_slots[spell.level] -= 1
 
     if spell.requires_attack_roll:
         advantage, disadvantage = resolve_advantage(actor, RollType.ATTACK, other = target, combat_state = combat_state)
@@ -132,15 +163,18 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: 
     else:
         attack_result = AttackResult.HIT
 
-    if attack_result != AttackResult.MISS:
-        damage_dice_used = spell.damage_dice
+    if amount == 0:
+        if attack_result != AttackResult.MISS:
+            damage_dice_used = spell.damage_dice
 
-        if spell.level == 0:
-            damage_dice_used += 1 if actor.caster_level >=5 else 0
+            if spell.level == 0:
+                damage_dice_used += 1 if actor.caster_level >=5 else 0
+        else:
+            damage_dice_used = spell.damage_dice_on_miss
+
+        damage = damage_roll(damage_dice_used, spell.damage_sides, attack_bonus, attack_result == AttackResult.CRIT)
     else:
-        damage_dice_used = spell.damage_dice_on_miss
-
-    damage = damage_roll(damage_dice_used, spell.damage_sides, attack_bonus, attack_result == AttackResult.CRIT)
+        damage = amount
 
     if spell.save_allowed:
         advantage, disadvantage = resolve_advantage(target, RollType.SAVE, other = actor, ability = spell.save_attribute, spell = spell, combat_state = combat_state)
@@ -167,4 +201,4 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: 
         else:
             save_made = True
 
-    return attack_result, damage, save_made, effect_applied
+    return SpellHitResult(target, attack_result, damage, save_made, effect_applied)

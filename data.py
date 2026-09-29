@@ -94,6 +94,7 @@ def parse_spell(entry: dict) -> Spell:
         damage_sides = entry.get("damage_sides", 0),
         effect = effect_class,
         range = entry["range"],
+        aoe_radius = entry.get("aoe_radius", 0),
         requires_attack_roll = entry["requires_attack_roll"],
         save_allowed = entry["save_allowed"],
         save_attribute = Ability(entry.get("save_attribute", "dexterity")),

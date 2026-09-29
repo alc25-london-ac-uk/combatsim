@@ -126,10 +126,10 @@ def test_healing_spell_heals_instead_of_damaging(monkeypatch):
     )
     caster.spell_slots = {1: 1}
 
-    attack_result, amount, save_made, effect_applied = cast_spell(caster, target, cure_wounds, combat_state)
+    spell_hit_results = cast_spell(caster, target, cure_wounds, combat_state)
 
-    assert amount > 0
-    assert target.hp == 5 + amount
+    assert spell_hit_results[0].amount > 0
+    assert target.hp == 5 + spell_hit_results[0].amount
 
 def test_healing_does_not_exceed_max_hp(monkeypatch):
     monkeypatch.setattr("dice.random.randint", lambda a, b: 8)
@@ -205,7 +205,8 @@ def test_cantrip_gains_an_extra_damage_die_at_caster_level_5(monkeypatch):
         save_allowed = False, save_attribute = Ability.DEXTERITY
     )
 
-    _, amount, _, _ = cast_spell(caster, target, fire_bolt, combat_state)
+    spell_hit_results = cast_spell(caster, target, fire_bolt, combat_state)
+    amount = spell_hit_results[0].amount
 
     expected_bonus = caster.get_spell_attack_bonus()
     assert amount == 4 * 2 + expected_bonus # base die + 1 extra die at level 5
@@ -222,10 +223,100 @@ def test_cantrip_has_no_extra_die_below_caster_level_5(monkeypatch):
         save_allowed = False, save_attribute = Ability.DEXTERITY
     )
 
-    _, amount, _, _ = cast_spell(caster, target, fire_bolt, combat_state)
+    spell_hit_results = cast_spell(caster, target, fire_bolt, combat_state)
+    amount = spell_hit_results[0].amount
 
     expected_bonus = caster.get_spell_attack_bonus()
     assert amount == 4 * 1 + expected_bonus
+
+# --- cast_spell() AoE ---
+
+def _fireball(**overrides):
+    defaults: dict[str, Any] = dict(
+        name = "Fireball", level = 3, target_type = TargetType.ENEMY, damage_type = DamageType.FIRE,
+        damage_dice = 8, damage_sides = 6, range = 150, requires_attack_roll = False,
+        save_allowed = True, save_attribute = Ability.DEXTERITY, damage_pct_on_save = 0.5,
+        aoe_radius = 20
+    )
+    defaults.update(overrides)
+    return Spell(**defaults)
+
+def test_aoe_spell_hits_every_target_within_the_radius(monkeypatch):
+    monkeypatch.setattr("dice.random.randint", lambda a, b: 4)
+    caster = _make_player(level = 5)
+    primary = _make_monster(name = "Primary", ac = 5)
+    bystander = _make_monster(name = "Bystander", ac = 5)
+    combat_state = _combat_state(caster, primary, bystander) # helper places everyone at (0,0)
+    combat_state.grid.place(caster, 30, 0) # keep the caster itself out of their own blast
+    caster.spell_slots = {3: 2}
+
+    spell_hit_results = cast_spell(caster, primary, _fireball(), combat_state)
+
+    assert {r.target for r in spell_hit_results} == {primary, bystander}
+
+def test_aoe_spell_does_not_hit_targets_outside_the_radius(monkeypatch):
+    monkeypatch.setattr("dice.random.randint", lambda a, b: 4)
+    caster = _make_player(level = 5)
+    primary = _make_monster(name = "Primary", ac = 5)
+    far_away = _make_monster(name = "Far Away", ac = 5)
+    combat_state = _combat_state(caster, primary, far_away)
+    combat_state.grid.place(caster, 30, 0) # keep the caster itself out of their own blast
+    combat_state.grid.place(far_away, 10, 0) # 50ft from primary, outside a 20ft-radius blast
+    caster.spell_slots = {3: 2}
+
+    spell_hit_results = cast_spell(caster, primary, _fireball(), combat_state)
+
+    assert {r.target for r in spell_hit_results} == {primary}
+
+def test_aoe_spell_ignores_dead_combatants_in_the_blast(monkeypatch):
+    monkeypatch.setattr("dice.random.randint", lambda a, b: 4)
+    caster = _make_player(level = 5)
+    primary = _make_monster(name = "Primary", ac = 5)
+    corpse = _make_monster(name = "Corpse", ac = 5)
+    corpse.hp = 0
+    combat_state = _combat_state(caster, primary, corpse)
+    combat_state.grid.place(caster, 30, 0) # keep the caster itself out of their own blast
+    caster.spell_slots = {3: 2}
+
+    spell_hit_results = cast_spell(caster, primary, _fireball(), combat_state)
+
+    assert {r.target for r in spell_hit_results} == {primary}
+
+def test_aoe_spell_consumes_only_one_spell_slot_regardless_of_targets_hit(monkeypatch):
+    monkeypatch.setattr("dice.random.randint", lambda a, b: 4)
+    caster = _make_player(level = 5)
+    primary = _make_monster(name = "Primary", ac = 5)
+    bystander_a = _make_monster(name = "Bystander A", ac = 5)
+    bystander_b = _make_monster(name = "Bystander B", ac = 5)
+    combat_state = _combat_state(caster, primary, bystander_a, bystander_b)
+    combat_state.grid.place(caster, 30, 0) # keep the caster itself out of their own blast
+    caster.spell_slots = {3: 2}
+
+    spell_hit_results = cast_spell(caster, primary, _fireball(), combat_state)
+
+    assert len(spell_hit_results) == 3 # confirms the blast really did catch multiple targets
+    assert caster.spell_slots[3] == 1
+
+def test_aoe_spell_rolls_damage_once_and_shares_it_across_targets(monkeypatch):
+    from dice import damage_roll as real_damage_roll
+    call_count = {"n": 0}
+    def counting_damage_roll(*args, **kwargs):
+        call_count["n"] += 1
+        return real_damage_roll(*args, **kwargs)
+    monkeypatch.setattr("actions.damage_roll", counting_damage_roll)
+    monkeypatch.setattr("dice.random.randint", lambda a, b: 1) # force every save to fail, keep it simple
+
+    caster = _make_player(level = 5)
+    primary = _make_monster(name = "Primary", ac = 5)
+    bystander = _make_monster(name = "Bystander", ac = 5)
+    combat_state = _combat_state(caster, primary, bystander)
+    combat_state.grid.place(caster, 30, 0) # keep the caster itself out of their own blast
+    caster.spell_slots = {3: 2}
+
+    spell_hit_results = cast_spell(caster, primary, _fireball(), combat_state)
+
+    assert call_count["n"] == 1
+    assert spell_hit_results[0].amount == spell_hit_results[1].amount
 
 # --- move_towards_target() / opportunity attacks ---
 

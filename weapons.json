@@ -9,6 +9,15 @@
         "finesse": false
     },
     {
+        "name": "Quarterstaff",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
         "name": "Mace",
         "damage_dice": 1,
         "damage_sides": 6,

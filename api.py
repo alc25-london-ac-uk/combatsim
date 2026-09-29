@@ -40,7 +40,7 @@ async def simulate_live(goblins: int = 3, hobgoblins: int = 1):
     spell_registry = load_spells("spells.json")
 
     player_registry = load_players("players.json", weapon_registry, spell_registry)
-    players = [spawn(player_registry, "Fighter"), spawn(player_registry, "Cleric")]
+    players = [spawn(player_registry, "Fighter"), spawn(player_registry, "Cleric"), spawn(player_registry, "Wizard")]
 
     monster_registry = load_monsters("monsters.json", weapon_registry, spell_registry)
     monsters = []

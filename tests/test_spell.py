@@ -36,3 +36,4 @@ def test_optional_fields_default_sensibly():
     assert spell.damage_pct_on_save == 0
     assert spell.upcastable_extra_damage_die is False
     assert spell.upcastable_extra_target is False
+    assert spell.aoe_radius == 0

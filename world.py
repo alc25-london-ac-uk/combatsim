@@ -45,6 +45,14 @@ class Grid:
             and self.distance(combatant, c) <= 5
         )
 
+    def combatants_in_range(self, combatant: Combatant, range: int) -> list[Combatant]:
+        return [
+            c for c in self.positions
+            if c is not combatant
+            and self.distance(combatant, c) <= range
+            and c.alive
+        ]
+
 @dataclass
 class CombatState:
     grid: Grid

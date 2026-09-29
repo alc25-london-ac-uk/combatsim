@@ -7,7 +7,7 @@ from enums import AttackResult, ActionType, TargetType
 from combatant import Combatant, Weapon, MeleeWeapon, RangedWeapon, Spell, Ability
 from effects import Effect, AcidArrow, Barkskin, Blind, Concentrating, Paralysed
 from world import CombatState, Position
-from actions import Action, ActionResult, move_towards_target, attack, cast_spell
+from actions import Action, ActionResult, SpellHitResult, move_towards_target, attack, cast_spell, determine_targets
 
 class CombatantAI:
     combatant: Combatant
@@ -15,7 +15,6 @@ class CombatantAI:
     def __init__(self, combatant: Combatant):
         self.combatant = combatant
 
-    # TODO: reactions
     def take_turn(self, combat_state: CombatState) -> list[ActionResult]:
         results = []
 
@@ -133,35 +132,46 @@ class CombatantAI:
         if self.combatant.spell_slots.get(spell.level, 0) == 0:
             return -1.0
 
+        distance = combat_state.grid.distance(self.combatant, target)
+        movement_penalty = max(0, distance - spell.range) / self.combatant.speed
+        if any(e.forbids_approaching(target) for e in self.combatant.effects):
+            movement_penalty = 100
+
         concentration_penalty = 3.0 if spell.concentration and self.combatant.has_effect(Concentrating) else 0.0
 
-        # healing spells
+        targets = determine_targets(target, spell, combat_state)        
+        total = sum(self.score_spell_hit(t, spell, combat_state) for t in targets)
+
+        return total - movement_penalty - concentration_penalty
+
+    def score_spell_hit(self, target: Combatant, spell: Spell, combat_state: CombatState) -> float:
+        is_ally = target.team == self.combatant.team
+        
         if spell.is_healing:
+            if not is_ally:
+                return -1.0
+
             expected_healing = (1 + 8) / 2 + self.combatant.ability_scores.modifier_for(self.combatant.spellcasting_ability)
             urgency = 1 - (target.hp / target.max_hp)
-            distance = combat_state.grid.distance(self.combatant, target)
-            movement_penalty = max(0, distance - 5) / self.combatant.speed
 
-            return (expected_healing * urgency) - movement_penalty
+            return expected_healing * urgency
 
-        # control spells
         if spell.effect is not None and spell.damage_dice == 0:
             threat = target.hp / target.max_hp
-            distance = combat_state.grid.distance(self.combatant, target)
-            movement_penalty = max(0, distance - spell.range) / self.combatant.speed
-            return (5.0 * threat) - movement_penalty
+            score = 5.0 * threat
+            
+            return -score if is_ally else score
 
-        # damage spells
         if not spell.requires_attack_roll:
             hit_probability = 1
         else:
-            hit_probability = max(0, min(1,
-                (21 - (target.ac - self.combatant.get_spell_attack_bonus())) / 20
-            ))
+            hit_probability = max(0, min(1, (21 - (target.ac - self.combatant.get_spell_attack_bonus())) / 20))
+
         expected_damage = hit_probability * (
             (spell.damage_dice + 1 if self.combatant.caster_level >= 5 else 0) * (spell.damage_sides + 1) / 2
             + self.combatant.ability_scores.modifier_for(self.combatant.spellcasting_ability)
         )
+
         if spell.save_allowed:
             save_mod = target.ability_scores.modifier_for(spell.save_attribute)
             save_success_probability = max(0, min(1,
@@ -171,14 +181,10 @@ class CombatantAI:
                 expected_damage * (1 - save_success_probability) +
                 expected_damage * spell.damage_pct_on_save * save_success_probability
             )
+
         kill_bonus = min(1, expected_damage / max(1, target.hp)) * 2.0
-        distance = combat_state.grid.distance(self.combatant, target)
-        movement_penalty = max(0, distance - spell.range) / self.combatant.speed
 
-        if any(e.forbids_approaching(target) for e in self.combatant.effects):
-            movement_penalty = 100
-
-        return expected_damage + kill_bonus - movement_penalty - concentration_penalty
+        return -expected_damage if is_ally else (expected_damage + kill_bonus)
 
     def execute(self, action: Action, combat_state: CombatState, bonus_action: bool = False) -> list[ActionResult]:
         results = []
@@ -189,8 +195,9 @@ class CombatantAI:
                     return results
                 
                 if combat_state.grid.distance(self.combatant, action.target) <= action.required_range:
-                    attack_result, amount, save_made, effect_applied = cast_spell(self.combatant, action.target, action.spell, combat_state)
-                    results.append(self.make_result(action, attack_result, amount, combat_state, save_made = save_made))
+                    spell_hit_results = cast_spell(self.combatant, action.target, action.spell, combat_state)
+                    for shr in spell_hit_results:
+                        results.append(self.make_result(action, shr.attack_result, shr.amount, combat_state, target = shr.target, save_made = shr.save_made))
 
             case ActionType.ATTACK:
                 number_of_attacks = 1
@@ -221,20 +228,20 @@ class CombatantAI:
 
         return results
     
-    def make_result(self, action: Action, attack_result: AttackResult, amount: int, combat_state: CombatState, save_made: bool = False, effect_applied: str = "") -> ActionResult:
+    def make_result(self, action: Action, attack_result: AttackResult, amount: int, combat_state: CombatState, target: Optional[Combatant] = None, save_made: bool = False, effect_applied: str = "") -> ActionResult:
         combatant_position = combat_state.grid.position_of(self.combatant)
-        target_position = combat_state.grid.position_of(action.target)
+        target_position = combat_state.grid.position_of(target) if target is not None else combat_state.grid.position_of(action.target)
 
         return ActionResult(
             action_type = action.action_type,
-            target = action.target,
+            target = target if target is not None else action.target,
             actor = self.combatant.name,
             spell = action.spell.name if action.spell else "",
             weapon = action.weapon.name if action.weapon else "",
             amount = amount,
             is_healing = action.spell.is_healing if action.spell else False,
             attack_result = attack_result,
-            target_hp_after_action = action.target.hp,
+            target_hp_after_action = target.hp if target is not None else action.target.hp,
             combatant_x = combatant_position.x,
             combatant_y = combatant_position.y,
             target_x = target_position.x,

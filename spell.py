@@ -25,6 +25,7 @@ class Spell:
     requires_attack_roll: bool
     save_allowed: bool
     save_attribute: Ability
+    aoe_radius: int = 0
     is_healing: bool = False
     damage_dice_on_miss: int = 0
     damage_pct_on_save: float = 0
