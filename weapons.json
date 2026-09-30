@@ -1,6 +1,56 @@
 [
     {
-        "name": "Bite",
+        "name": "Beak",
+        "damage_dice": 1,
+        "damage_sides": 8,
+        "damage_type": "SLASHING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Beak - Small",
+        "damage_dice": 1,
+        "damage_sides": 4,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": true,
+        "natural_weapon": true
+    },
+    {
+        "name": "Beak - Giant Eagle",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Beak - Giant Vulture",
+        "damage_dice": 2,
+        "damage_sides": 4,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Bite - Blunt",
+        "damage_dice": 1,
+        "damage_sides": 4,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Bite - Small",
         "damage_dice": 1,
         "damage_sides": 4,
         "damage_type": "PIERCING",
@@ -8,6 +58,309 @@
         "reach": 5,
         "finesse": false,
         "natural_weapon": true
+    },
+    {
+        "name": "Bite",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Bite - Death Dog",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Poisoned", "dc": 12, "save_attribute": "CONSTITUTION"}
+        ]
+    },
+    {
+        "name": "Bite - Flying Snake",
+        "damage_dice": 3,
+        "damage_sides": 4,
+        "damage_type": "POISON",
+        "range": "melee",
+        "reach": 5,
+        "finesse": true,
+        "natural_weapon": true
+    },
+    {
+        "name": "Bite - Giant Centipede",
+        "damage_dice": 1,
+        "damage_sides": 4,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": true,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Giant Centipede Venom", "dc": 11, "save_attribute": "CONSTITUTION"}
+        ]
+    },
+    {
+        "name": "Bite - Giant Frog",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Restrained", "dc": 11}
+        ]
+    },
+    {
+        "name": "Bite - Giant Hyena",
+        "damage_dice": 2,
+        "damage_sides": 6,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Bite - Giant Lizard",
+        "damage_dice": 1,
+        "damage_sides": 8,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Bite - Giant Weasel",
+        "damage_dice": 1,
+        "damage_sides": 4,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": true,
+        "natural_weapon": true
+    },
+    {
+        "name": "Bite - Giant Wolf Spider",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Giant Wolf Spider Venom", "dc": 11, "save_attribute": "CONSTITUTION"}
+        ]
+    },
+    {
+        "name": "Bite - Grappling",
+        "damage_dice": 1,
+        "damage_sides": 10,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Restrained", "dc": 12}
+        ]
+    },
+    {
+        "name": "Bite - Dire Wolf",
+        "damage_dice": 2,
+        "damage_sides": 6,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "effects": [
+            {"name": "Prone", "dc": 13, "save_attribute": "STRENGTH"}
+        ]
+    },
+    {
+        "name": "Bite - Giant Constrictor Snake",
+        "damage_dice": 2,
+        "damage_sides": 6,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 10,
+        "finesse": false
+    },
+    {
+        "name": "Bite - Giant Crocodile",
+        "damage_dice": 3,
+        "damage_sides": 10,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Restrained", "dc": 16}
+        ]
+    },
+    {
+        "name": "Bite - Giant Poisonous Snake",
+        "damage_dice": 1,
+        "damage_sides": 4,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 10,
+        "finesse": true,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Giant Poisonous Snake Venom", "dc": 11, "save_attribute": "CONSTITUTION"}
+        ]
+    },
+    {
+        "name": "Bite - Giant Spider",
+        "damage_dice": 1,
+        "damage_sides": 8,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": true,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Giant Spider Venom", "dc": 11, "save_attribute": "CONSTITUTION"}
+        ]
+    },
+    {
+        "name": "Bite - Giant Toad",
+        "damage_dice": 1,
+        "damage_sides": 10,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Giant Toad Venom", "dc": 13}
+        ]
+    },
+    {
+        "name": "Bite - Large",
+        "damage_dice": 1,
+        "damage_sides": 8,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Bite - Lion",
+        "damage_dice": 1,
+        "damage_sides": 8,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Bite - Mastiff",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Prone", "dc": 11, "save_attribute": "STRENGTH"}
+        ]
+    },
+    {
+        "name": "Claw",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Restrained", "dc": 11}
+        ]
+    },
+    {
+        "name": "Claw - Giant Scorpion",
+        "damage_dice": 1,
+        "damage_sides": 8,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Restrained", "dc": 12}
+        ]
+    },
+    {
+        "name": "Claw - Lion",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "SLASHING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Claws",
+        "damage_dice": 2,
+        "damage_sides": 4,
+        "damage_type": "SLASHING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Claws - Large",
+        "damage_dice": 2,
+        "damage_sides": 6,
+        "damage_type": "SLASHING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Constrict",
+        "damage_dice": 1,
+        "damage_sides": 8,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Restrained", "dc": 14}
+        ]
+    },
+    {
+        "name": "Constrict - Giant Constrictor Snake",
+        "damage_dice": 2,
+        "damage_sides": 8,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Restrained", "dc": 16}
+        ]
     },
     {
         "name": "Fist",
@@ -20,8 +373,38 @@
         "natural_weapon": true
     },
     {
+        "name": "Fist - Giant Ape",
+        "damage_dice": 3,
+        "damage_sides": 10,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 10,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
         "name": "Gore",
         "damage_dice": 2,
+        "damage_sides": 8,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Gore - Mammoth",
+        "damage_dice": 4,
+        "damage_sides": 8,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 10,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Gore - Elephant",
+        "damage_dice": 3,
         "damage_sides": 8,
         "damage_type": "PIERCING",
         "range": "melee",
@@ -37,6 +420,36 @@
         "range": "melee",
         "reach": 5,
         "finesse": false
+    },
+    {
+        "name": "Hooves",
+        "damage_dice": 2,
+        "damage_sides": 4,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Hooves - Mule",
+        "damage_dice": 1,
+        "damage_sides": 4,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Hooves - Giant Elk",
+        "damage_dice": 4,
+        "damage_sides": 8,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
     },
     {
         "name": "Javelin",
@@ -94,6 +507,35 @@
         "finesse": false
     },
     {
+        "name": "Ram",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
+        "name": "Ram - Giant Elk",
+        "damage_dice": 2,
+        "damage_sides": 6,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 10,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Ram - Giant Goat",
+        "damage_dice": 2,
+        "damage_sides": 4,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
         "name": "Rock",
         "damage_dice": 1,
         "damage_sides": 6,
@@ -102,6 +544,16 @@
         "thrown": true,
         "optimal_distance": 25,
         "maximum_distance": 50
+    },
+    {
+        "name": "Rock - Giant Ape",
+        "damage_dice": 7,
+        "damage_sides": 6,
+        "damage_type": "BLUDGEONING",
+        "range": "ranged",
+        "thrown": true,
+        "optimal_distance": 50,
+        "maximum_distance": 100
     },
     {
         "name": "Scimitar",
@@ -139,5 +591,92 @@
         "range": "melee",
         "reach": 5,
         "finesse": false
+    },
+    {
+        "name": "Sting",
+        "damage_dice": 1,
+        "damage_sides": 10,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Giant Scorpion Venom", "dc": 12, "save_attribute": "CONSTITUTION"}
+        ]
+    },
+    {
+        "name": "Sting - Giant Wasp",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": true,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Giant Wasp Venom", "dc": 11, "save_attribute": "CONSTITUTION"}
+        ]
+    },
+    {
+        "name": "Stomp",
+        "damage_dice": 3,
+        "damage_sides": 10,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
+        "name": "Stomp - Mammoth",
+        "damage_dice": 4,
+        "damage_sides": 10,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
+        "name": "Tail - Giant Crocodile",
+        "damage_dice": 2,
+        "damage_sides": 8,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true,
+        "effects": [
+            {"name": "Prone", "dc": 16, "save_attribute": "STRENGTH"}
+        ]
+    },
+    {
+        "name": "Talons",
+        "damage_dice": 2,
+        "damage_sides": 6,
+        "damage_type": "SLASHING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Tusk",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "SLASHING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Tusk - Giant Boar",
+        "damage_dice": 2,
+        "damage_sides": 6,
+        "damage_type": "SLASHING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
     }
 ]

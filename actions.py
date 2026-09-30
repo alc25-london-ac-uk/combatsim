@@ -70,35 +70,36 @@ def move_towards_target(actor: Combatant, target: Combatant, combat_state: Comba
         combatant_y = new_position.y
     ))
 
-    for reactor, distance_before_move in distances_before_move.items():
-        if not actor.alive or not reactor.has_reaction:
-            continue
+    if not actor.can_fly:
+        for reactor, distance_before_move in distances_before_move.items():
+            if not actor.alive or not reactor.has_reaction:
+                continue
 
-        melee_weapon = next((w for w in reactor.weapons if isinstance(w, MeleeWeapon)), None)
-        if melee_weapon is None:
-            continue
+            melee_weapon = next((w for w in reactor.weapons if isinstance(w, MeleeWeapon)), None)
+            if melee_weapon is None:
+                continue
 
-        was_in_reach = distance_before_move <= melee_weapon.reach
-        still_in_reach = combat_state.grid.distance(actor, reactor) <= melee_weapon.reach
+            was_in_reach = distance_before_move <= melee_weapon.reach
+            still_in_reach = combat_state.grid.distance(actor, reactor) <= melee_weapon.reach
 
-        if was_in_reach and not still_in_reach:
-            reactor.has_reaction = False
-            attack_result, amount = attack(reactor, actor, melee_weapon, combat_state)
-            reactor_position = combat_state.grid.position_of(reactor)
-            results.append(ActionResult(
-                action_type = ActionType.ATTACK,
-                target = actor,
-                actor = reactor.name,
-                weapon = melee_weapon.name,
-                amount = amount,
-                attack_result = attack_result,
-                target_hp_after_action = actor.hp,
-                combatant_x = reactor_position.x,
-                combatant_y = reactor_position.y,
-                target_x = new_position.x,
-                target_y = new_position.y,
-                rationale = "Opportunity attack"
-            ))
+            if was_in_reach and not still_in_reach:
+                reactor.has_reaction = False
+                attack_result, amount = attack(reactor, actor, melee_weapon, combat_state)
+                reactor_position = combat_state.grid.position_of(reactor)
+                results.append(ActionResult(
+                    action_type = ActionType.ATTACK,
+                    target = actor,
+                    actor = reactor.name,
+                    weapon = melee_weapon.name,
+                    amount = amount,
+                    attack_result = attack_result,
+                    target_hp_after_action = actor.hp,
+                    combatant_x = reactor_position.x,
+                    combatant_y = reactor_position.y,
+                    target_x = new_position.x,
+                    target_y = new_position.y,
+                    rationale = "Opportunity attack"
+                ))
     
     return results
 

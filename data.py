@@ -139,6 +139,7 @@ def parse_monster(entry: dict, weapon_registry: dict[str, Weapon], spell_registr
         damage_vulnerabilities = [DamageType[v] for v in entry.get("damage_vulnerabilities", [])],
         damage_resistances = [DamageType[v] for v in entry.get("damage_resistances", [])],
         damage_immunities = [DamageType[v] for v in entry.get("damage_immunities", [])],
+        can_fly = entry.get("can_fly", False)
     )
 
 def parse_player_character(entry: dict, weapon_registry: dict[str, Weapon], spell_registry: dict[str, Spell]) -> PlayerCharacter:

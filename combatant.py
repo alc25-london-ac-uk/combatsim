@@ -64,6 +64,7 @@ class Combatant(ABC):
     damage_vulnerabilities: list[DamageType] = field(default_factory = list)
     damage_resistances: list[DamageType] = field(default_factory = list)
     damage_immunities: list[DamageType] = field(default_factory = list)
+    can_fly: bool = False
 
     def __post_init__(self):
         self.movement = self.speed
@@ -223,7 +224,9 @@ class PlayerCharacter(Combatant):
         else:
             return self.proficiency_bonus + self.ability_scores.str_mod
 
-# TODO: resistances & immunities
+# TODO: speed
+# TODO: feats: Charge
+# TODO: feats: Pack Tactics
 @dataclass(eq=False)
 class Monster(Combatant):
     team: str = "enemies"

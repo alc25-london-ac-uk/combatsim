@@ -3,6 +3,7 @@
         "name": "Ape",
         "armor_class": 12,
         "hit_points": 19,
+        "speed": 30,
         "strength": 16,
         "dexterity": 14,
         "constitution": 14,
@@ -21,6 +22,7 @@
         "name": "Awakened Tree",
         "armor_class": 13,
         "hit_points": 59,
+        "speed": 20,
         "strength": 19,
         "dexterity": 6,
         "constitution": 15,
@@ -43,39 +45,122 @@
         "damage_immunities": []
     },
     {
-        "name": "Goblin",
-        "armor_class": 15,
-        "hit_points": 7,
-        "strength": 8,
-        "dexterity": 14,
-        "constitution": 10,
-        "intelligence": 10,
-        "wisdom": 8,
-        "charisma": 8,
+        "name": "Axe Beak",
+        "armor_class": 11,
+        "hit_points": 19,
+        "speed": 50,
+        "strength": 14,
+        "dexterity": 12,
+        "constitution": 12,
+        "intelligence": 2,
+        "wisdom": 10,
+        "charisma": 5,
         "challenge_rating": 0.25,
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Scimitar"},
-            {"name": "Shortbow"}
+            {"name": "Beak"}
         ]
     },
     {
-        "name": "Hobgoblin",
-        "armor_class": 18,
-        "hit_points": 11,
-        "strength": 13,
-        "dexterity": 12,
+        "name": "Black Bear",
+        "armor_class": 11,
+        "hit_points": 19,
+        "speed": 40,
+        "strength": 15,
+        "dexterity": 10,
+        "constitution": 14,
+        "intelligence": 2,
+        "wisdom": 12,
+        "charisma": 7,
+        "challenge_rating": 0.5,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            {"name": "Bite"},
+            {"name": "Claws", "is_off_hand": true}
+        ]
+    },
+    {
+        "name": "Blink Dog",
+        "armor_class": 13,
+        "hit_points": 22,
+        "speed": 40,
+        "can_fly": true,
+        "strength": 12,
+        "dexterity": 17,
         "constitution": 12,
         "intelligence": 10,
-        "wisdom": 10,
-        "charisma": 9,
-        "challenge_rating": 0.5,
+        "wisdom": 13,
+        "charisma": 11,
+        "challenge_rating": 0.25,
         "attack_count": 1,
         "attack_bonus": 3,
         "weapons": [
-            {"name": "Longsword"},
-            {"name": "Longbow"}
+            {"name": "Bite"}
+        ]
+    },
+    {
+        "name": "Blood Hawk",
+        "armor_class": 12,
+        "hit_points": 7,
+        "speed": 60,
+        "can_fly": true,
+        "strength": 6,
+        "dexterity": 14,
+        "constitution": 10,
+        "intelligence": 3,
+        "wisdom": 14,
+        "charisma": 5,
+        "challenge_rating": 0.125,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            {"name": "Beak - Small"}
+        ],
+        "feats": [
+            "Pack Tactics"
+        ]
+    },
+    {
+        "name": "Boar",
+        "armor_class": 11,
+        "hit_points": 11,
+        "speed": 40,
+        "strength": 13,
+        "dexterity": 11,
+        "constitution": 12,
+        "intelligence": 2,
+        "wisdom": 9,
+        "charisma": 5,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 3,
+        "weapons": [
+            {"name": "Tusk"}
+        ],
+        "feats": [
+            "Charge",
+            "Relentless"
+        ]
+    },
+    {
+        "name": "Brown Bear",
+        "armor_class": 11,
+        "hit_points": 34,
+        "speed": 40,
+        "strength": 19,
+        "dexterity": 10,
+        "constitution": 16,
+        "intelligence": 2,
+        "wisdom": 13,
+        "charisma": 7,
+        "challenge_rating": 1,
+        "attack_count": 1,
+        "attack_bonus": 6,
+        "weapons": [
+            {"name": "Bite - Large"},
+            {"name": "Claws - Large", "is_off_hand": true}
         ]
     },
     {
@@ -97,6 +182,663 @@
         ]
     },
     {
+        "name": "Camel",
+        "armor_class": 9,
+        "hit_points": 15,
+        "speed": 50,
+        "strength": 16,
+        "dexterity": 8,
+        "constitution": 14,
+        "intelligence": 2,
+        "wisdom": 8,
+        "charisma": 5,
+        "challenge_rating": 0.125,
+        "attack_count": 1,
+        "attack_bonus": 5,
+        "weapons": [
+            {"name": "Bite - Blunt"}
+        ]
+    },
+    {
+        "name": "Constrictor Snake",
+        "armor_class": 12,
+        "hit_points": 13,
+        "speed": 30,
+        "strength": 15,
+        "dexterity": 14,
+        "constitution": 12,
+        "intelligence": 1,
+        "wisdom": 10,
+        "charisma": 3,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            {"name": "Bite"},
+            {"name": "Constrict"}
+        ]
+    },
+    {
+        "name": "Crocodile",
+        "armor_class": 12,
+        "hit_points": 19,
+        "speed": 20,
+        "strength": 15,
+        "dexterity": 10,
+        "constitution": 13,
+        "intelligence": 2,
+        "wisdom": 10,
+        "charisma": 5,
+        "challenge_rating": 0.5,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            {"name": "Bite - Grappling"}
+        ]
+    },
+    {
+        "name": "Death Dog",
+        "armor_class": 12,
+        "hit_points": 39,
+        "speed": 40,
+        "strength": 15,
+        "dexterity": 14,
+        "constitution": 14,
+        "intelligence": 3,
+        "wisdom": 13,
+        "charisma": 6,
+        "challenge_rating": 1,
+        "attack_count": 2,
+        "attack_bonus": 4,
+        "weapons": [
+            {"name": "Bite - Death Dog"}
+        ],
+        "feats": [
+            "Two-Headed"
+        ]
+    },
+    {
+        "name": "Dire Wolf",
+        "armor_class": 14,
+        "hit_points": 37,
+        "speed": 50,
+        "strength": 17,
+        "dexterity": 15,
+        "constitution": 15,
+        "intelligence": 3,
+        "wisdom": 12,
+        "charisma": 7,
+        "challenge_rating": 1,
+        "attack_count": 1,
+        "attack_bonus": 5,
+        "weapons": [
+            {"name": "Bite - Dire Wolf"}
+        ],
+        "feats": [
+            "Pack Tactics"
+        ]
+    },
+    {
+        "name": "Draft Horse",
+        "armor_class": 10,
+        "hit_points": 19,
+        "speed": 40,
+        "strength": 18,
+        "dexterity": 10,
+        "constitution": 12,
+        "intelligence": 2,
+        "wisdom": 11,
+        "charisma": 7,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 6,
+        "weapons": [
+            {"name": "Hooves"}
+        ]
+    },
+    {
+        "name": "Elephant",
+        "armor_class": 12,
+        "hit_points": 76,
+        "speed": 40,
+        "strength": 22,
+        "dexterity": 9,
+        "constitution": 17,
+        "intelligence": 3,
+        "wisdom": 11,
+        "charisma": 6,
+        "challenge_rating": 4,
+        "attack_count": 1,
+        "attack_bonus": 8,
+        "weapons": [
+            {"name": "Gore"},
+            {"name": "Stomp", "is_off_hand": true, "required_effect": "Prone"}
+        ],
+        "feats": [
+            "Trampling Charge"
+        ]
+    },
+    {
+        "name": "Elk",
+        "armor_class": 10,
+        "hit_points": 13,
+        "speed": 50,
+        "strength": 16,
+        "dexterity": 10,
+        "constitution": 12,
+        "intelligence": 2,
+        "wisdom": 10,
+        "charisma": 6,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 5,
+        "weapons": [
+            {"name": "Ram"},
+            {"name": "Hooves", "required_effect": "Prone"}
+        ],
+        "feats": [
+            "Charge"
+        ]
+    },
+    {
+        "name": "Flying Snake",
+        "armor_class": 14,
+        "hit_points": 5,
+        "speed": 60,
+        "can_fly": true,
+        "strength": 4,
+        "dexterity": 18,
+        "constitution": 11,
+        "intelligence": 2,
+        "wisdom": 12,
+        "charisma": 5,
+        "challenge_rating": 0.125,
+        "attack_count": 1,
+        "attack_bonus": 6,
+        "weapons": [
+            {"name": "Bite - Flying Snake"}
+        ]
+    },
+    {
+        "name": "Giant Ape",
+        "armor_class": 12,
+        "hit_points": 157,
+        "speed": 40,
+        "strength": 23,
+        "dexterity": 14,
+        "constitution": 18,
+        "intelligence": 7,
+        "wisdom": 12,
+        "charisma": 7,
+        "challenge_rating": 7,
+        "attack_count": 2,
+        "attack_bonus": 9,
+        "weapons": [
+            {"name": "Fist - Giant Ape"},
+            {"name": "Rock - Giant Ape"}
+        ]
+    },
+    {
+        "name": "Giant Badger",
+        "armor_class": 10,
+        "hit_points": 13,
+        "speed": 30,
+        "strength": 13,
+        "dexterity": 10,
+        "constitution": 15,
+        "intelligence": 2,
+        "wisdom": 12,
+        "charisma": 5,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 3,
+        "weapons": [
+            {"name": "Bite"},
+            {"name": "Claws", "is_off_hand": true}
+        ]
+    },
+    {
+        "name": "Giant Bat",
+        "armor_class": 13,
+        "hit_points": 22,
+        "speed": 60,
+        "strength": 15,
+        "dexterity": 16,
+        "constitution": 11,
+        "intelligence": 2,
+        "wisdom": 12,
+        "charisma": 6,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            {"name": "Bite"}
+        ]
+    },
+    {
+        "name": "Giant Boar",
+        "armor_class": 12,
+        "hit_points": 42,
+        "speed": 40,
+        "strength": 17,
+        "dexterity": 10,
+        "constitution": 16,
+        "intelligence": 2,
+        "wisdom": 7,
+        "charisma": 5,
+        "challenge_rating": 2,
+        "attack_count": 1,
+        "attack_bonus": 5,
+        "weapons": [
+            {"name": "Tusk - Giant Boar"}
+        ],
+        "feats": [
+            "Charge",
+            "Relentless"
+        ]
+    },
+    {
+        "name": "Giant Centipede",
+        "armor_class": 13,
+        "hit_points": 4,
+        "speed": 30,
+        "strength": 5,
+        "dexterity": 14,
+        "constitution": 12,
+        "intelligence": 1,
+        "wisdom": 7,
+        "charisma": 3,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            {"name": "Bite - Giant Centipede"}
+        ]
+    },
+    {
+        "name": "Giant Constrictor Snake",
+        "armor_class": 12,
+        "hit_points": 60,
+        "speed": 30,
+        "strength": 19,
+        "dexterity": 14,
+        "constitution": 12,
+        "intelligence": 1,
+        "wisdom": 10,
+        "charisma": 3,
+        "challenge_rating": 2,
+        "attack_count": 1,
+        "attack_bonus": 6,
+        "weapons": [
+            {"name": "Bite - Giant Constrictor Snake"},
+            {"name": "Constrict - Giant Constrictor Snake"}
+        ]
+    },
+    {
+        "name": "Giant Crab",
+        "armor_class": 15,
+        "hit_points": 13,
+        "speed": 30,
+        "strength": 13,
+        "dexterity": 15,
+        "constitution": 11,
+        "intelligence": 1,
+        "wisdom": 9,
+        "charisma": 3,
+        "challenge_rating": 0.125,
+        "attack_count": 1,
+        "attack_bonus": 3,
+        "weapons": [
+            {"name": "Claw"}
+        ]
+    },
+    {
+        "name": "Giant Crocodile",
+        "armor_class": 14,
+        "hit_points": 85,
+        "speed": 30,
+        "strength": 21,
+        "dexterity": 9,
+        "constitution": 17,
+        "intelligence": 2,
+        "wisdom": 10,
+        "charisma": 7,
+        "challenge_rating": 5,
+        "attack_count": 1,
+        "attack_bonus": 8,
+        "weapons": [
+            {"name": "Bite - Giant Crocodile"},
+            {"name": "Tail - Giant Crocodile", "is_off_hand": true}
+        ]
+    },
+    {
+        "name": "Giant Eagle",
+        "armor_class": 13,
+        "hit_points": 26,
+        "speed": 80,
+        "can_fly": true,
+        "strength": 16,
+        "dexterity": 17,
+        "constitution": 13,
+        "intelligence": 8,
+        "wisdom": 14,
+        "charisma": 10,
+        "challenge_rating": 1,
+        "attack_count": 1,
+        "attack_bonus": 5,
+        "weapons": [
+            {"name": "Beak - Giant Eagle"},
+            {"name": "Talons", "is_off_hand": true}
+        ]
+    },
+    {
+        "name": "Giant Elk",
+        "armor_class": 14,
+        "hit_points": 42,
+        "speed": 60,
+        "strength": 19,
+        "dexterity": 16,
+        "constitution": 14,
+        "intelligence": 7,
+        "wisdom": 14,
+        "charisma": 10,
+        "challenge_rating": 2,
+        "attack_count": 1,
+        "attack_bonus": 6,
+        "weapons": [
+            {"name": "Ram - Giant Elk"},
+            {"name": "Hooves - Giant Elk", "required_effect": "Prone"}
+        ]
+    },
+    {
+        "name": "Giant Frog",
+        "armor_class": 11,
+        "hit_points": 18,
+        "speed": 30,
+        "strength": 12,
+        "dexterity": 13,
+        "constitution": 11,
+        "intelligence": 2,
+        "wisdom": 10,
+        "charisma": 3,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 3,
+        "weapons": [
+            {"name": "Bite - Giant Frog"}
+        ]
+    },
+    {
+        "name": "Giant Goat",
+        "armor_class": 11,
+        "hit_points": 19,
+        "speed": 40,
+        "strength": 17,
+        "dexterity": 11,
+        "constitution": 12,
+        "intelligence": 3,
+        "wisdom": 12,
+        "charisma": 6,
+        "challenge_rating": 0.5,
+        "attack_count": 1,
+        "attack_bonus": 5,
+        "weapons": [
+            {"name": "Ram - Giant Goat"}
+        ],
+        "feats": [
+            "Charge",
+            "Sure-Footed"
+        ]
+    },
+    {
+        "name": "Giant Hyena",
+        "armor_class": 12,
+        "hit_points": 45,
+        "speed": 50,
+        "strength": 16,
+        "dexterity": 14,
+        "constitution": 14,
+        "intelligence": 2,
+        "wisdom": 12,
+        "charisma": 7,
+        "challenge_rating": 1,
+        "attack_count": 1,
+        "attack_bonus": 5,
+        "weapons": [
+            {"name": "Bite - Giant Hyena"}
+        ]
+    },
+    {
+        "name": "Giant Lizard",
+        "armor_class": 12,
+        "hit_points": 19,
+        "speed": 30,
+        "strength": 15,
+        "dexterity": 12,
+        "constitution": 13,
+        "intelligence": 2,
+        "wisdom": 10,
+        "charisma": 5,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            {"name": "Bite - Giant Lizard"}
+        ]
+    },
+    {
+        "name": "Giant Owl",
+        "armor_class": 12,
+        "hit_points": 19,
+        "speed": 60,
+        "can_fly": true,
+        "strength": 13,
+        "dexterity": 15,
+        "constitution": 12,
+        "intelligence": 8,
+        "wisdom": 13,
+        "charisma": 10,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 3,
+        "weapons": [
+            {"name": "Talons"}
+        ]
+    },
+    {
+        "name": "Giant Poisonous Snake",
+        "armor_class": 14,
+        "hit_points": 11,
+        "speed": 30,
+        "strength": 10,
+        "dexterity": 18,
+        "constitution": 13,
+        "intelligence": 2,
+        "wisdom": 10,
+        "charisma": 3,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 6,
+        "weapons": [
+            {"name": "Bite - Giant Poisonous Snake"}
+        ]
+    },
+    {
+        "name": "Giant Rat",
+        "armor_class": 12,
+        "hit_points": 7,
+        "speed": 30,
+        "strength": 7,
+        "dexterity": 15,
+        "constitution": 11,
+        "intelligence": 2,
+        "wisdom": 10,
+        "charisma": 4,
+        "challenge_rating": 0.125,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            {"name": "Bite - Small"}
+        ],
+        "feats": [
+            "Pack Tactics"
+        ]
+    },
+    {
+        "name": "Giant Scorpion",
+        "armor_class": 15,
+        "hit_points": 52,
+        "speed": 40,
+        "strength": 15,
+        "dexterity": 13,
+        "constitution": 15,
+        "intelligence": 1,
+        "wisdom": 9,
+        "charisma": 3,
+        "challenge_rating": 3,
+        "attack_count": 2,
+        "attack_bonus": 4,
+        "weapons": [
+            {"name": "Claw - Giant Scorpion"},
+            {"name": "Sting", "is_off_hand": true}
+        ]
+    },
+    {
+        "name": "Giant Spider",
+        "armor_class": 14,
+        "hit_points": 26,
+        "speed": 30,
+        "strength": 14,
+        "dexterity": 16,
+        "constitution": 12,
+        "intelligence": 2,
+        "wisdom": 11,
+        "charisma": 4,
+        "challenge_rating": 1,
+        "attack_count": 1,
+        "attack_bonus": 5,
+        "weapons": [
+            {"name": "Bite - Giant Spider"}
+        ],
+        "feats": [
+            "Web"
+        ]
+    },
+    {
+        "name": "Giant Toad",
+        "armor_class": 11,
+        "hit_points": 39,
+        "speed": 20,
+        "strength": 15,
+        "dexterity": 13,
+        "constitution": 13,
+        "intelligence": 2,
+        "wisdom": 10,
+        "charisma": 3,
+        "challenge_rating": 1,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            {"name": "Bite - Giant Toad"}
+        ],
+        "feats": [
+            "Swallow"
+        ]
+    },
+    {
+        "name": "Giant Vulture",
+        "armor_class": 10,
+        "hit_points": 22,
+        "speed": 60,
+        "can_fly": true,
+        "strength": 15,
+        "dexterity": 10,
+        "constitution": 15,
+        "intelligence": 6,
+        "wisdom": 12,
+        "charisma": 7,
+        "challenge_rating": 1,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            {"name": "Beak - Giant Vulture"},
+            {"name": "Talons", "is_off_hand": true}
+        ]
+    },
+    {
+        "name": "Giant Wasp",
+        "armor_class": 12,
+        "hit_points": 13,
+        "speed": 50,
+        "can_fly": true,
+        "strength": 10,
+        "dexterity": 14,
+        "constitution": 10,
+        "intelligence": 1,
+        "wisdom": 10,
+        "charisma": 3,
+        "challenge_rating": 0.5,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            {"name": "Sting - Giant Wasp"}
+        ]
+    },
+    {
+        "name": "Giant Weasel",
+        "armor_class": 13,
+        "hit_points": 9,
+        "speed": 40,
+        "strength": 11,
+        "dexterity": 16,
+        "constitution": 10,
+        "intelligence": 4,
+        "wisdom": 12,
+        "charisma": 5,
+        "challenge_rating": 0.125,
+        "attack_count": 1,
+        "attack_bonus": 5,
+        "weapons": [
+            {"name": "Bite - Giant Weasel"}
+        ]
+    },
+    {
+        "name": "Giant Wolf Spider",
+        "armor_class": 13,
+        "hit_points": 11,
+        "speed": 40,
+        "strength": 12,
+        "dexterity": 16,
+        "constitution": 13,
+        "intelligence": 3,
+        "wisdom": 12,
+        "charisma": 4,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 3,
+        "weapons": [
+            {"name": "Bite - Giant Wolf Spider"}
+        ]
+    },
+    {
+        "name": "Goblin",
+        "armor_class": 15,
+        "hit_points": 7,
+        "strength": 8,
+        "dexterity": 14,
+        "constitution": 10,
+        "intelligence": 10,
+        "wisdom": 8,
+        "charisma": 8,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            {"name": "Scimitar"},
+            {"name": "Shortbow"}
+        ]
+    },
+    {
         "name": "Gnoll",
         "armor_class": 15,
         "hit_points": 22,
@@ -110,9 +852,90 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Bite"},
+            {"name": "Bite - Small"},
             {"name": "Spear"},
             {"name": "Longbow"}
+        ]
+    },
+    {
+        "name": "Hobgoblin",
+        "armor_class": 18,
+        "hit_points": 11,
+        "strength": 13,
+        "dexterity": 12,
+        "constitution": 12,
+        "intelligence": 10,
+        "wisdom": 10,
+        "charisma": 9,
+        "challenge_rating": 0.5,
+        "attack_count": 1,
+        "attack_bonus": 3,
+        "weapons": [
+            {"name": "Longsword"},
+            {"name": "Longbow"}
+        ]
+    },
+    {
+        "name": "Lion",
+        "armor_class": 12,
+        "hit_points": 26,
+        "speed": 50,
+        "strength": 17,
+        "dexterity": 15,
+        "constitution": 13,
+        "intelligence": 3,
+        "wisdom": 12,
+        "charisma": 8,
+        "challenge_rating": 1,
+        "attack_count": 1,
+        "attack_bonus": 5,
+        "weapons": [
+            {"name": "Bite - Lion"},
+            {"name": "Claw - Lion"}
+        ],
+        "feats": [
+            "Pack Tactics",
+            "Pounce"
+        ]
+    },
+    {
+        "name": "Mammoth",
+        "armor_class": 13,
+        "hit_points": 126,
+        "speed": 40,
+        "strength": 24,
+        "dexterity": 9,
+        "constitution": 21,
+        "intelligence": 3,
+        "wisdom": 11,
+        "charisma": 6,
+        "challenge_rating": 6,
+        "attack_count": 1,
+        "attack_bonus": 10,
+        "weapons": [
+            {"name": "Gore - Mammoth"},
+            {"name": "Stomp - Mammoth", "required_effect": "Prone"}
+        ],
+        "feats": [
+            "Trampling Charge"
+        ]
+    },
+    {
+        "name": "Mastiff",
+        "armor_class": 12,
+        "hit_points": 5,
+        "speed": 40,
+        "strength": 13,
+        "dexterity": 14,
+        "constitution": 12,
+        "intelligence": 3,
+        "wisdom": 12,
+        "charisma": 7,
+        "challenge_rating": 0.125,
+        "attack_count": 1,
+        "attack_bonus": 3,
+        "weapons": [
+            {"name": "Bite - Mastiff"}
         ]
     },
     {
@@ -131,6 +954,24 @@
         "weapons": [
             {"name": "Greataxe"},
             {"name": "Gore"}
+        ]
+    },
+    {
+        "name": "Mule",
+        "armor_class": 10,
+        "hit_points": 11,
+        "speed": 40,
+        "strength": 14,
+        "dexterity": 10,
+        "constitution": 13,
+        "intelligence": 2,
+        "wisdom": 10,
+        "charisma": 5,
+        "challenge_rating": 0.125,
+        "attack_count": 1,
+        "attack_bonus": 2,
+        "weapons": [
+            {"name": "Hooves - Mule"}
         ]
     }
 ]
