@@ -118,7 +118,7 @@ def attack(actor: Combatant, target: 'Combatant', weapon: Weapon, combat_state: 
     
     damage = damage_roll(weapon.damage_dice, weapon.damage_sides, actor.get_damage_bonus(weapon), attack_result == AttackResult.CRIT)
 
-    target.take_damage(damage)
+    target.take_damage(damage, weapon.damage_type)
 
     return attack_result, damage
 
@@ -133,7 +133,7 @@ def determine_targets(target: Combatant, spell: Spell, combat_state: CombatState
     return combatants
 
 def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: CombatState) -> list[SpellHitResult]:
-    if spell.level > 0:
+    if not spell.is_cantrip:
         actor.spell_slots[spell.level] -= 1
     
     results = []
@@ -144,7 +144,7 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: 
         for t in targets:
             results.append(resolve_spell_against_target(actor, t, spell, combat_state))
     else:
-        damage_dice_used = spell.damage_dice + (1 if spell.level == 0 and actor.caster_level >= 5 else 0)
+        damage_dice_used = spell.damage_dice + (1 if spell.is_cantrip and actor.caster_level >= 5 else 0)
         amount = damage_roll(damage_dice_used, spell.damage_sides, actor.get_spell_attack_bonus(), is_crit = False)
         for t in targets:
             results.append(resolve_spell_against_target(actor, t, spell, combat_state, amount))
@@ -167,7 +167,7 @@ def resolve_spell_against_target(actor: Combatant, target: Combatant, spell: Spe
         if attack_result != AttackResult.MISS:
             damage_dice_used = spell.damage_dice
 
-            if spell.level == 0:
+            if spell.is_cantrip:
                 damage_dice_used += 1 if actor.caster_level >=5 else 0
         else:
             damage_dice_used = spell.damage_dice_on_miss
@@ -185,8 +185,8 @@ def resolve_spell_against_target(actor: Combatant, target: Combatant, spell: Spe
     if damage > 0:
         if spell.is_healing:
             target.heal(damage)
-        else:
-            target.take_damage(damage)
+        elif not spell.damage_type is None:
+            target.take_damage(damage, spell.damage_type)
 
     if spell.effect is not None:
         if (not spell.requires_attack_roll or attack_result != AttackResult.MISS) and (not spell.save_allowed or not save_made):

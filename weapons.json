@@ -1,9 +1,85 @@
 [
     {
+        "name": "Bite",
+        "damage_dice": 1,
+        "damage_sides": 4,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Fist",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Gore",
+        "damage_dice": 2,
+        "damage_sides": 8,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false,
+        "natural_weapon": true
+    },
+    {
+        "name": "Greataxe",
+        "damage_dice": 2,
+        "damage_sides": 12,
+        "damage_type": "SLASHING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
+        "name": "Javelin",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "PIERCING",
+        "range": "ranged",
+        "thrown": true,
+        "optimal_distance": 30,
+        "maximum_distance": 120
+    },
+    {
+        "name": "Longbow",
+        "damage_dice": 1,
+        "damage_sides": 8,
+        "damage_type": "PIERCING",
+        "range": "ranged",
+        "optimal_distance": 150,
+        "maximum_distance": 600
+    },
+    {
         "name": "Longsword",
         "damage_dice": 1,
         "damage_sides": 10,
         "damage_type": "SLASHING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
+        "name": "Mace",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
+        "name": "Morningstar",
+        "damage_dice": 2,
+        "damage_sides": 8,
+        "damage_type": "PIERCING",
         "range": "melee",
         "reach": 5,
         "finesse": false
@@ -18,13 +94,14 @@
         "finesse": false
     },
     {
-        "name": "Mace",
+        "name": "Rock",
         "damage_dice": 1,
         "damage_sides": 6,
         "damage_type": "BLUDGEONING",
-        "range": "melee",
-        "reach": 5,
-        "finesse": false
+        "range": "ranged",
+        "thrown": true,
+        "optimal_distance": 25,
+        "maximum_distance": 50
     },
     {
         "name": "Scimitar",
@@ -45,39 +122,12 @@
         "maximum_distance": 320
     },
     {
-        "name": "Longbow",
-        "damage_dice": 1,
-        "damage_sides": 8,
-        "damage_type": "PIERCING",
-        "range": "ranged",
-        "optimal_distance": 150,
-        "maximum_distance": 600
-    },
-    {
-        "name": "Morningstar",
-        "damage_dice": 2,
-        "damage_sides": 8,
-        "damage_type": "PIERCING",
-        "range": "melee",
-        "reach": 5,
-        "finesse": false
-    },
-    {
-        "name": "Javelin",
-        "damage_dice": 1,
+        "name": "Slam",
+        "damage_dice": 3,
         "damage_sides": 6,
-        "damage_type": "PIERCING",
-        "range": "ranged",
-        "optimal_distance": 30,
-        "maximum_distance": 120
-    },
-    {
-        "name": "Bite",
-        "damage_dice": 1,
-        "damage_sides": 4,
-        "damage_type": "PIERCING",
+        "damage_type": "BLUDGEONING",
         "range": "melee",
-        "reach": 5,
+        "reach": 10,
         "finesse": false,
         "natural_weapon": true
     },
@@ -89,24 +139,5 @@
         "range": "melee",
         "reach": 5,
         "finesse": false
-    },
-    {
-        "name": "Greataxe",
-        "damage_dice": 2,
-        "damage_sides": 12,
-        "damage_type": "SLASHING",
-        "range": "melee",
-        "reach": 5,
-        "finesse": false
-    },
-    {
-        "name": "Gore",
-        "damage_dice": 2,
-        "damage_sides": 8,
-        "damage_type": "PIERCING",
-        "range": "melee",
-        "reach": 5,
-        "finesse": false,
-        "natural_weapon": true
     }
 ]

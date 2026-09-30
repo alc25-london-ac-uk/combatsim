@@ -31,6 +31,7 @@ class MeleeWeapon(Weapon):
 class RangedWeapon(Weapon):
     optimal_distance: int
     maximum_distance: int
+    thrown: bool = False
 
     @property
     def range(self) -> int:

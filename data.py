@@ -79,7 +79,8 @@ def parse_weapon(entry: dict) -> Weapon:
             damage_sides = entry["damage_sides"],
             damage_type = DamageType[entry["damage_type"]],
             optimal_distance = entry["optimal_distance"],
-            maximum_distance = entry["maximum_distance"]
+            maximum_distance = entry["maximum_distance"],
+            thrown = entry.get("thrown", False)
         )
 
 def parse_spell(entry: dict) -> Spell:
@@ -134,7 +135,10 @@ def parse_monster(entry: dict, weapon_registry: dict[str, Weapon], spell_registr
         spell_bonus = entry.get("spell_bonus", 0),
         spellcaster_level = entry.get("spellcaster_level", 0),
         weapons = weapons,
-        spells = spells
+        spells = spells,
+        damage_vulnerabilities = [DamageType[v] for v in entry.get("damage_vulnerabilities", [])],
+        damage_resistances = [DamageType[v] for v in entry.get("damage_resistances", [])],
+        damage_immunities = [DamageType[v] for v in entry.get("damage_immunities", [])],
     )
 
 def parse_player_character(entry: dict, weapon_registry: dict[str, Weapon], spell_registry: dict[str, Spell]) -> PlayerCharacter:

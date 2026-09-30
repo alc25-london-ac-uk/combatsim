@@ -1,3 +1,4 @@
+from enums import DamageType
 from combatant import AbilityScores, PlayerCharacter, Monster
 from effects import Blind
 
@@ -164,7 +165,88 @@ def test_take_damage_reduces_hp_and_notifies_effects(make_player):
     player.add_effect(_WatchingEffect())
     starting_hp = player.hp
 
-    player.take_damage(7)
+    player.take_damage(7, DamageType.BLUDGEONING)
 
     assert player.hp == starting_hp - 7
     assert notified == [7]
+
+# --- take_damage: vulnerability / resistance / immunity ---
+
+def test_resistance_halves_damage_of_the_matching_type(make_monster):
+    monster = make_monster(damage_resistances = [DamageType.BLUDGEONING])
+    starting_hp = monster.hp
+
+    monster.take_damage(10, DamageType.BLUDGEONING)
+
+    assert monster.hp == starting_hp - 5
+
+def test_resistance_rounds_the_halved_damage_down(make_monster):
+    monster = make_monster(damage_resistances = [DamageType.BLUDGEONING])
+    starting_hp = monster.hp
+
+    monster.take_damage(7, DamageType.BLUDGEONING) # 7 * 0.5 = 3.5, should round down to 3
+
+    assert monster.hp == starting_hp - 3
+
+def test_vulnerability_doubles_damage_of_the_matching_type(make_monster):
+    monster = make_monster(damage_vulnerabilities = [DamageType.FIRE])
+    starting_hp = monster.hp
+
+    monster.take_damage(10, DamageType.FIRE)
+
+    assert monster.hp == starting_hp - 20
+
+def test_immunity_prevents_any_damage_of_the_matching_type(make_monster):
+    monster = make_monster(damage_immunities = [DamageType.POISON])
+    starting_hp = monster.hp
+
+    monster.take_damage(999, DamageType.POISON)
+
+    assert monster.hp == starting_hp
+
+def test_immunity_takes_priority_over_resistance_and_vulnerability(make_monster):
+    monster = make_monster(
+        damage_immunities = [DamageType.FIRE],
+        damage_vulnerabilities = [DamageType.FIRE]
+    )
+    starting_hp = monster.hp
+
+    monster.take_damage(999, DamageType.FIRE)
+
+    assert monster.hp == starting_hp
+
+def test_resistance_to_one_damage_type_does_not_affect_another(make_monster):
+    monster = make_monster(damage_resistances = [DamageType.FIRE])
+    starting_hp = monster.hp
+
+    monster.take_damage(10, DamageType.BLUDGEONING)
+
+    assert monster.hp == starting_hp - 10
+
+def test_effects_are_notified_with_the_mitigated_damage_amount(make_monster):
+    monster = make_monster(damage_resistances = [DamageType.BLUDGEONING])
+    notified = []
+
+    class _WatchingEffect(Blind):
+        def on_damage_taken(self, target, amount):
+            notified.append(amount)
+
+    monster.add_effect(_WatchingEffect())
+
+    monster.take_damage(10, DamageType.BLUDGEONING)
+
+    assert notified == [5] # effects should see the post-resistance amount, not the raw roll
+
+def test_immune_target_does_not_notify_effects(make_monster):
+    monster = make_monster(damage_immunities = [DamageType.POISON])
+    notified = []
+
+    class _WatchingEffect(Blind):
+        def on_damage_taken(self, target, amount):
+            notified.append(amount)
+
+    monster.add_effect(_WatchingEffect())
+
+    monster.take_damage(999, DamageType.POISON)
+
+    assert notified == []

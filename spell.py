@@ -4,15 +4,9 @@ from dataclasses import dataclass
 from enums import TargetType, DamageType, Ability
 from effects import Effect
 
-# TODO: area-effect spells
 # TODO: delayed-effect spells
-# TODO: control spells
-# TODO: concentration
-# TODO: levelled cantrips
 # TODO: upcasting
-# TODO: healing spells
 # TODO: Summons
-# TODO: Buffs
 @dataclass
 class Spell:
     name: str

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from abc import ABC
 
 from dice import saving_throw, RollContext, resolve_advantage
-from enums import Ability, RollType
+from enums import Ability, RollType, DamageType
 from weapon import Weapon, MeleeWeapon, RangedWeapon
 
 if TYPE_CHECKING:
@@ -65,7 +65,7 @@ class AcidArrow(Effect):
         damage = 0
         for i in range(0,self.levels_upcast + 2):
             damage += random.randint(1, 4)
-        target.take_damage(damage)
+        target.take_damage(damage, DamageType.ACID)
         target.remove_effect(self)
 
 @dataclass

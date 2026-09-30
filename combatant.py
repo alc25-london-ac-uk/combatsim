@@ -5,7 +5,7 @@ import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
-from enums import Ability
+from enums import Ability, DamageType
 from weapon import Weapon, MeleeWeapon, RangedWeapon
 from spell import Spell
 from effects import Effect
@@ -61,6 +61,9 @@ class Combatant(ABC):
     has_action: bool = True
     has_bonus_action: bool = True
     has_reaction: bool = True
+    damage_vulnerabilities: list[DamageType] = field(default_factory = list)
+    damage_resistances: list[DamageType] = field(default_factory = list)
+    damage_immunities: list[DamageType] = field(default_factory = list)
 
     def __post_init__(self):
         self.movement = self.speed
@@ -96,7 +99,7 @@ class Combatant(ABC):
         pass
 
     def get_damage_bonus(self, weapon: Weapon) -> int:
-        if isinstance(weapon, RangedWeapon) or (isinstance(weapon, MeleeWeapon) and weapon.finesse):
+        if (isinstance(weapon, RangedWeapon) and not weapon.thrown) or (isinstance(weapon, MeleeWeapon) and weapon.finesse):
             return self.ability_scores.dex_mod
         else:
             return self.ability_scores.str_mod
@@ -142,13 +145,30 @@ class Combatant(ABC):
         effect.on_remove(self)
         self.effects = [e for e in self.effects if e is not effect]
 
-    def take_damage(self, amount: int) -> None:
+    def take_damage(self, amount: int, damage_type: DamageType) -> None:
+        if self.immune_to(damage_type):
+            return
+
+        if self.resistant_to(damage_type):
+            amount = int(amount * 0.5)
+        elif self.vulnerable_to(damage_type):
+            amount *= 2
+
         self.hp -= amount
         for effect in self.effects:
             effect.on_damage_taken(self, amount)
 
     def heal(self, amount: int) -> None:
         self.hp = min(self.hp + amount, self.max_hp)
+
+    def immune_to(self, damage_type: DamageType) -> bool:
+        return damage_type in self.damage_immunities
+
+    def resistant_to(self, damage_type: DamageType) -> bool:
+        return damage_type in self.damage_resistances
+
+    def vulnerable_to(self, damage_type: DamageType) -> bool:
+        return damage_type in self.damage_vulnerabilities
 
 # TODO: Class features (e.g. turn undead)
 @dataclass(eq=False)
@@ -198,12 +218,11 @@ class PlayerCharacter(Combatant):
         return self.proficiency_bonus + self.ability_scores.modifier_for(self.spellcasting_ability)
 
     def get_attack_bonus(self, weapon: Weapon) -> int:
-        if isinstance(weapon, RangedWeapon) or (isinstance(weapon, MeleeWeapon) and weapon.finesse):
+        if (isinstance(weapon, RangedWeapon) and not weapon.thrown) or (isinstance(weapon, MeleeWeapon) and weapon.finesse):
             return self.proficiency_bonus + self.ability_scores.dex_mod
         else:
             return self.proficiency_bonus + self.ability_scores.str_mod
 
-# TODO: creature type (animal, undead, etc.)
 # TODO: resistances & immunities
 @dataclass(eq=False)
 class Monster(Combatant):
