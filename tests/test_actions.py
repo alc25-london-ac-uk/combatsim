@@ -56,11 +56,23 @@ def test_attack_hit_applies_damage(monkeypatch):
     target = _make_monster(ac = 10)
     combat_state = _combat_state(attacker, target)
 
-    attack_result, amount = attack(attacker, target, _melee_weapon(), combat_state)
+    attack_result, amount, mitigated_amount = attack(attacker, target, _melee_weapon(), combat_state)
 
     assert attack_result == AttackResult.HIT
     assert amount > 0
     assert target.hp == target.max_hp - amount
+
+def test_attack_against_a_resistant_target_returns_a_smaller_mitigated_amount(monkeypatch):
+    monkeypatch.setattr("dice.random.randint", lambda a, b: 15)
+    attacker = _make_player()
+    target = _make_monster(ac = 10, damage_resistances = [DamageType.SLASHING])
+    combat_state = _combat_state(attacker, target)
+
+    attack_result, amount, mitigated_amount = attack(attacker, target, _melee_weapon(), combat_state)
+
+    assert attack_result == AttackResult.HIT
+    assert mitigated_amount == amount // 2
+    assert target.hp == target.max_hp - mitigated_amount
 
 def test_attack_miss_deals_no_damage(monkeypatch):
     monkeypatch.setattr("dice.random.randint", lambda a, b: 1)
@@ -68,7 +80,7 @@ def test_attack_miss_deals_no_damage(monkeypatch):
     target = _make_monster(ac = 25)
     combat_state = _combat_state(attacker, target)
 
-    attack_result, amount = attack(attacker, target, _melee_weapon(), combat_state)
+    attack_result, amount, mitigated_amount = attack(attacker, target, _melee_weapon(), combat_state)
 
     assert attack_result == AttackResult.MISS
     assert amount == 0
@@ -81,20 +93,19 @@ def test_attack_crit_doubles_dice_but_not_ability_modifier(monkeypatch):
     target = _make_monster(ac = 10)
     combat_state = _combat_state(attacker, target)
 
-    attack_result, amount = attack(attacker, target, _melee_weapon(), combat_state)
+    attack_result, amount, mitigated_amount = attack(attacker, target, _melee_weapon(), combat_state)
 
     assert attack_result == AttackResult.CRIT
     assert amount == 20 * 2 + 3 # dice doubled, modifier added once
 
 def test_melee_attack_against_paralysed_target_is_always_a_crit(monkeypatch):
-    # a roll of 1 would normally always miss -- Paralysed forces an auto-crit regardless of the roll, for melee attacks specifically
     monkeypatch.setattr("dice.random.randint", lambda a, b: 1)
     attacker = _make_player()
     target = _make_monster(ac = 25)
     target.add_effect(Paralysed())
     combat_state = _combat_state(attacker, target)
 
-    attack_result, amount = attack(attacker, target, _melee_weapon(), combat_state)
+    attack_result, amount, mitigated_amount = attack(attacker, target, _melee_weapon(), combat_state)
 
     assert attack_result == AttackResult.CRIT
     assert amount > 0
@@ -106,7 +117,7 @@ def test_ranged_attack_against_paralysed_target_does_not_auto_crit(monkeypatch):
     target.add_effect(Paralysed())
     combat_state = _combat_state(attacker, target)
 
-    attack_result, amount = attack(attacker, target, _ranged_weapon(), combat_state)
+    attack_result, amount, mitigated_amount = attack(attacker, target, _ranged_weapon(), combat_state)
 
     assert attack_result == AttackResult.MISS
 
@@ -162,6 +173,23 @@ def test_damage_spell_reduces_target_hp(monkeypatch):
     caster.spell_slots = {1: 1}
 
     cast_spell(caster, target, inflict_wounds, combat_state)
+
+    assert target.hp < target.max_hp
+
+def test_damage_spell_with_no_damage_type_still_reduces_target_hp(monkeypatch):
+    monkeypatch.setattr("dice.random.randint", lambda a, b: 4)
+    caster = _make_player()
+    target = _make_monster(ac = 5)
+    combat_state = _combat_state(caster, target)
+
+    typeless_spell = Spell(
+        name = "Typeless Bolt", level = 1, target_type = TargetType.ENEMY, damage_type = None,
+        damage_dice = 3, damage_sides = 10, range = 5, requires_attack_roll = True,
+        save_allowed = False, save_attribute = Ability.DEXTERITY
+    )
+    caster.spell_slots = {1: 1}
+
+    cast_spell(caster, target, typeless_spell, combat_state)
 
     assert target.hp < target.max_hp
 

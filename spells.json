@@ -58,6 +58,7 @@
         "name": "Fireball",
         "level": 3,
         "target_type": "Enemy",
+        "damage_type": "FIRE",
         "damage_dice": 8,
         "damage_sides": 6,
         "range": 150,

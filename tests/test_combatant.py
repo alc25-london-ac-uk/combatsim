@@ -250,3 +250,14 @@ def test_immune_target_does_not_notify_effects(make_monster):
     monster.take_damage(999, DamageType.POISON)
 
     assert notified == []
+
+def test_take_damage_returns_the_actual_mitigated_amount(make_monster):
+    normal = make_monster()
+    resistant = make_monster(damage_resistances = [DamageType.FIRE])
+    vulnerable = make_monster(damage_vulnerabilities = [DamageType.FIRE])
+    immune = make_monster(damage_immunities = [DamageType.FIRE])
+
+    assert normal.take_damage(10, DamageType.FIRE) == 10
+    assert resistant.take_damage(10, DamageType.FIRE) == 5
+    assert vulnerable.take_damage(10, DamageType.FIRE) == 20
+    assert immune.take_damage(10, DamageType.FIRE) == 0

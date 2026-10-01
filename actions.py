@@ -2,7 +2,7 @@ from typing import Optional
 import random
 from dataclasses import dataclass
 
-from enums import AttackResult, ActionType, RollType
+from enums import AttackResult, ActionType, RollType, DamageType
 from dice import saving_throw, attack_roll, damage_roll, resolve_advantage
 from combatant import Combatant, Weapon, MeleeWeapon, RangedWeapon, Spell, Ability
 from effects import Concentrating
@@ -32,7 +32,11 @@ class ActionResult:
     weapon: str = ""
     spell: str = ""
     amount: int = 0
+    mitigated_amount: int = 0
+    damage_type: Optional[DamageType] = None
     is_healing: bool = False
+    concentration: bool = False
+    spell_level: int = 0
     attack_result: AttackResult = AttackResult.MISS
     target_hp_after_action: int = 0
     combatant_x: int = 0
@@ -48,6 +52,7 @@ class SpellHitResult:
     target: Combatant
     attack_result: AttackResult
     amount: int
+    mitigated_amount: int = 0
     save_made: bool = False
     effect_applied: str = ""
 
@@ -84,7 +89,7 @@ def move_towards_target(actor: Combatant, target: Combatant, combat_state: Comba
 
             if was_in_reach and not still_in_reach:
                 reactor.has_reaction = False
-                attack_result, amount = attack(reactor, actor, melee_weapon, combat_state)
+                attack_result, amount, mitigated_amount = attack(reactor, actor, melee_weapon, combat_state)
                 reactor_position = combat_state.grid.position_of(reactor)
                 results.append(ActionResult(
                     action_type = ActionType.ATTACK,
@@ -92,6 +97,8 @@ def move_towards_target(actor: Combatant, target: Combatant, combat_state: Comba
                     actor = reactor.name,
                     weapon = melee_weapon.name,
                     amount = amount,
+                    mitigated_amount = mitigated_amount,
+                    damage_type = melee_weapon.damage_type,
                     attack_result = attack_result,
                     target_hp_after_action = actor.hp,
                     combatant_x = reactor_position.x,
@@ -103,25 +110,25 @@ def move_towards_target(actor: Combatant, target: Combatant, combat_state: Comba
     
     return results
 
-def attack(actor: Combatant, target: 'Combatant', weapon: Weapon, combat_state: CombatState) -> tuple[AttackResult, int]:
+def attack(actor: Combatant, target: 'Combatant', weapon: Weapon, combat_state: CombatState) -> tuple[AttackResult, int, int]:
     attack_bonus = actor.get_attack_bonus(weapon)
     damage = 0
 
     advantage, disadvantage = resolve_advantage(actor, RollType.ATTACK, other = target, weapon = weapon, combat_state = combat_state)
-    
+
     if isinstance(weapon, MeleeWeapon) and any(e.auto_crit_in_melee for e in target.effects):
         attack_result = AttackResult.CRIT
     else:
         attack_result = attack_roll(attack_bonus, target.ac, advantage, disadvantage)
-    
+
     if attack_result == AttackResult.MISS:
-        return attack_result, damage
-    
+        return attack_result, damage, 0
+
     damage = damage_roll(weapon.damage_dice, weapon.damage_sides, actor.get_damage_bonus(weapon), attack_result == AttackResult.CRIT)
 
-    target.take_damage(damage, weapon.damage_type)
+    mitigated_amount = target.take_damage(damage, weapon.damage_type)
 
-    return attack_result, damage
+    return attack_result, damage, mitigated_amount
 
 def determine_targets(target: Combatant, spell: Spell, combat_state: CombatState) -> list[Combatant]:
     combatants = []
@@ -155,6 +162,7 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: 
 def resolve_spell_against_target(actor: Combatant, target: Combatant, spell: Spell, combat_state: CombatState, amount: int = 0) -> SpellHitResult:
     attack_bonus = actor.get_spell_attack_bonus()
     damage = 0
+    mitigated_amount = 0
     save_made = False
     effect_applied = ""
 
@@ -186,8 +194,9 @@ def resolve_spell_against_target(actor: Combatant, target: Combatant, spell: Spe
     if damage > 0:
         if spell.is_healing:
             target.heal(damage)
-        elif not spell.damage_type is None:
-            target.take_damage(damage, spell.damage_type)
+            mitigated_amount = damage
+        else:
+            mitigated_amount = target.take_damage(damage, spell.damage_type)
 
     if spell.effect is not None:
         if (not spell.requires_attack_roll or attack_result != AttackResult.MISS) and (not spell.save_allowed or not save_made):
@@ -202,4 +211,4 @@ def resolve_spell_against_target(actor: Combatant, target: Combatant, spell: Spe
         else:
             save_made = True
 
-    return SpellHitResult(target, attack_result, damage, save_made, effect_applied)
+    return SpellHitResult(target, attack_result, damage, mitigated_amount, save_made, effect_applied)

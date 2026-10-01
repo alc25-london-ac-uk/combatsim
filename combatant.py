@@ -146,9 +146,9 @@ class Combatant(ABC):
         effect.on_remove(self)
         self.effects = [e for e in self.effects if e is not effect]
 
-    def take_damage(self, amount: int, damage_type: DamageType) -> None:
+    def take_damage(self, amount: int, damage_type: DamageType) -> int:
         if self.immune_to(damage_type):
-            return
+            return 0
 
         if self.resistant_to(damage_type):
             amount = int(amount * 0.5)
@@ -158,6 +158,8 @@ class Combatant(ABC):
         self.hp -= amount
         for effect in self.effects:
             effect.on_damage_taken(self, amount)
+
+        return amount
 
     def heal(self, amount: int) -> None:
         self.hp = min(self.hp + amount, self.max_hp)

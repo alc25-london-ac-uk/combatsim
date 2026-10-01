@@ -1,7 +1,257 @@
 import combat
-from combat import format_attack_result, format_spell_result, log_action, run_combat, monte_carlo
+from combat import format_attack_result, format_spell_result, log_action, run_combat, monte_carlo, broadcast_observations
 from actions import ActionResult
-from enums import ActionType, AttackResult
+from enums import ActionType, AttackResult, DamageType
+
+# --- broadcast_observations: routes damage vs healing to the right belief update ---
+
+def test_broadcast_observations_applies_damage_to_every_other_observers_belief(make_player, make_monster, make_combat_state):
+    actor = make_player()
+    target = make_monster(max_hp = 20)
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(actor, target, bystander)
+
+    result = ActionResult(action_type = ActionType.ATTACK, target = target, amount = 8, attack_result = AttackResult.HIT)
+    broadcast_observations(actor, [result], combat_state)
+
+    for observer in (actor, bystander):
+        belief = observer.ai.beliefs[target]
+        assert abs(belief.expected_hp() - (belief.believed_max_hp - 8)) < 1e-9
+
+def test_broadcast_observations_applies_healing_not_damage_when_the_result_is_healing(make_player, make_combat_state):
+    healer = make_player()
+    ally = make_player(name = "Ally")
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(healer, ally, bystander)
+
+    damage_result = ActionResult(action_type = ActionType.ATTACK, target = ally, amount = 10, attack_result = AttackResult.HIT)
+    broadcast_observations(healer, [damage_result], combat_state)
+    damaged_expected_hp = bystander.ai.beliefs[ally].expected_hp()
+
+    heal_result = ActionResult(action_type = ActionType.SPELL, target = ally, amount = 4, attack_result = AttackResult.HIT, is_healing = True)
+    broadcast_observations(healer, [heal_result], combat_state)
+
+    assert abs(bystander.ai.beliefs[ally].expected_hp() - (damaged_expected_hp + 4)) < 1e-9
+
+def test_broadcast_observations_does_not_update_the_targets_own_belief_about_themselves(make_player, make_monster, make_combat_state):
+    actor = make_player()
+    target = make_monster()
+    combat_state = make_combat_state(actor, target)
+
+    result = ActionResult(action_type = ActionType.ATTACK, target = target, amount = 5, attack_result = AttackResult.HIT)
+    broadcast_observations(actor, [result], combat_state)
+
+    assert target not in target.ai.beliefs
+
+def test_broadcast_observations_ignores_misses_and_moves(make_player, make_monster, make_combat_state):
+    actor = make_player()
+    target = make_monster()
+    combat_state = make_combat_state(actor, target)
+
+    miss_result = ActionResult(action_type = ActionType.ATTACK, target = target, amount = 0, attack_result = AttackResult.MISS)
+    move_result = ActionResult(action_type = ActionType.MOVE, target = target, amount = 0)
+    broadcast_observations(actor, [miss_result, move_result], combat_state)
+
+    assert target not in actor.ai.beliefs
+
+# --- broadcast_observations: spellcasting-role evidence attributes to the caster, not the target ---
+
+def test_broadcast_observations_updates_the_casters_offensive_belief_not_the_targets(make_player, make_monster, make_combat_state):
+    caster = make_player()
+    target = make_monster()
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(caster, target, bystander)
+
+    result = ActionResult(action_type = ActionType.SPELL, target = target, amount = 6, attack_result = AttackResult.HIT, is_healing = False)
+    broadcast_observations(caster, [result], combat_state)
+
+    assert bystander.ai.beliefs[caster].offensive_capable > 0.5
+    assert target not in bystander.ai.beliefs or bystander.ai.beliefs[target].offensive_capable == 0.5
+
+def test_broadcast_observations_updates_the_casters_healer_belief_for_a_healing_spell(make_player, make_combat_state):
+    caster = make_player()
+    ally = make_player(name = "Ally")
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(caster, ally, bystander)
+
+    result = ActionResult(action_type = ActionType.SPELL, target = ally, amount = 4, attack_result = AttackResult.HIT, is_healing = True)
+    broadcast_observations(caster, [result], combat_state)
+
+    assert bystander.ai.beliefs[caster].healer_capable > 0.5
+    assert bystander.ai.beliefs[caster].offensive_capable == 0.5
+
+def test_broadcast_observations_counts_an_aoe_spell_as_one_cast_not_one_per_target(make_player, make_monster, make_combat_state):
+    caster = make_player()
+    target_a = make_monster(name = "A")
+    target_b = make_monster(name = "B")
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(caster, target_a, target_b, bystander)
+
+    results = [
+        ActionResult(action_type = ActionType.SPELL, target = target_a, amount = 10, attack_result = AttackResult.HIT, is_healing = False),
+        ActionResult(action_type = ActionType.SPELL, target = target_b, amount = 10, attack_result = AttackResult.HIT, is_healing = False),
+    ]
+    broadcast_observations(caster, results, combat_state)
+
+    # one cast witnessed (even though it hit two targets) should match the single-observation worked example, 0.5 -> 0.95
+    assert abs(bystander.ai.beliefs[caster].offensive_capable - 0.95) < 1e-9
+
+def test_broadcast_observations_does_not_update_the_casters_own_belief_about_themselves(make_player, make_monster, make_combat_state):
+    caster = make_player()
+    target = make_monster()
+    combat_state = make_combat_state(caster, target)
+
+    result = ActionResult(action_type = ActionType.SPELL, target = target, amount = 6, attack_result = AttackResult.HIT, is_healing = False)
+    broadcast_observations(caster, [result], combat_state)
+
+    assert caster not in caster.ai.beliefs
+
+# --- broadcast_observations: concentration-spell evidence attributes to the caster ---
+
+def test_broadcast_observations_updates_the_casters_concentration_belief_for_a_concentration_spell(make_player, make_monster, make_combat_state):
+    caster = make_player()
+    target = make_monster()
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(caster, target, bystander)
+
+    result = ActionResult(action_type = ActionType.SPELL, target = target, amount = 0, attack_result = AttackResult.HIT, concentration = True)
+    broadcast_observations(caster, [result], combat_state)
+
+    assert abs(bystander.ai.beliefs[caster].concentrating - 0.95) < 1e-9
+
+def test_broadcast_observations_does_not_raise_concentration_belief_for_a_non_concentration_spell(make_player, make_monster, make_combat_state):
+    caster = make_player()
+    target = make_monster()
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(caster, target, bystander)
+
+    result = ActionResult(action_type = ActionType.SPELL, target = target, amount = 6, attack_result = AttackResult.HIT, concentration = False)
+    broadcast_observations(caster, [result], combat_state)
+
+    assert bystander.ai.beliefs[caster].concentrating == 0.0
+
+def test_broadcast_observations_counts_an_aoe_concentration_spell_as_one_cast(make_player, make_monster, make_combat_state):
+    caster = make_player()
+    target_a = make_monster(name = "A")
+    target_b = make_monster(name = "B")
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(caster, target_a, target_b, bystander)
+
+    results = [
+        ActionResult(action_type = ActionType.SPELL, target = target_a, amount = 0, attack_result = AttackResult.HIT, concentration = True),
+        ActionResult(action_type = ActionType.SPELL, target = target_b, amount = 0, attack_result = AttackResult.HIT, concentration = True),
+    ]
+    broadcast_observations(caster, results, combat_state)
+
+    # a direct assignment is idempotent regardless of dedup, but this confirms the dedup path still
+    # runs correctly for concentration alongside the offensive/healing flags on the same result set
+    assert abs(bystander.ai.beliefs[caster].concentrating - 0.95) < 1e-9
+
+def test_broadcast_observations_decays_concentration_belief_via_the_existing_damage_path(make_player, make_monster, make_combat_state):
+    caster = make_player()
+    target = make_monster()
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(caster, target, bystander)
+
+    cast_result = ActionResult(action_type = ActionType.SPELL, target = target, amount = 0, attack_result = AttackResult.HIT, concentration = True)
+    broadcast_observations(caster, [cast_result], combat_state)
+    assert abs(bystander.ai.beliefs[caster].concentrating - 0.95) < 1e-9
+
+    damage_result = ActionResult(action_type = ActionType.ATTACK, target = caster, amount = 10, attack_result = AttackResult.HIT)
+    broadcast_observations(target, [damage_result], combat_state)
+
+    assert abs(bystander.ai.beliefs[caster].concentrating - (0.95 * 0.625)) < 1e-9
+
+# --- broadcast_observations: spell-slot depletion evidence attributes to the caster ---
+
+def test_broadcast_observations_updates_the_casters_depletion_belief_for_a_leveled_spell(make_player, make_monster, make_combat_state):
+    caster = make_player()
+    target = make_monster()
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(caster, target, bystander)
+
+    result = ActionResult(action_type = ActionType.SPELL, target = target, amount = 6, attack_result = AttackResult.HIT, spell = "Fireball", spell_level = 3)
+    broadcast_observations(caster, [result], combat_state)
+
+    assert abs(bystander.ai.beliefs[caster].depleted - 0.3) < 1e-9
+
+def test_broadcast_observations_does_not_raise_depletion_belief_for_a_cantrip(make_player, make_monster, make_combat_state):
+    caster = make_player()
+    target = make_monster()
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(caster, target, bystander)
+
+    result = ActionResult(action_type = ActionType.SPELL, target = target, amount = 4, attack_result = AttackResult.HIT, spell = "Fire Bolt", spell_level = 0)
+    broadcast_observations(caster, [result], combat_state)
+
+    assert bystander.ai.beliefs[caster].depleted == 0.0
+
+def test_broadcast_observations_counts_an_aoe_leveled_spell_as_one_cast_not_one_per_target(make_player, make_monster, make_combat_state):
+    caster = make_player()
+    target_a = make_monster(name = "A")
+    target_b = make_monster(name = "B")
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(caster, target_a, target_b, bystander)
+
+    results = [
+        ActionResult(action_type = ActionType.SPELL, target = target_a, amount = 10, attack_result = AttackResult.HIT, spell = "Fireball", spell_level = 3),
+        ActionResult(action_type = ActionType.SPELL, target = target_b, amount = 10, attack_result = AttackResult.HIT, spell = "Fireball", spell_level = 3),
+    ]
+    broadcast_observations(caster, results, combat_state)
+
+    assert abs(bystander.ai.beliefs[caster].depleted - 0.3) < 1e-9
+
+def test_broadcast_observations_counts_two_different_leveled_spells_in_one_turn_as_two_casts(make_player, make_monster, make_combat_state):
+    # a main action spell and a bonus action spell in the same turn are two separate slot expenditures
+    caster = make_player()
+    target = make_monster()
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(caster, target, bystander)
+
+    results = [
+        ActionResult(action_type = ActionType.SPELL, target = target, amount = 10, attack_result = AttackResult.HIT, spell = "Fireball", spell_level = 3),
+        ActionResult(action_type = ActionType.SPELL, target = target, amount = 5, attack_result = AttackResult.HIT, spell = "Healing Word", spell_level = 1, is_healing = True),
+    ]
+    broadcast_observations(caster, results, combat_state)
+
+    assert abs(bystander.ai.beliefs[caster].depleted - 0.51) < 1e-9
+
+# --- broadcast_observations: damage-mitigation evidence attributes to the target ---
+
+def test_broadcast_observations_updates_the_targets_damage_multiplier_belief(make_player, make_monster, make_combat_state):
+    actor = make_player()
+    target = make_monster(max_hp = 20)
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(actor, target, bystander)
+
+    result = ActionResult(action_type = ActionType.ATTACK, target = target, amount = 10, mitigated_amount = 5, damage_type = DamageType.FIRE, attack_result = AttackResult.HIT)
+    broadcast_observations(actor, [result], combat_state)
+
+    for observer in (actor, bystander):
+        assert abs(observer.ai.beliefs[target].damage_multiplier(DamageType.FIRE) - 0.75) < 1e-9
+
+def test_broadcast_observations_does_not_update_damage_multiplier_for_healing(make_player, make_combat_state):
+    healer = make_player()
+    ally = make_player(name = "Ally")
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(healer, ally, bystander)
+
+    result = ActionResult(action_type = ActionType.SPELL, target = ally, amount = 10, mitigated_amount = 5, damage_type = DamageType.FIRE, attack_result = AttackResult.HIT, is_healing = True)
+    broadcast_observations(healer, [result], combat_state)
+
+    assert bystander.ai.beliefs[ally].damage_multiplier(DamageType.FIRE) == 1.0
+
+def test_broadcast_observations_skips_damage_multiplier_update_when_damage_type_is_none(make_player, make_monster, make_combat_state):
+    actor = make_player()
+    target = make_monster()
+    bystander = make_player(name = "Bystander")
+    combat_state = make_combat_state(actor, target, bystander)
+
+    result = ActionResult(action_type = ActionType.SPELL, target = target, amount = 10, mitigated_amount = 5, damage_type = None, attack_result = AttackResult.HIT)
+    broadcast_observations(actor, [result], combat_state)
+
+    # no crash, and no belief created against a damage type we can't identify
+    assert bystander.ai.beliefs[target].damage_multipliers == {}
 
 # --- format_attack_result / format_spell_result: actor attribution ---
 

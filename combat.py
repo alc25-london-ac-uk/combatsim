@@ -4,6 +4,7 @@ from enums import AttackResult, ActionType
 from combatant import Combatant
 from ai import ActionResult
 from world import CombatState, Grid
+from belief import CombatantBelief
 
 def log_action(combatant: Combatant, results: list[ActionResult]) -> list[str]:
     log = []
@@ -20,6 +21,52 @@ def log_action(combatant: Combatant, results: list[ActionResult]) -> list[str]:
             case ActionType.NONE:
                 log.append(f"{combatant.name} skipped their turn.")
     return log
+
+def broadcast_observations(actor: Combatant, results: list[ActionResult], combat_state: CombatState) -> None:
+    # Deduplicated per turn, not per result: an AoE spell produces one ActionResult per target hit,
+    # but that's still only one witnessed cast, not one per target. A main action and a bonus action
+    # spell in the same turn are genuinely two separate casts, so both can be True independently.
+    cast_offensive = any(r.action_type == ActionType.SPELL and not r.is_healing for r in results)
+    cast_healing = any(r.action_type == ActionType.SPELL and r.is_healing for r in results)
+    cast_concentration = any(r.action_type == ActionType.SPELL and r.concentration for r in results)
+    # Deduped by distinct spell name, not a single boolean: a main action and a bonus action spell in
+    # the same turn are two genuinely separate slot expenditures, while an AoE spell hitting several
+    # targets (several ActionResults, same spell name) is still only one.
+    leveled_spells_cast = {r.spell for r in results if r.action_type == ActionType.SPELL and r.spell_level > 0}
+
+    if cast_offensive or cast_healing or cast_concentration or leveled_spells_cast:
+        for observer in combat_state.initiative_order:
+            if observer is actor or observer.ai is None:
+                continue
+
+            belief = observer.ai.beliefs.setdefault(actor, CombatantBelief.initial_prior_for(actor))
+            if cast_offensive:
+                belief.observe_offensive_cast()
+            if cast_healing:
+                belief.observe_healing_cast()
+            if cast_concentration:
+                belief.observe_concentration_spell_cast()
+            for _ in leveled_spells_cast:
+                belief.observe_leveled_spell_cast()
+
+    for result in results:
+        if result.action_type not in (ActionType.ATTACK, ActionType.SPELL):
+            continue
+        if result.amount <= 0:
+            continue
+
+        target = result.target
+        for observer in combat_state.initiative_order:
+            if observer is target or observer.ai is None:
+                continue
+
+            belief = observer.ai.beliefs.setdefault(target, CombatantBelief.initial_prior_for(target))
+            if result.is_healing:
+                belief.observe_healing(result.amount)
+            else:
+                belief.observe_damage(result.amount)
+                if result.damage_type is not None:
+                    belief.observe_damage_mitigation(result.damage_type, result.amount, result.mitigated_amount)
 
 def format_attack_result(combatant: Combatant, result: ActionResult) -> str:
     prefix = f"{result.actor} attacks {result.target.name} with {result.weapon} - "
@@ -106,9 +153,9 @@ def run_combat_live(party: list[Combatant], enemies: list[Combatant]):
 
             combatant.end_turn()
 
-            log_lines = log_action(combatant, results)
+            broadcast_observations(combatant, results, combat_state)
 
-            # update beliefs
+            log_lines = log_action(combatant, results)
         
             party_alive = any(c.alive for c in party)
             enemies_alive = any(c.alive for c in enemies)
@@ -169,11 +216,11 @@ def run_combat(party: list[Combatant], enemies: list[Combatant], log: bool = Fal
 
             combatant.end_turn()
 
+            broadcast_observations(combatant, results, combat_state)
+
             if log:
                 for log_line in log_action(combatant, results):
                     print(log_line)
-
-            # update beliefs
         
         party_alive = any(c.alive for c in party)
         enemies_alive = any(c.alive for c in enemies)
