@@ -46,6 +46,10 @@ class ActionResult:
     save_made: bool = False
     effect_applied: str = ""
     rationale: str = ""
+    attack_roll_bonus: Optional[int] = None
+    save_ability: Optional[Ability] = None
+    save_dc: Optional[int] = None
+    save_succeeded: Optional[bool] = None
 
 @dataclass
 class SpellHitResult:
@@ -55,6 +59,18 @@ class SpellHitResult:
     mitigated_amount: int = 0
     save_made: bool = False
     effect_applied: str = ""
+    attack_roll_bonus: Optional[int] = None
+    save_ability: Optional[Ability] = None
+    save_dc: Optional[int] = None
+    save_succeeded: Optional[bool] = None
+
+def is_auto_crit_attack(target: Combatant, weapon: Weapon) -> bool:
+    return isinstance(weapon, MeleeWeapon) and any(e.auto_crit_in_melee for e in target.effects)
+
+def attack_roll_bonus_observed(actor: Combatant, target: Combatant, weapon: Weapon) -> Optional[int]:
+    if is_auto_crit_attack(target, weapon):
+        return None
+    return actor.get_attack_bonus(weapon)
 
 def move_towards_target(actor: Combatant, target: Combatant, combat_state: CombatState) -> list[ActionResult]:
     results = []
@@ -100,6 +116,7 @@ def move_towards_target(actor: Combatant, target: Combatant, combat_state: Comba
                     mitigated_amount = mitigated_amount,
                     damage_type = melee_weapon.damage_type,
                     attack_result = attack_result,
+                    attack_roll_bonus = attack_roll_bonus_observed(reactor, actor, melee_weapon),
                     target_hp_after_action = actor.hp,
                     combatant_x = reactor_position.x,
                     combatant_y = reactor_position.y,
@@ -116,7 +133,7 @@ def attack(actor: Combatant, target: 'Combatant', weapon: Weapon, combat_state: 
 
     advantage, disadvantage = resolve_advantage(actor, RollType.ATTACK, other = target, weapon = weapon, combat_state = combat_state)
 
-    if isinstance(weapon, MeleeWeapon) and any(e.auto_crit_in_melee for e in target.effects):
+    if is_auto_crit_attack(target, weapon):
         attack_result = AttackResult.CRIT
     else:
         attack_result = attack_roll(attack_bonus, target.ac, advantage, disadvantage)
@@ -165,8 +182,13 @@ def resolve_spell_against_target(actor: Combatant, target: Combatant, spell: Spe
     mitigated_amount = 0
     save_made = False
     effect_applied = ""
+    observed_attack_bonus = None
+    observed_save_ability = None
+    observed_save_dc = None
+    observed_save_succeeded = None
 
     if spell.requires_attack_roll:
+        observed_attack_bonus = attack_bonus
         advantage, disadvantage = resolve_advantage(actor, RollType.ATTACK, other = target, combat_state = combat_state)
         attack_result = attack_roll(attack_bonus, target.ac, advantage, disadvantage)
     else:
@@ -187,7 +209,13 @@ def resolve_spell_against_target(actor: Combatant, target: Combatant, spell: Spe
 
     if spell.save_allowed:
         advantage, disadvantage = resolve_advantage(target, RollType.SAVE, other = actor, ability = spell.save_attribute, spell = spell, combat_state = combat_state)
-        if saving_throw(target, spell.save_attribute, actor.spell_save_dc, advantage, disadvantage):
+        auto_failed = any(e.auto_fails_save(spell.save_attribute) for e in target.effects)
+        save_succeeded = saving_throw(target, spell.save_attribute, actor.spell_save_dc, advantage, disadvantage)
+        if not auto_failed:
+            observed_save_ability = spell.save_attribute
+            observed_save_dc = actor.spell_save_dc
+            observed_save_succeeded = save_succeeded
+        if save_succeeded:
             save_made = True
             damage = int(damage * spell.damage_pct_on_save)
             
@@ -211,4 +239,4 @@ def resolve_spell_against_target(actor: Combatant, target: Combatant, spell: Spe
         else:
             save_made = True
 
-    return SpellHitResult(target, attack_result, damage, mitigated_amount, save_made, effect_applied)
+    return SpellHitResult(target, attack_result, damage, mitigated_amount, save_made, effect_applied, observed_attack_bonus, observed_save_ability, observed_save_dc, observed_save_succeeded)

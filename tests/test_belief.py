@@ -424,3 +424,207 @@ def test_bracket_probabilities_sum_to_one():
     belief = CombatantBelief.for_player_character(character_class = "wizard", level = 3)
     probabilities = belief.bracket_probabilities()
     assert abs(sum(probabilities.values()) - 1.0) < 1e-9
+
+# --- CombatantBelief: AC and saving-throw beliefs ---
+
+from enums import Ability
+
+def test_ac_prior_is_a_normalised_distribution_for_monsters_and_players(make_monster, make_player):
+    for combatant in (make_monster(), make_player(character_class = "wizard")):
+        belief = CombatantBelief.initial_prior_for(combatant)
+
+        _assert_distribution_sums_to_one(belief.ac_distribution)
+
+def test_ac_prior_expects_a_wizard_to_be_squishier_than_a_fighter(make_player):
+    wizard = CombatantBelief.initial_prior_for(make_player(character_class = "wizard"))
+    fighter = CombatantBelief.initial_prior_for(make_player(character_class = "fighter"))
+
+    assert wizard.expected_armour_class() < fighter.expected_armour_class()
+
+def test_observing_a_hit_lowers_the_expected_ac_and_a_miss_raises_it():
+    base = CombatantBelief.for_monster(max_hp = 20).expected_armour_class()
+
+    hit_belief = CombatantBelief.for_monster(max_hp = 20)
+    hit_belief.observe_attack_roll(attack_bonus = 5, hit = True)
+    miss_belief = CombatantBelief.for_monster(max_hp = 20)
+    miss_belief.observe_attack_roll(attack_bonus = 5, hit = False)
+
+    assert hit_belief.expected_armour_class() < base < miss_belief.expected_armour_class()
+    _assert_distribution_sums_to_one(hit_belief.ac_distribution)
+    _assert_distribution_sums_to_one(miss_belief.ac_distribution)
+
+def test_ac_update_matches_a_worked_likelihood_ratio_example():
+    # +5 to hit: AC 12 is beaten by rolls 8..19 (12 of 20); AC 20 only by rolls 16..19 (4 of 20) -> likelihood ratio 3
+    belief = CombatantBelief(hypotheses = {(10, 10): 1.0}, ac_distribution = {12: 0.5, 20: 0.5})
+
+    belief.observe_attack_roll(attack_bonus = 5, hit = True)
+
+    assert abs(belief.ac_distribution[12] - 0.75) < 1e-9
+    assert abs(belief.ac_distribution[20] - 0.25) < 1e-9
+
+def test_repeated_misses_converge_towards_a_high_ac():
+    belief = CombatantBelief.for_monster(max_hp = 20)
+    for _ in range(6):
+        belief.observe_attack_roll(attack_bonus = 4, hit = False)
+
+    assert belief.expected_armour_class() > 17
+
+def test_an_extreme_observation_never_collapses_the_ac_belief():
+    belief = CombatantBelief.for_monster(max_hp = 20)
+
+    for _ in range(40):
+        belief.observe_attack_roll(attack_bonus = 30, hit = False) # impossible for any AC in support
+
+    _assert_distribution_sums_to_one(belief.ac_distribution)
+
+def test_hit_probability_under_a_point_mass_matches_the_scoring_formula():
+    belief = CombatantBelief(hypotheses = {(10, 10): 1.0}, ac_distribution = {15: 1.0})
+
+    assert abs(belief.hit_probability(attack_bonus = 5) - (21 - (15 - 5)) / 20) < 1e-9
+
+def test_observed_save_success_raises_the_expected_save_modifier_and_failure_lowers_it():
+    base = CombatantBelief.for_monster(max_hp = 20)
+    base_mean = sum(m * p for m, p in base.save_modifier_distribution(Ability.WISDOM).items())
+
+    succeeded = CombatantBelief.for_monster(max_hp = 20)
+    succeeded.observe_save(Ability.WISDOM, difficulty = 14, succeeded = True)
+    failed = CombatantBelief.for_monster(max_hp = 20)
+    failed.observe_save(Ability.WISDOM, difficulty = 14, succeeded = False)
+
+    succeeded_mean = sum(m * p for m, p in succeeded.save_modifier_distribution(Ability.WISDOM).items())
+    failed_mean = sum(m * p for m, p in failed.save_modifier_distribution(Ability.WISDOM).items())
+    assert failed_mean < base_mean < succeeded_mean
+
+def test_a_save_observation_only_changes_the_belief_for_that_ability():
+    belief = CombatantBelief.for_monster(max_hp = 20)
+    before = dict(belief.save_modifier_distribution(Ability.DEXTERITY))
+
+    belief.observe_save(Ability.WISDOM, difficulty = 14, succeeded = True)
+
+    assert belief.save_modifier_distribution(Ability.DEXTERITY) == before
+
+def test_save_success_probability_under_a_point_mass_matches_the_scoring_formula():
+    belief = CombatantBelief(hypotheses = {(10, 10): 1.0}, save_distributions = {Ability.DEXTERITY: {3: 1.0}})
+
+    assert abs(belief.save_success_probability(Ability.DEXTERITY, difficulty = 15) - (21 - (15 - 3)) / 20) < 1e-9
+
+def test_ground_truth_belief_knows_the_exact_ac_and_save_modifiers(make_monster):
+    from combatant import AbilityScores
+
+    monster = make_monster(ac = 17, ability_scores = AbilityScores(dexterity = 14))
+
+    belief = CombatantBelief.ground_truth_for(monster)
+
+    assert belief.ac_distribution == {17: 1.0}
+    assert belief.save_modifier_distribution(Ability.DEXTERITY) == {2: 1.0}
+
+def test_save_modifier_prior_is_centred_near_zero():
+    belief = CombatantBelief.for_monster(max_hp = 20)
+
+    mean = sum(m * p for m, p in belief.save_modifier_distribution(Ability.WISDOM).items())
+
+    assert -0.5 < mean < 0.75
+
+
+# --- belief_for: defences are shared across creatures of the same type ---
+
+from belief import belief_for
+
+def _typed(make_monster, name, type_name, **overrides):
+    monster = make_monster(name = name, **overrides)
+    monster.type_name = type_name
+    return monster
+
+def test_belief_for_returns_the_same_belief_on_repeated_calls(make_monster):
+    beliefs = {}
+    skeleton = _typed(make_monster, "Skeleton 1", "Skeleton")
+
+    assert belief_for(beliefs, skeleton) is belief_for(beliefs, skeleton)
+
+def test_ac_learned_about_one_skeleton_applies_to_a_second_one_created_later(make_monster):
+    beliefs = {}
+    first = _typed(make_monster, "Skeleton 1", "Skeleton")
+    second = _typed(make_monster, "Skeleton 2", "Skeleton")
+
+    belief_for(beliefs, first).observe_attack_roll(attack_bonus = 5, hit = False)
+    learned = belief_for(beliefs, first).expected_armour_class()
+
+    assert abs(belief_for(beliefs, second).expected_armour_class() - learned) < 1e-9
+
+def test_ac_learned_after_both_beliefs_exist_reaches_both(make_monster):
+    beliefs = {}
+    first = _typed(make_monster, "Skeleton 1", "Skeleton")
+    second = _typed(make_monster, "Skeleton 2", "Skeleton")
+    prior = belief_for(beliefs, first).expected_armour_class()
+    belief_for(beliefs, second)
+
+    belief_for(beliefs, second).observe_attack_roll(attack_bonus = 5, hit = False)
+
+    assert belief_for(beliefs, first).expected_armour_class() > prior
+    assert abs(belief_for(beliefs, first).expected_armour_class() - belief_for(beliefs, second).expected_armour_class()) < 1e-9
+
+def test_a_shared_observation_is_counted_once_not_once_per_creature(make_monster):
+    shared = {}
+    solo = {}
+    first = _typed(make_monster, "Skeleton 1", "Skeleton")
+    second = _typed(make_monster, "Skeleton 2", "Skeleton")
+    lone = _typed(make_monster, "Lone", "Lone")
+    belief_for(shared, first)
+    belief_for(shared, second)
+
+    belief_for(shared, first).observe_attack_roll(attack_bonus = 5, hit = False)
+    belief_for(solo, lone).observe_attack_roll(attack_bonus = 5, hit = False)
+
+    assert abs(belief_for(shared, second).expected_armour_class() - belief_for(solo, lone).expected_armour_class()) < 1e-9
+
+def test_save_and_damage_mitigation_beliefs_are_shared_between_same_type_creatures(make_monster):
+    beliefs = {}
+    first = _typed(make_monster, "Skeleton 1", "Skeleton")
+    second = _typed(make_monster, "Skeleton 2", "Skeleton")
+    belief_for(beliefs, first)
+    belief_for(beliefs, second)
+
+    belief_for(beliefs, first).observe_save(Ability.WISDOM, difficulty = 14, succeeded = True)
+    belief_for(beliefs, first).observe_damage_mitigation(DamageType.BLUDGEONING, expected_damage = 10, actual_damage = 20)
+
+    assert belief_for(beliefs, second).save_modifier_distribution(Ability.WISDOM) == belief_for(beliefs, first).save_modifier_distribution(Ability.WISDOM)
+    assert belief_for(beliefs, second).damage_multiplier(DamageType.BLUDGEONING) > 1.0
+
+def test_defences_are_not_shared_between_different_creature_types(make_monster):
+    beliefs = {}
+    skeleton = _typed(make_monster, "Skeleton 1", "Skeleton")
+    zombie = _typed(make_monster, "Zombie 1", "Zombie")
+    prior = belief_for(beliefs, zombie).expected_armour_class()
+
+    belief_for(beliefs, skeleton).observe_attack_roll(attack_bonus = 5, hit = False)
+    belief_for(beliefs, skeleton).observe_damage_mitigation(DamageType.FIRE, expected_damage = 10, actual_damage = 0)
+
+    assert abs(belief_for(beliefs, zombie).expected_armour_class() - prior) < 1e-9
+    assert belief_for(beliefs, zombie).damage_multiplier(DamageType.FIRE) == 1.0
+
+def test_creatures_without_a_type_name_never_share_beliefs(make_monster):
+    beliefs = {}
+    first = make_monster(name = "A")
+    second = make_monster(name = "B")
+    prior = belief_for(beliefs, second).expected_armour_class()
+
+    belief_for(beliefs, first).observe_attack_roll(attack_bonus = 5, hit = False)
+
+    assert abs(belief_for(beliefs, second).expected_armour_class() - prior) < 1e-9
+
+def test_hp_and_spellcasting_beliefs_are_not_shared_between_same_type_creatures(make_monster):
+    beliefs = {}
+    first = _typed(make_monster, "Skeleton 1", "Skeleton", max_hp = 30)
+    second = _typed(make_monster, "Skeleton 2", "Skeleton", max_hp = 30)
+    belief_for(beliefs, first)
+    belief_for(beliefs, second)
+    second_hp = belief_for(beliefs, second).expected_hp()
+
+    belief_for(beliefs, first).observe_damage(12)
+    belief_for(beliefs, first).observe_offensive_cast()
+    belief_for(beliefs, first).observe_concentration_spell_cast()
+
+    second_belief = belief_for(beliefs, second)
+    assert abs(second_belief.expected_hp() - second_hp) < 1e-9
+    assert second_belief.offensive_capable == 0.5
+    assert second_belief.concentrating == 0.0

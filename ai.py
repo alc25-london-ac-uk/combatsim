@@ -4,7 +4,7 @@ from enums import AttackResult, ActionType, TargetType
 from combatant import Combatant, Monster, PlayerCharacter, Weapon, MeleeWeapon, RangedWeapon, Spell, Ability
 from effects import Effect, AcidArrow, Barkskin, Blind, Concentrating, Paralysed
 from world import CombatState, Position
-from actions import Action, ActionResult, SpellHitResult, move_towards_target, attack, cast_spell, determine_targets
+from actions import Action, ActionResult, SpellHitResult, move_towards_target, attack, cast_spell, determine_targets, attack_roll_bonus_observed
 from policy import Policy
 from policy_greedyutility import GreedyUtilityPolicy
 from belief import CombatantBelief
@@ -84,7 +84,7 @@ class CombatantAI:
                 if combat_state.grid.distance(self.combatant, action.target) <= action.required_range:
                     spell_hit_results = cast_spell(self.combatant, action.target, action.spell, combat_state)
                     for shr in spell_hit_results:
-                        results.append(self.make_result(action, shr.attack_result, shr.amount, combat_state, target = shr.target, save_made = shr.save_made, mitigated_amount = shr.mitigated_amount))
+                        results.append(self.make_result(action, shr.attack_result, shr.amount, combat_state, target = shr.target, save_made = shr.save_made, mitigated_amount = shr.mitigated_amount, attack_roll_bonus = shr.attack_roll_bonus, save_ability = shr.save_ability, save_dc = shr.save_dc, save_succeeded = shr.save_succeeded))
 
             case ActionType.ATTACK:
                 number_of_attacks = 1
@@ -105,7 +105,7 @@ class CombatantAI:
          
                     if combat_state.grid.distance(self.combatant, action.target) <= action.required_range:
                         attack_result, amount, mitigated_amount = attack(self.combatant, action.target, action.weapon, combat_state)
-                        results.append(self.make_result(action, attack_result, amount, combat_state, mitigated_amount = mitigated_amount))
+                        results.append(self.make_result(action, attack_result, amount, combat_state, mitigated_amount = mitigated_amount, attack_roll_bonus = attack_roll_bonus_observed(self.combatant, action.target, action.weapon)))
 
             case ActionType.NONE:
                 results.append(ActionResult(
@@ -115,7 +115,7 @@ class CombatantAI:
 
         return results
     
-    def make_result(self, action: Action, attack_result: AttackResult, amount: int, combat_state: CombatState, target: Optional[Combatant] = None, save_made: bool = False, effect_applied: str = "", mitigated_amount: int = 0) -> ActionResult:
+    def make_result(self, action: Action, attack_result: AttackResult, amount: int, combat_state: CombatState, target: Optional[Combatant] = None, save_made: bool = False, effect_applied: str = "", mitigated_amount: int = 0, attack_roll_bonus: Optional[int] = None, save_ability: Optional[Ability] = None, save_dc: Optional[int] = None, save_succeeded: Optional[bool] = None) -> ActionResult:
         combatant_position = combat_state.grid.position_of(self.combatant)
         target_position = combat_state.grid.position_of(target) if target is not None else combat_state.grid.position_of(action.target)
 
@@ -139,5 +139,9 @@ class CombatantAI:
             target_y = target_position.y,
             save_made = save_made,
             effect_applied = effect_applied,
+            attack_roll_bonus = attack_roll_bonus,
+            save_ability = save_ability,
+            save_dc = save_dc,
+            save_succeeded = save_succeeded,
             rationale = action.rationale
         )

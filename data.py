@@ -138,6 +138,7 @@ def parse_monster(entry: dict, weapon_registry: dict[str, Weapon], spell_registr
         attack_bonus = entry["attack_bonus"],
         spell_bonus = entry.get("spell_bonus", 0),
         spellcaster_level = entry.get("spellcaster_level", 0),
+        spell_slots = {int(k): v for k, v in entry.get("spell_slots", {}).items()},
         challenge_rating = entry["challenge_rating"],
         weapons = weapons,
         spells = spells,
@@ -179,6 +180,7 @@ def parse_player_character(entry: dict, weapon_registry: dict[str, Weapon], spel
 def spawn(registry: dict[str, Combatant], name: str, label: str = "", policy: Optional[Policy] = None, profile: Optional[AIProfile] = None) -> Combatant:
     combatant = copy.deepcopy(registry[name])
     combatant.name = label or name
+    combatant.type_name = name
     combatant.ai = CombatantAI(combatant)
     if policy is not None:
         combatant.ai.policy = policy

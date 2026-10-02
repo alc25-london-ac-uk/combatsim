@@ -144,3 +144,51 @@ def test_duplicate_weapon_names_produce_independent_objects_for_monsters(weapon_
     assert first_weapon is not second_weapon
     assert first_weapon.is_off_hand is False
     assert second_weapon.is_off_hand is True
+
+# --- spell coverage ---
+
+def test_every_caster_has_a_spell_for_every_slot_level_they_hold(player_registry):
+    for player in player_registry.values():
+        for level, slots in player.spell_slots.items():
+            if slots > 0:
+                assert any(s.level == level for s in player.spells), f"{player.name} has level {level} slots but no level {level} spell"
+
+def test_every_spellcaster_with_slots_has_a_cantrip(player_registry):
+    for player in player_registry.values():
+        if any(slots > 0 for slots in player.spell_slots.values()):
+            assert any(s.is_cantrip for s in player.spells), f"{player.name} has no cantrip fallback"
+
+def test_healing_word_loads_as_a_bonus_action_heal(spell_registry):
+    healing_word = spell_registry["Healing Word"]
+
+    assert healing_word.is_bonus_action is True
+    assert healing_word.is_healing is True
+
+def test_only_flagged_spells_are_bonus_actions(spell_registry):
+    assert spell_registry["Cure Wounds"].is_bonus_action is False
+    assert spell_registry["Fireball"].is_bonus_action is False
+
+# --- monster spellcasting and damage modifiers ---
+
+def test_monster_spell_slots_use_integer_levels_as_keys(monster_registry):
+    priest = monster_registry["Priest"]
+
+    assert priest.spell_slots == {1: 4, 2: 3, 3: 2}
+    assert priest.max_spell_slots == {1: 4, 2: 3, 3: 2}
+
+def test_every_monster_spell_is_castable_with_its_slots(monster_registry):
+    for monster in monster_registry.values():
+        for spell in monster.spells:
+            assert spell.is_cantrip or monster.spell_slots.get(spell.level, 0) > 0, f"{monster.name} cannot cast {spell.name}"
+
+def test_new_monsters_expose_vulnerabilities_resistances_and_immunities(monster_registry):
+    assert DamageType.BLUDGEONING in monster_registry["Skeleton"].damage_vulnerabilities
+    assert DamageType.FIRE in monster_registry["Magmin"].damage_immunities
+    assert DamageType.FIRE in monster_registry["Mummy"].damage_vulnerabilities
+    assert DamageType.SLASHING in monster_registry["Gargoyle"].damage_resistances
+
+def test_spawn_records_the_registry_name_as_the_creature_type_even_when_labelled(monster_registry):
+    skeleton = spawn(monster_registry, "Skeleton", "Skeleton 3")
+
+    assert skeleton.name == "Skeleton 3"
+    assert skeleton.type_name == "Skeleton"

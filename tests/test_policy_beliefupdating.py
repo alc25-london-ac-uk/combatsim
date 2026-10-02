@@ -415,3 +415,177 @@ def test_horizon_none_does_not_penalise_melee_attacks(make_player, make_monster,
     ranged_score = policy.score_attack(attacker, target, ranged_weapon(optimal_distance = 999, maximum_distance = 999), combat_state, {})
 
     assert abs(melee_score - ranged_score) < 1e-9
+
+def test_best_spell_offers_a_cantrip_regardless_of_spell_slots(make_player, make_monster, make_combat_state):
+    from spell import Spell
+    from enums import Ability
+
+    caster = make_player()
+    caster.spell_slots = {}
+    caster.spells = [Spell(
+        name = "Test Cantrip", level = 0, target_type = TargetType.ENEMY, damage_type = None,
+        damage_dice = 1, damage_sides = 8, range = 60, requires_attack_roll = False,
+        save_allowed = False, save_attribute = Ability.DEXTERITY
+    )]
+    target = make_monster()
+    combat_state = make_combat_state(caster, target)
+    policy = BeliefUpdatingPolicy()
+
+    score, action = policy.best_spell(caster, combat_state, {}, bonus_action = False)
+
+    assert action is not None
+
+
+# --- spell scoring: expected dice ---
+
+def _scoring_spell(level):
+    from spell import Spell
+    from enums import Ability
+    return Spell(
+        name = "Scoring Spell", level = level, target_type = TargetType.ENEMY, damage_type = None,
+        damage_dice = 2, damage_sides = 6, range = 60, requires_attack_roll = False,
+        save_allowed = False, save_attribute = Ability.DEXTERITY
+    )
+
+def test_leveled_spell_scoring_ignores_the_cantrip_extra_die(make_monster, make_combat_state):
+    low = make_monster(name = "Low", spellcaster_level = 1, max_hp = 1000)
+    high = make_monster(name = "High", spellcaster_level = 9, max_hp = 1000)
+    target = make_monster(name = "Target", max_hp = 1000, team = "party")
+    combat_state = make_combat_state(low, high, target)
+    policy = BeliefUpdatingPolicy()
+    spell = _scoring_spell(level = 1)
+
+    low_score = policy.score_spell_hit(low, target, spell, combat_state, {})
+    high_score = policy.score_spell_hit(high, target, spell, combat_state, {})
+
+    assert low_score == high_score
+    assert low_score > 7 # 2d6 averages 7; kill bonus on top, never zero dice
+
+def test_cantrip_scoring_gains_a_die_only_from_caster_level_5(make_monster, make_combat_state):
+    low = make_monster(name = "Low", spellcaster_level = 4, max_hp = 1000)
+    high = make_monster(name = "High", spellcaster_level = 5, max_hp = 1000)
+    target = make_monster(name = "Target", max_hp = 1000, team = "party")
+    combat_state = make_combat_state(low, high, target)
+    policy = BeliefUpdatingPolicy()
+    spell = _scoring_spell(level = 0)
+
+    low_score = policy.score_spell_hit(low, target, spell, combat_state, {})
+    high_score = policy.score_spell_hit(high, target, spell, combat_state, {})
+
+    assert 3.4 < high_score - low_score < 3.6 # one extra d6 averages 3.5
+
+
+# --- AC and save beliefs drive scoring (no peeking at the target) ---
+
+def test_score_attack_uses_the_believed_ac_not_the_targets_true_ac(make_player, make_monster, melee_weapon, make_combat_state):
+    attacker = make_player()
+    weapon = melee_weapon()
+    target = make_monster(ac = 5) # truly easy to hit
+    combat_state = make_combat_state(attacker, target)
+    policy = BeliefUpdatingPolicy()
+
+    believed_hard = {target: CombatantBelief(hypotheses = {(20, 20): 1.0}, ac_distribution = {25: 1.0})}
+    believed_easy = {target: CombatantBelief(hypotheses = {(20, 20): 1.0}, ac_distribution = {5: 1.0})}
+
+    assert policy.score_attack(attacker, target, weapon, combat_state, believed_easy) > policy.score_attack(attacker, target, weapon, combat_state, believed_hard)
+
+def test_score_spell_hit_uses_the_believed_save_modifier_not_the_targets_true_one(make_player, make_monster, make_combat_state):
+    from combatant import AbilityScores
+
+    caster = make_player()
+    target = make_monster(ability_scores = AbilityScores(dexterity = 1)) # truly terrible at dex saves
+    spell = Spell(
+        name = "Save Spell", level = 0, target_type = TargetType.ENEMY, damage_type = None,
+        damage_dice = 2, damage_sides = 6, range = 60, requires_attack_roll = False,
+        save_allowed = True, save_attribute = Ability.DEXTERITY, damage_pct_on_save = 0
+    )
+    combat_state = make_combat_state(caster, target)
+    policy = BeliefUpdatingPolicy()
+
+    believed_strong = {target: CombatantBelief(hypotheses = {(20, 20): 1.0}, save_distributions = {Ability.DEXTERITY: {10: 1.0}})}
+    believed_weak = {target: CombatantBelief(hypotheses = {(20, 20): 1.0}, save_distributions = {Ability.DEXTERITY: {-3: 1.0}})}
+
+    assert policy.score_spell_hit(caster, target, spell, combat_state, believed_weak) > policy.score_spell_hit(caster, target, spell, combat_state, believed_strong)
+
+
+# --- exploration: untried damage types are treated optimistically ---
+
+def _two_weapon_attacker(make_player, melee_weapon):
+    attacker = make_player()
+    attacker.weapons = [
+        melee_weapon(name = "Longsword", damage_type = DamageType.SLASHING),
+        melee_weapon(name = "Warhammer", damage_type = DamageType.BLUDGEONING),
+    ]
+    return attacker
+
+def _best_weapon_name(policy, attacker, target, combat_state, beliefs):
+    _, action = policy.best_attack(attacker, combat_state, beliefs, bonus_action = False)
+    return action.weapon.name
+
+def test_has_tested_is_false_until_a_damage_type_has_been_observed():
+    belief = CombatantBelief.for_monster(max_hp = 20)
+
+    assert not belief.has_tested(DamageType.FIRE)
+    belief.observe_damage_mitigation(DamageType.FIRE, expected_damage = 10, actual_damage = 10)
+    assert belief.has_tested(DamageType.FIRE)
+
+def test_ground_truth_beliefs_count_every_damage_type_as_known(make_monster):
+    belief = CombatantBelief.ground_truth_for(make_monster())
+
+    assert all(belief.has_tested(damage_type) for damage_type in DamageType)
+
+def test_the_policy_tries_an_untested_damage_type_once_the_first_has_proved_ordinary(make_player, make_monster, melee_weapon, make_combat_state):
+    attacker = _two_weapon_attacker(make_player, melee_weapon)
+    target = make_monster()
+    combat_state = make_combat_state(attacker, target)
+    beliefs = {target: CombatantBelief.for_monster(max_hp = 20)}
+    beliefs[target].observe_damage_mitigation(DamageType.SLASHING, expected_damage = 10, actual_damage = 10)
+
+    assert _best_weapon_name(BeliefUpdatingPolicy(), attacker, target, combat_state, beliefs) == "Warhammer"
+
+def test_the_policy_sticks_with_a_damage_type_that_proved_vulnerable(make_player, make_monster, melee_weapon, make_combat_state):
+    attacker = _two_weapon_attacker(make_player, melee_weapon)
+    target = make_monster()
+    combat_state = make_combat_state(attacker, target)
+    beliefs = {target: CombatantBelief.for_monster(max_hp = 20)}
+    beliefs[target].observe_damage_mitigation(DamageType.SLASHING, expected_damage = 10, actual_damage = 10)
+    for _ in range(3):
+        beliefs[target].observe_damage_mitigation(DamageType.BLUDGEONING, expected_damage = 10, actual_damage = 20)
+
+    assert _best_weapon_name(BeliefUpdatingPolicy(), attacker, target, combat_state, beliefs) == "Warhammer"
+
+def test_the_policy_returns_to_the_first_damage_type_once_the_second_proves_resisted(make_player, make_monster, melee_weapon, make_combat_state):
+    attacker = _two_weapon_attacker(make_player, melee_weapon)
+    target = make_monster()
+    combat_state = make_combat_state(attacker, target)
+    beliefs = {target: CombatantBelief.for_monster(max_hp = 20)}
+    beliefs[target].observe_damage_mitigation(DamageType.SLASHING, expected_damage = 10, actual_damage = 10)
+    beliefs[target].observe_damage_mitigation(DamageType.BLUDGEONING, expected_damage = 10, actual_damage = 5)
+
+    assert _best_weapon_name(BeliefUpdatingPolicy(), attacker, target, combat_state, beliefs) == "Longsword"
+
+def test_exploration_is_not_repeated_for_a_sibling_whose_type_has_already_been_tested(make_player, make_monster, melee_weapon, make_combat_state):
+    from belief import belief_for
+
+    attacker = _two_weapon_attacker(make_player, melee_weapon)
+    first = make_monster(name = "Skeleton 1")
+    first.type_name = "Skeleton"
+    second = make_monster(name = "Skeleton 2")
+    second.type_name = "Skeleton"
+    combat_state = make_combat_state(attacker, first, second)
+    beliefs = {}
+    belief_for(beliefs, first).observe_damage_mitigation(DamageType.SLASHING, expected_damage = 10, actual_damage = 10)
+    belief_for(beliefs, first).observe_damage_mitigation(DamageType.BLUDGEONING, expected_damage = 10, actual_damage = 5)
+    # only the second sibling is alive to be attacked, and it inherits what was learned about the first
+    first.hp = 0
+
+    assert _best_weapon_name(BeliefUpdatingPolicy(), attacker, second, combat_state, beliefs) == "Longsword"
+
+def test_omniscient_never_explores_because_it_already_knows_every_damage_type(make_player, make_monster, melee_weapon, make_combat_state):
+    from policy_omniscient import OmniscientPolicy
+
+    attacker = _two_weapon_attacker(make_player, melee_weapon)
+    target = make_monster() # no resistances, so both weapons are equally good
+    combat_state = make_combat_state(attacker, target)
+
+    assert _best_weapon_name(OmniscientPolicy(), attacker, target, combat_state, {}) == "Longsword"

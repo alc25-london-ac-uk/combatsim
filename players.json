@@ -17,7 +17,8 @@
             "3": 0
         },
         "weapons": [
-            {"name": "Longsword", "is_off_hand": false}
+            {"name": "Longsword", "is_off_hand": false},
+            {"name": "Warhammer", "is_off_hand": false}
         ]
     },
     {

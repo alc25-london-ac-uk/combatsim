@@ -7,8 +7,10 @@ from evaluation import build_party
 from cr_calibration import (
     XP_BY_CR, XP_THRESHOLDS_BY_LEVEL, TIERS,
     encounter_multiplier, classify_difficulty, generate_random_encounter, run_cr_calibration,
+    has_damage_modifiers, run_policy_sweep, summarise_sweep,
 )
 from policy_greedyutility import GreedyUtilityPolicy
+from evaluation import POLICIES
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -108,3 +110,46 @@ def test_run_cr_calibration_reports_none_for_an_empty_tier(player_registry, mons
         if r["n_encounters"] == 0:
             assert r["avg_party_win_pct"] is None
             assert r["avg_rounds"] is None
+
+# --- policy sweep ---
+
+def test_has_damage_modifiers_detects_resistances_and_ignores_plain_monsters(monster_registry):
+    assert has_damage_modifiers(["Skeleton"], monster_registry) is True
+    assert has_damage_modifiers(["Goblin", "Skeleton"], monster_registry) is True
+    assert has_damage_modifiers(["Goblin", "Goblin"], monster_registry) is False
+
+def test_run_policy_sweep_records_every_policy_for_every_encounter(player_registry, monster_registry):
+    records = run_policy_sweep(player_registry, monster_registry, n_encounters = 3, trials_per_encounter = 3, seed = 1)
+
+    assert len(records) == 3
+    for record in records:
+        assert set(record["win_pct"]) == set(POLICIES)
+        assert record["tier"] in TIERS
+        assert all(0 <= pct <= 100 for pct in record["win_pct"].values())
+
+def test_run_policy_sweep_uses_the_same_encounters_for_the_same_seed(player_registry, monster_registry):
+    first = run_policy_sweep(player_registry, monster_registry, n_encounters = 4, trials_per_encounter = 2, seed = 5)
+    second = run_policy_sweep(player_registry, monster_registry, n_encounters = 4, trials_per_encounter = 2, seed = 5)
+
+    assert [r["monsters"] for r in first] == [r["monsters"] for r in second]
+
+def test_summarise_sweep_computes_paired_differences_against_the_baseline():
+    records = [
+        {"monsters": [], "tier": "Hard", "has_modifiers": True, "win_pct": {"Random": 0, "Greedy": 50, "BeliefUpdating": 60, "Omniscient": 70}},
+        {"monsters": [], "tier": "Hard", "has_modifiers": True, "win_pct": {"Random": 0, "Greedy": 40, "BeliefUpdating": 50, "Omniscient": 80}},
+    ]
+
+    summary = summarise_sweep(records)
+
+    assert summary["Greedy"]["avg_diff_vs_baseline"] == 0
+    assert summary["BeliefUpdating"]["avg_diff_vs_baseline"] == 10
+    assert summary["BeliefUpdating"]["diff_standard_error"] == 0 # identical +10 in both encounters
+    assert summary["Omniscient"]["avg_win_pct"] == 75
+
+def test_run_policy_sweep_supports_putting_the_policy_on_the_monsters(player_registry, monster_registry):
+    records = run_policy_sweep(player_registry, monster_registry, n_encounters = 2, trials_per_encounter = 3, seed = 1, policy_side = "monsters")
+
+    assert len(records) == 2
+    for record in records:
+        assert set(record["win_pct"]) == set(POLICIES)
+        assert isinstance(record["has_casters"], bool)

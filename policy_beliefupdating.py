@@ -8,12 +8,15 @@ from actions import ActionType, Action, determine_targets
 from world import CombatState
 from combatant import Combatant
 from policy import Policy
-from belief import CombatantBelief
+from belief import CombatantBelief, belief_for
 from ai_profile import CreatureAIProfile
 
 HEALER_PRIORITY_WEIGHT = 1.5
 CONCENTRATION_PRIORITY_WEIGHT = 1.0
 OFFENSIVE_PRIORITY_WEIGHT = 0.5
+
+EXPLORATION_BONUS = 0.25
+EXPLORE_WITH_SPELLS = False
 
 NEAREST_WEIGHT = 0.05
 WEAKEST_WEIGHT = 2.0
@@ -21,7 +24,13 @@ HIGHEST_THREAT_WEIGHT = 1.0
 
 class BeliefUpdatingPolicy(Policy):
     def _belief_for(self, target: Combatant, beliefs: dict[Combatant, CombatantBelief]) -> CombatantBelief:
-        return beliefs.setdefault(target, CombatantBelief.initial_prior_for(target))
+        return belief_for(beliefs, target)
+
+    def _expected_damage_multiplier(self, belief: CombatantBelief, damage_type, explore: bool = True) -> float:
+        # Optimism in the face of uncertainty: a damage type never tried on this creature type might be a vulnerability, which can only be discovered by trying it.
+        if explore and not belief.has_tested(damage_type):
+            return 1.0 + EXPLORATION_BONUS
+        return belief.damage_multiplier(damage_type)
 
     def _priority_bonus(self, belief: CombatantBelief) -> float:
         remaining_resource_confidence = 1 - belief.depleted
@@ -82,9 +91,8 @@ class BeliefUpdatingPolicy(Policy):
         return best_score, best_action
 
     def score_attack(self, combatant: Combatant, target: Combatant, weapon: Weapon, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief]) -> float:
-        hit_probability = max(0, min(1,
-            (21 - (target.ac - combatant.get_attack_bonus(weapon))) / 20
-        ))
+        belief = self._belief_for(target, beliefs)
+        hit_probability = belief.hit_probability(combatant.get_attack_bonus(weapon))
 
         if isinstance(weapon, RangedWeapon) and combat_state.grid.enemies_in_melee_range(combatant):
             hit_probability *= 0.5
@@ -94,8 +102,7 @@ class BeliefUpdatingPolicy(Policy):
             + combatant.get_damage_bonus(weapon)
         )
 
-        belief = self._belief_for(target, beliefs)
-        expected_damage *= belief.damage_multiplier(weapon.damage_type)
+        expected_damage *= self._expected_damage_multiplier(belief, weapon.damage_type)
         kill_bonus = belief.probability_at_or_below(round(expected_damage)) * 2.0
         priority_bonus = self._priority_bonus(belief)
 
@@ -125,7 +132,7 @@ class BeliefUpdatingPolicy(Policy):
         return best_score, best_action
 
     def score_spell(self, combatant: Combatant, target: Combatant, spell: Spell, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief]) -> float:
-        if combatant.spell_slots.get(spell.level, 0) == 0:
+        if not spell.is_cantrip and combatant.spell_slots.get(spell.level, 0) == 0:
             return -1.0
 
         distance = combat_state.grid.distance(combatant, target)
@@ -164,25 +171,22 @@ class BeliefUpdatingPolicy(Policy):
         if not spell.requires_attack_roll:
             hit_probability = 1
         else:
-            hit_probability = max(0, min(1, (21 - (target.ac - combatant.get_spell_attack_bonus())) / 20))
+            hit_probability = belief.hit_probability(combatant.get_spell_attack_bonus())
 
         expected_damage = hit_probability * (
-            (spell.damage_dice + 1 if combatant.caster_level >= 5 else 0) * (spell.damage_sides + 1) / 2
+            (spell.damage_dice + (1 if spell.is_cantrip and combatant.caster_level >= 5 else 0)) * (spell.damage_sides + 1) / 2
             + combatant.ability_scores.modifier_for(combatant.spellcasting_ability)
         )
 
         if spell.save_allowed:
-            save_mod = target.ability_scores.modifier_for(spell.save_attribute)
-            save_success_probability = max(0, min(1,
-                (21 - (combatant.spell_save_dc - save_mod)) / 20
-            ))
+            save_success_probability = belief.save_success_probability(spell.save_attribute, combatant.spell_save_dc)
             expected_damage = (
                 expected_damage * (1 - save_success_probability) +
                 expected_damage * spell.damage_pct_on_save * save_success_probability
             )
 
         if spell.damage_type is not None:
-            expected_damage *= belief.damage_multiplier(spell.damage_type)
+            expected_damage *= self._expected_damage_multiplier(belief, spell.damage_type, explore = EXPLORE_WITH_SPELLS)
 
         kill_bonus = belief.probability_at_or_below(round(expected_damage)) * 2.0
         priority_bonus = self._priority_bonus(belief)

@@ -417,3 +417,70 @@ def test_no_opportunity_attack_when_moving_towards_the_reactor(monkeypatch):
     results = move_towards_target(mover, reactor, combat_state) # moving towards, not away
 
     assert not any(r.rationale == "Opportunity attack" for r in results)
+
+# --- observation data carried on spell results / attack helpers ---
+
+def _save_spell(**overrides):
+    defaults: dict[str, Any] = dict(
+        name = "Test Save Spell", level = 1, target_type = TargetType.ENEMY, damage_type = DamageType.FIRE,
+        damage_dice = 1, damage_sides = 6, range = 60, requires_attack_roll = False,
+        save_allowed = True, save_attribute = Ability.DEXTERITY
+    )
+    defaults.update(overrides)
+    return Spell(**defaults)
+
+def _two_combatant_state(caster, target):
+    grid = Grid(10, 10)
+    grid.place(caster, 0, 0)
+    grid.place(target, 1, 0)
+    return CombatState(grid = grid, initiative_order = [caster, target])
+
+def test_spell_result_reports_the_save_that_was_actually_rolled():
+    from actions import resolve_spell_against_target
+
+    caster = _make_player()
+    target = _make_monster()
+    combat_state = _two_combatant_state(caster, target)
+
+    result = resolve_spell_against_target(caster, target, _save_spell(), combat_state)
+
+    assert result.save_ability == Ability.DEXTERITY
+    assert result.save_dc == caster.spell_save_dc
+    assert result.save_succeeded in (True, False)
+
+def test_spell_result_reports_no_save_observation_when_the_target_auto_fails():
+    from actions import resolve_spell_against_target
+
+    caster = _make_player()
+    target = _make_monster()
+    target.add_effect(Paralysed())
+    combat_state = _two_combatant_state(caster, target)
+
+    result = resolve_spell_against_target(caster, target, _save_spell(save_attribute = Ability.DEXTERITY), combat_state)
+
+    assert result.save_succeeded is None
+
+def test_attack_roll_spells_report_the_attack_bonus_and_save_only_spells_do_not():
+    from actions import resolve_spell_against_target
+
+    caster = _make_player()
+    target = _make_monster()
+    combat_state = _two_combatant_state(caster, target)
+
+    attack_spell = resolve_spell_against_target(caster, target, _save_spell(requires_attack_roll = True, save_allowed = False), combat_state)
+    save_spell = resolve_spell_against_target(caster, target, _save_spell(), combat_state)
+
+    assert attack_spell.attack_roll_bonus == caster.get_spell_attack_bonus()
+    assert save_spell.attack_roll_bonus is None
+
+def test_attack_roll_bonus_observed_is_none_for_an_automatic_melee_crit():
+    from actions import attack_roll_bonus_observed
+
+    attacker = _make_player()
+    target = _make_monster()
+    weapon = MeleeWeapon(name = "Sword", damage_dice = 1, damage_sides = 6, damage_type = DamageType.SLASHING, reach = 5, finesse = False)
+
+    assert attack_roll_bonus_observed(attacker, target, weapon) == attacker.get_attack_bonus(weapon)
+
+    target.add_effect(Paralysed())
+    assert attack_roll_bonus_observed(attacker, target, weapon) is None

@@ -66,6 +66,7 @@ class Combatant(ABC):
     damage_resistances: list[DamageType] = field(default_factory = list)
     damage_immunities: list[DamageType] = field(default_factory = list)
     can_fly: bool = False
+    type_name: str = ""
 
     def __post_init__(self):
         self.movement = self.speed

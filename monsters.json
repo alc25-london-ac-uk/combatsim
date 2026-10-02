@@ -14,8 +14,12 @@
         "attack_count": 2,
         "attack_bonus": 5,
         "weapons": [
-            {"name": "Fist"},
-            {"name": "Rock"}
+            {
+                "name": "Fist"
+            },
+            {
+                "name": "Rock"
+            }
         ]
     },
     {
@@ -33,7 +37,9 @@
         "attack_count": 1,
         "attack_bonus": 6,
         "weapons": [
-            {"name": "Slam"}
+            {
+                "name": "Slam"
+            }
         ],
         "damage_vulnerabilities": [
             "FIRE"
@@ -59,7 +65,9 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Beak"}
+            {
+                "name": "Beak"
+            }
         ]
     },
     {
@@ -77,8 +85,13 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Bite"},
-            {"name": "Claws", "is_off_hand": true}
+            {
+                "name": "Bite"
+            },
+            {
+                "name": "Claws",
+                "is_off_hand": true
+            }
         ]
     },
     {
@@ -97,7 +110,9 @@
         "attack_count": 1,
         "attack_bonus": 3,
         "weapons": [
-            {"name": "Bite"}
+            {
+                "name": "Bite"
+            }
         ]
     },
     {
@@ -116,7 +131,9 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Beak - Small"}
+            {
+                "name": "Beak - Small"
+            }
         ],
         "feats": [
             "Pack Tactics"
@@ -137,7 +154,9 @@
         "attack_count": 1,
         "attack_bonus": 3,
         "weapons": [
-            {"name": "Tusk"}
+            {
+                "name": "Tusk"
+            }
         ],
         "feats": [
             "Charge",
@@ -159,8 +178,13 @@
         "attack_count": 1,
         "attack_bonus": 6,
         "weapons": [
-            {"name": "Bite - Large"},
-            {"name": "Claws - Large", "is_off_hand": true}
+            {
+                "name": "Bite - Large"
+            },
+            {
+                "name": "Claws - Large",
+                "is_off_hand": true
+            }
         ]
     },
     {
@@ -177,8 +201,12 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Morningstar"},
-            {"name": "Javelin"}
+            {
+                "name": "Morningstar"
+            },
+            {
+                "name": "Javelin"
+            }
         ]
     },
     {
@@ -196,7 +224,9 @@
         "attack_count": 1,
         "attack_bonus": 5,
         "weapons": [
-            {"name": "Bite - Blunt"}
+            {
+                "name": "Bite - Blunt"
+            }
         ]
     },
     {
@@ -214,8 +244,12 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Bite"},
-            {"name": "Constrict"}
+            {
+                "name": "Bite"
+            },
+            {
+                "name": "Constrict"
+            }
         ]
     },
     {
@@ -233,7 +267,9 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Bite - Grappling"}
+            {
+                "name": "Bite - Grappling"
+            }
         ]
     },
     {
@@ -251,7 +287,9 @@
         "attack_count": 2,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Bite - Death Dog"}
+            {
+                "name": "Bite - Death Dog"
+            }
         ],
         "feats": [
             "Two-Headed"
@@ -272,7 +310,9 @@
         "attack_count": 1,
         "attack_bonus": 5,
         "weapons": [
-            {"name": "Bite - Dire Wolf"}
+            {
+                "name": "Bite - Dire Wolf"
+            }
         ],
         "feats": [
             "Pack Tactics"
@@ -293,7 +333,9 @@
         "attack_count": 1,
         "attack_bonus": 6,
         "weapons": [
-            {"name": "Hooves"}
+            {
+                "name": "Hooves"
+            }
         ]
     },
     {
@@ -311,8 +353,14 @@
         "attack_count": 1,
         "attack_bonus": 8,
         "weapons": [
-            {"name": "Gore"},
-            {"name": "Stomp", "is_off_hand": true, "required_effect": "Prone"}
+            {
+                "name": "Gore"
+            },
+            {
+                "name": "Stomp",
+                "is_off_hand": true,
+                "required_effect": "Prone"
+            }
         ],
         "feats": [
             "Trampling Charge"
@@ -333,8 +381,13 @@
         "attack_count": 1,
         "attack_bonus": 5,
         "weapons": [
-            {"name": "Ram"},
-            {"name": "Hooves", "required_effect": "Prone"}
+            {
+                "name": "Ram"
+            },
+            {
+                "name": "Hooves",
+                "required_effect": "Prone"
+            }
         ],
         "feats": [
             "Charge"
@@ -356,7 +409,9 @@
         "attack_count": 1,
         "attack_bonus": 6,
         "weapons": [
-            {"name": "Bite - Flying Snake"}
+            {
+                "name": "Bite - Flying Snake"
+            }
         ]
     },
     {
@@ -374,8 +429,12 @@
         "attack_count": 2,
         "attack_bonus": 9,
         "weapons": [
-            {"name": "Fist - Giant Ape"},
-            {"name": "Rock - Giant Ape"}
+            {
+                "name": "Fist - Giant Ape"
+            },
+            {
+                "name": "Rock - Giant Ape"
+            }
         ]
     },
     {
@@ -393,8 +452,13 @@
         "attack_count": 1,
         "attack_bonus": 3,
         "weapons": [
-            {"name": "Bite"},
-            {"name": "Claws", "is_off_hand": true}
+            {
+                "name": "Bite"
+            },
+            {
+                "name": "Claws",
+                "is_off_hand": true
+            }
         ]
     },
     {
@@ -412,7 +476,9 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Bite"}
+            {
+                "name": "Bite"
+            }
         ]
     },
     {
@@ -430,7 +496,9 @@
         "attack_count": 1,
         "attack_bonus": 5,
         "weapons": [
-            {"name": "Tusk - Giant Boar"}
+            {
+                "name": "Tusk - Giant Boar"
+            }
         ],
         "feats": [
             "Charge",
@@ -452,7 +520,9 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Bite - Giant Centipede"}
+            {
+                "name": "Bite - Giant Centipede"
+            }
         ]
     },
     {
@@ -470,8 +540,12 @@
         "attack_count": 1,
         "attack_bonus": 6,
         "weapons": [
-            {"name": "Bite - Giant Constrictor Snake"},
-            {"name": "Constrict - Giant Constrictor Snake"}
+            {
+                "name": "Bite - Giant Constrictor Snake"
+            },
+            {
+                "name": "Constrict - Giant Constrictor Snake"
+            }
         ]
     },
     {
@@ -489,7 +563,9 @@
         "attack_count": 1,
         "attack_bonus": 3,
         "weapons": [
-            {"name": "Claw"}
+            {
+                "name": "Claw"
+            }
         ]
     },
     {
@@ -507,8 +583,13 @@
         "attack_count": 1,
         "attack_bonus": 8,
         "weapons": [
-            {"name": "Bite - Giant Crocodile"},
-            {"name": "Tail - Giant Crocodile", "is_off_hand": true}
+            {
+                "name": "Bite - Giant Crocodile"
+            },
+            {
+                "name": "Tail - Giant Crocodile",
+                "is_off_hand": true
+            }
         ]
     },
     {
@@ -527,8 +608,13 @@
         "attack_count": 1,
         "attack_bonus": 5,
         "weapons": [
-            {"name": "Beak - Giant Eagle"},
-            {"name": "Talons", "is_off_hand": true}
+            {
+                "name": "Beak - Giant Eagle"
+            },
+            {
+                "name": "Talons",
+                "is_off_hand": true
+            }
         ]
     },
     {
@@ -546,8 +632,13 @@
         "attack_count": 1,
         "attack_bonus": 6,
         "weapons": [
-            {"name": "Ram - Giant Elk"},
-            {"name": "Hooves - Giant Elk", "required_effect": "Prone"}
+            {
+                "name": "Ram - Giant Elk"
+            },
+            {
+                "name": "Hooves - Giant Elk",
+                "required_effect": "Prone"
+            }
         ]
     },
     {
@@ -565,7 +656,9 @@
         "attack_count": 1,
         "attack_bonus": 3,
         "weapons": [
-            {"name": "Bite - Giant Frog"}
+            {
+                "name": "Bite - Giant Frog"
+            }
         ]
     },
     {
@@ -583,7 +676,9 @@
         "attack_count": 1,
         "attack_bonus": 5,
         "weapons": [
-            {"name": "Ram - Giant Goat"}
+            {
+                "name": "Ram - Giant Goat"
+            }
         ],
         "feats": [
             "Charge",
@@ -605,7 +700,9 @@
         "attack_count": 1,
         "attack_bonus": 5,
         "weapons": [
-            {"name": "Bite - Giant Hyena"}
+            {
+                "name": "Bite - Giant Hyena"
+            }
         ]
     },
     {
@@ -623,7 +720,9 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Bite - Giant Lizard"}
+            {
+                "name": "Bite - Giant Lizard"
+            }
         ]
     },
     {
@@ -642,7 +741,9 @@
         "attack_count": 1,
         "attack_bonus": 3,
         "weapons": [
-            {"name": "Talons"}
+            {
+                "name": "Talons"
+            }
         ]
     },
     {
@@ -660,7 +761,9 @@
         "attack_count": 1,
         "attack_bonus": 6,
         "weapons": [
-            {"name": "Bite - Giant Poisonous Snake"}
+            {
+                "name": "Bite - Giant Poisonous Snake"
+            }
         ]
     },
     {
@@ -678,7 +781,9 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Bite - Small"}
+            {
+                "name": "Bite - Small"
+            }
         ],
         "feats": [
             "Pack Tactics"
@@ -699,8 +804,13 @@
         "attack_count": 2,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Claw - Giant Scorpion"},
-            {"name": "Sting", "is_off_hand": true}
+            {
+                "name": "Claw - Giant Scorpion"
+            },
+            {
+                "name": "Sting",
+                "is_off_hand": true
+            }
         ]
     },
     {
@@ -718,7 +828,9 @@
         "attack_count": 1,
         "attack_bonus": 5,
         "weapons": [
-            {"name": "Bite - Giant Spider"}
+            {
+                "name": "Bite - Giant Spider"
+            }
         ],
         "feats": [
             "Web"
@@ -739,7 +851,9 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Bite - Giant Toad"}
+            {
+                "name": "Bite - Giant Toad"
+            }
         ],
         "feats": [
             "Swallow"
@@ -761,8 +875,13 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Beak - Giant Vulture"},
-            {"name": "Talons", "is_off_hand": true}
+            {
+                "name": "Beak - Giant Vulture"
+            },
+            {
+                "name": "Talons",
+                "is_off_hand": true
+            }
         ]
     },
     {
@@ -781,7 +900,9 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Sting - Giant Wasp"}
+            {
+                "name": "Sting - Giant Wasp"
+            }
         ]
     },
     {
@@ -799,7 +920,9 @@
         "attack_count": 1,
         "attack_bonus": 5,
         "weapons": [
-            {"name": "Bite - Giant Weasel"}
+            {
+                "name": "Bite - Giant Weasel"
+            }
         ]
     },
     {
@@ -817,7 +940,9 @@
         "attack_count": 1,
         "attack_bonus": 3,
         "weapons": [
-            {"name": "Bite - Giant Wolf Spider"}
+            {
+                "name": "Bite - Giant Wolf Spider"
+            }
         ]
     },
     {
@@ -834,8 +959,12 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Scimitar"},
-            {"name": "Shortbow"}
+            {
+                "name": "Scimitar"
+            },
+            {
+                "name": "Shortbow"
+            }
         ]
     },
     {
@@ -852,9 +981,15 @@
         "attack_count": 1,
         "attack_bonus": 4,
         "weapons": [
-            {"name": "Bite - Small"},
-            {"name": "Spear"},
-            {"name": "Longbow"}
+            {
+                "name": "Bite - Small"
+            },
+            {
+                "name": "Spear"
+            },
+            {
+                "name": "Longbow"
+            }
         ]
     },
     {
@@ -871,8 +1006,12 @@
         "attack_count": 1,
         "attack_bonus": 3,
         "weapons": [
-            {"name": "Longsword"},
-            {"name": "Longbow"}
+            {
+                "name": "Longsword"
+            },
+            {
+                "name": "Longbow"
+            }
         ]
     },
     {
@@ -890,8 +1029,12 @@
         "attack_count": 1,
         "attack_bonus": 5,
         "weapons": [
-            {"name": "Bite - Lion"},
-            {"name": "Claw - Lion"}
+            {
+                "name": "Bite - Lion"
+            },
+            {
+                "name": "Claw - Lion"
+            }
         ],
         "feats": [
             "Pack Tactics",
@@ -913,8 +1056,13 @@
         "attack_count": 1,
         "attack_bonus": 10,
         "weapons": [
-            {"name": "Gore - Mammoth"},
-            {"name": "Stomp - Mammoth", "required_effect": "Prone"}
+            {
+                "name": "Gore - Mammoth"
+            },
+            {
+                "name": "Stomp - Mammoth",
+                "required_effect": "Prone"
+            }
         ],
         "feats": [
             "Trampling Charge"
@@ -935,7 +1083,9 @@
         "attack_count": 1,
         "attack_bonus": 3,
         "weapons": [
-            {"name": "Bite - Mastiff"}
+            {
+                "name": "Bite - Mastiff"
+            }
         ]
     },
     {
@@ -952,8 +1102,12 @@
         "attack_count": 1,
         "attack_bonus": 6,
         "weapons": [
-            {"name": "Greataxe"},
-            {"name": "Gore"}
+            {
+                "name": "Greataxe"
+            },
+            {
+                "name": "Gore"
+            }
         ]
     },
     {
@@ -971,7 +1125,239 @@
         "attack_count": 1,
         "attack_bonus": 2,
         "weapons": [
-            {"name": "Hooves - Mule"}
+            {
+                "name": "Hooves - Mule"
+            }
         ]
+    },
+    {
+        "name": "Skeleton",
+        "armor_class": 13,
+        "hit_points": 13,
+        "strength": 10,
+        "dexterity": 14,
+        "constitution": 15,
+        "intelligence": 6,
+        "wisdom": 8,
+        "charisma": 5,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            {
+                "name": "Shortsword"
+            },
+            {
+                "name": "Shortbow"
+            }
+        ],
+        "damage_vulnerabilities": [
+            "BLUDGEONING"
+        ],
+        "damage_immunities": [
+            "POISON"
+        ]
+    },
+    {
+        "name": "Zombie",
+        "armor_class": 8,
+        "hit_points": 22,
+        "strength": 13,
+        "dexterity": 6,
+        "constitution": 16,
+        "intelligence": 3,
+        "wisdom": 6,
+        "charisma": 5,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 3,
+        "weapons": [
+            {
+                "name": "Slam - Zombie"
+            }
+        ],
+        "damage_immunities": [
+            "POISON"
+        ]
+    },
+    {
+        "name": "Magmin",
+        "armor_class": 14,
+        "hit_points": 9,
+        "strength": 7,
+        "dexterity": 15,
+        "constitution": 12,
+        "intelligence": 8,
+        "wisdom": 11,
+        "charisma": 10,
+        "challenge_rating": 0.5,
+        "attack_count": 1,
+        "attack_bonus": 4,
+        "weapons": [
+            {
+                "name": "Touch - Magmin"
+            }
+        ],
+        "damage_resistances": [
+            "BLUDGEONING",
+            "PIERCING",
+            "SLASHING"
+        ],
+        "damage_immunities": [
+            "FIRE"
+        ]
+    },
+    {
+        "name": "Gargoyle",
+        "armor_class": 15,
+        "hit_points": 52,
+        "strength": 15,
+        "dexterity": 11,
+        "constitution": 16,
+        "intelligence": 6,
+        "wisdom": 11,
+        "charisma": 7,
+        "challenge_rating": 2,
+        "attack_count": 2,
+        "attack_bonus": 4,
+        "weapons": [
+            {
+                "name": "Bite"
+            },
+            {
+                "name": "Claws - Gargoyle"
+            }
+        ],
+        "damage_resistances": [
+            "BLUDGEONING",
+            "PIERCING",
+            "SLASHING"
+        ],
+        "damage_immunities": [
+            "POISON"
+        ]
+    },
+    {
+        "name": "Mummy",
+        "armor_class": 11,
+        "hit_points": 58,
+        "strength": 16,
+        "dexterity": 8,
+        "constitution": 15,
+        "intelligence": 6,
+        "wisdom": 10,
+        "charisma": 12,
+        "challenge_rating": 3,
+        "attack_count": 1,
+        "attack_bonus": 5,
+        "weapons": [
+            {
+                "name": "Rotting Fist"
+            }
+        ],
+        "damage_vulnerabilities": [
+            "FIRE"
+        ],
+        "damage_resistances": [
+            "BLUDGEONING",
+            "PIERCING",
+            "SLASHING"
+        ],
+        "damage_immunities": [
+            "NECROTIC",
+            "POISON"
+        ]
+    },
+    {
+        "name": "Acolyte",
+        "armor_class": 10,
+        "hit_points": 9,
+        "strength": 10,
+        "dexterity": 10,
+        "constitution": 10,
+        "intelligence": 10,
+        "wisdom": 14,
+        "charisma": 11,
+        "challenge_rating": 0.25,
+        "attack_count": 1,
+        "attack_bonus": 2,
+        "weapons": [
+            {
+                "name": "Mace"
+            }
+        ],
+        "spells": [
+            "Sacred Flame",
+            "Cure Wounds"
+        ],
+        "spell_slots": {
+            "1": 3
+        },
+        "spellcaster_level": 1,
+        "spell_bonus": 4
+    },
+    {
+        "name": "Priest",
+        "armor_class": 13,
+        "hit_points": 27,
+        "strength": 10,
+        "dexterity": 10,
+        "constitution": 12,
+        "intelligence": 13,
+        "wisdom": 16,
+        "charisma": 13,
+        "challenge_rating": 2,
+        "attack_count": 1,
+        "attack_bonus": 2,
+        "weapons": [
+            {
+                "name": "Mace"
+            }
+        ],
+        "spells": [
+            "Sacred Flame",
+            "Cure Wounds",
+            "Hold Person",
+            "Spirit Guardians"
+        ],
+        "spell_slots": {
+            "1": 4,
+            "2": 3,
+            "3": 2
+        },
+        "spellcaster_level": 5,
+        "spell_bonus": 5
+    },
+    {
+        "name": "Mage",
+        "armor_class": 12,
+        "hit_points": 40,
+        "strength": 9,
+        "dexterity": 14,
+        "constitution": 11,
+        "intelligence": 17,
+        "wisdom": 12,
+        "charisma": 11,
+        "challenge_rating": 6,
+        "attack_count": 1,
+        "attack_bonus": 5,
+        "weapons": [
+            {
+                "name": "Quarterstaff"
+            }
+        ],
+        "spells": [
+            "Fire Bolt",
+            "Magic Missile",
+            "Acid Arrow",
+            "Fireball"
+        ],
+        "spell_slots": {
+            "1": 4,
+            "2": 3,
+            "3": 3
+        },
+        "spellcaster_level": 9,
+        "spell_bonus": 6
     }
 ]

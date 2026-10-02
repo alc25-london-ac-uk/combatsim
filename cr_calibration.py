@@ -1,10 +1,12 @@
+import math
 import random
 
 from combatant import PlayerCharacter
 from data import spawn
 from combat import monte_carlo
 from policy import Policy
-from evaluation import build_party
+from evaluation import build_party, POLICIES
+from policy_greedyutility import GreedyUtilityPolicy
 
 XP_THRESHOLDS_BY_LEVEL: dict[int, dict[str, int]] = {
     1: {"easy": 25, "medium": 50, "hard": 75, "deadly": 100},
@@ -102,6 +104,91 @@ def print_cr_calibration(policy_name: str, results: dict[str, dict]) -> None:
         else:
             print(f"  {tier:<10}{r['n_encounters']:>12}{r['avg_party_win_pct']:>17.1f}%{r['avg_rounds']:>12.1f}")
 
+def has_damage_modifiers(monster_names: list[str], monster_registry: dict) -> bool:
+    return any(
+        monster_registry[name].damage_resistances or monster_registry[name].damage_immunities or monster_registry[name].damage_vulnerabilities
+        for name in monster_names
+    )
+
+def run_policy_sweep(player_registry: dict, monster_registry: dict, n_encounters: int = 100, trials_per_encounter: int = 200, seed: int = None, policy_side: str = "pcs") -> list[dict]:
+    rng = random.Random(seed)
+    if seed is not None:
+        random.seed(seed)
+
+    records = []
+    for _ in range(n_encounters):
+        monster_names = generate_random_encounter(monster_registry, rng)
+        tier = classify_difficulty(monster_names, monster_registry, build_party(player_registry))
+
+        win_pct = {}
+        for policy_name, policy_class in POLICIES.items():
+            if policy_side == "pcs":
+                party = build_party(player_registry, policy_class())
+                monster_policy = GreedyUtilityPolicy()
+            else:
+                party = build_party(player_registry)
+                monster_policy = policy_class()
+            enemies = [
+                spawn(monster_registry, name, f"{name} {i + 1}", policy = monster_policy)
+                for i, name in enumerate(monster_names)
+            ]
+            result = monte_carlo(party, enemies, trials_per_encounter, False)
+            win_pct[policy_name] = result["party_win_pct"] if policy_side == "pcs" else result["enemy_win_pct"]
+
+        records.append({
+            "monsters": monster_names,
+            "tier": tier,
+            "has_modifiers": has_damage_modifiers(monster_names, monster_registry),
+            "has_casters": any(monster_registry[name].spells for name in monster_names),
+            "win_pct": win_pct,
+        })
+
+    return records
+
+def summarise_sweep(records: list[dict], baseline: str = "Greedy") -> dict[str, dict]:
+    summary = {}
+    for policy_name in POLICIES:
+        wins = [r["win_pct"][policy_name] for r in records]
+        diffs = [r["win_pct"][policy_name] - r["win_pct"][baseline] for r in records]
+        n = len(records)
+        mean_diff = sum(diffs) / n if n else 0.0
+        if n > 1:
+            variance = sum((d - mean_diff) ** 2 for d in diffs) / (n - 1)
+            standard_error = math.sqrt(variance / n)
+        else:
+            standard_error = 0.0
+        summary[policy_name] = {
+            "n_encounters": n,
+            "avg_win_pct": sum(wins) / n if n else None,
+            "avg_diff_vs_baseline": mean_diff,
+            "diff_standard_error": standard_error,
+        }
+    return summary
+
+def print_sweep_summary(title: str, records: list[dict]) -> None:
+    print(f"{title} ({len(records)} encounters)")
+    if not records:
+        print("  (none)")
+        return
+    summary = summarise_sweep(records)
+    header = f"  {'Policy':<15}{'Avg win%':>13}{'vs Greedy':>12}{'+/- SE':>9}"
+    print(header)
+    print("  " + "-" * (len(header) - 2))
+    for name, s in summary.items():
+        print(f"  {name:<15}{s['avg_win_pct']:>12.1f}%{s['avg_diff_vs_baseline']:>+11.2f}{s['diff_standard_error']:>9.2f}")
+
+def print_sweep(records: list[dict], policy_side: str = "pcs") -> None:
+    print(f"Win% is for the {'PCs' if policy_side == 'pcs' else 'Monsters'} (the side using each policy); the other side is Greedy.")
+    print()
+    print_sweep_summary("All encounters", records)
+    print()
+    print_sweep_summary("Encounters with a resistance/immunity/vulnerability", [r for r in records if r["has_modifiers"]])
+    print()
+    print_sweep_summary("Encounters with no damage modifiers", [r for r in records if not r["has_modifiers"]])
+    for tier in TIERS:
+        print()
+        print_sweep_summary(f"Tier: {tier}", [r for r in records if r["tier"] == tier])
+
 if __name__ == "__main__":
     from data import load_weapons, load_spells, load_players, load_monsters
     from policy_greedyutility import GreedyUtilityPolicy
@@ -112,7 +199,14 @@ if __name__ == "__main__":
     player_registry = load_players("players.json", weapon_registry, spell_registry)
     monster_registry = load_monsters("monsters.json", weapon_registry, spell_registry)
 
-    for name, policy_class in [("Greedy", GreedyUtilityPolicy), ("BeliefUpdating", BeliefUpdatingPolicy)]:
-        results = run_cr_calibration(player_registry, monster_registry, policy_class, n_encounters = 50, trials_per_encounter = 200)
-        print_cr_calibration(name, results)
-        print()
+    import sys
+
+    if "--sweep" in sys.argv:
+        policy_side = "monsters" if "--monsters" in sys.argv else "pcs"
+        records = run_policy_sweep(player_registry, monster_registry, n_encounters = 150, trials_per_encounter = 200, seed = 2024, policy_side = policy_side)
+        print_sweep(records, policy_side)
+    else:
+        for name, policy_class in [("Greedy", GreedyUtilityPolicy), ("BeliefUpdating", BeliefUpdatingPolicy)]:
+            results = run_cr_calibration(player_registry, monster_registry, policy_class, n_encounters = 50, trials_per_encounter = 200)
+            print_cr_calibration(name, results)
+            print()
