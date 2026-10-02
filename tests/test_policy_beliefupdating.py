@@ -1,8 +1,9 @@
-from enums import TargetType, Ability, DamageType
+from enums import TargetType, Ability, DamageType, TargetPriority, Horizon
 from spell import Spell
 from belief import CombatantBelief
 from policy_beliefupdating import BeliefUpdatingPolicy
 from policy_greedyutility import GreedyUtilityPolicy
+from ai_profile import CreatureAIProfile
 
 # --- best_attack: weapon-slot filtering (main action vs bonus/off-hand) ---
 
@@ -97,19 +98,15 @@ def test_score_attack_uses_the_passed_in_belief_rather_than_ground_truth_hp(make
     combat_state = make_combat_state(attacker, target)
     policy = BeliefUpdatingPolicy()
 
-    # belief says this target is already nearly dead, even though ground truth says otherwise
     beliefs = {target: CombatantBelief.initial_prior_for(target)}
     beliefs[target].observe_damage(19)
 
     believing_dead_score = policy.score_attack(attacker, target, weapon, combat_state, beliefs)
     believing_healthy_score = policy.score_attack(attacker, target, weapon, combat_state, {})
 
-    # a near-certain kill should score higher than one where the belief still assumes full health
     assert believing_dead_score > believing_healthy_score
 
 def test_greedy_and_belief_updating_policies_can_diverge_on_the_same_ground_truth(make_player, make_monster, melee_weapon, make_combat_state):
-    # demonstrates the actual point of the mechanism: given identical ground truth, the two
-    # policies can reach different conclusions once the belief has drifted from reality
     attacker = make_player()
     weapon = melee_weapon(damage_dice = 2, damage_sides = 6)
     attacker.weapons = [weapon]
@@ -120,7 +117,6 @@ def test_greedy_and_belief_updating_policies_can_diverge_on_the_same_ground_trut
     weak_target.hp = 100
     combat_state = make_combat_state(attacker, tough_target, weak_target)
 
-    # ground truth is identical for both targets; only the belief about "Weak" has drifted low
     beliefs = {
         tough_target: CombatantBelief.initial_prior_for(tough_target),
         weak_target: CombatantBelief.initial_prior_for(weak_target),
@@ -130,8 +126,6 @@ def test_greedy_and_belief_updating_policies_can_diverge_on_the_same_ground_trut
     greedy_score, greedy_action = GreedyUtilityPolicy().best_attack(attacker, combat_state, {}, bonus_action = False)
     belief_score, belief_action = BeliefUpdatingPolicy().best_attack(attacker, combat_state, beliefs, bonus_action = False)
 
-    # greedy reads identical ground truth hp for both and has no preference; belief-updating
-    # prefers finishing off the target it believes is nearly dead
     assert belief_action.target is weak_target
 
 # --- score_attack / score_spell_hit: priority bonus from offensive/healer belief ---
@@ -225,9 +219,6 @@ def test_score_attack_favours_a_believed_concentrating_target_over_an_identical_
     assert concentrating_score > plain_score
 
 def test_concentration_priority_weight_sits_between_offensive_and_healer_weights():
-    # isolate the weight constants themselves (not natural priors/observations, which start at
-    # different baselines -- concentrating starts at a true 0 vs 0.5 for the other two, so one
-    # observation each produces different-sized swings and isn't a clean comparison of the weights)
     policy = BeliefUpdatingPolicy()
     healer_belief = CombatantBelief(hypotheses = {}, offensive_capable = 0.0, healer_capable = 1.0, concentrating = 0.0)
     concentrating_belief = CombatantBelief(hypotheses = {}, offensive_capable = 0.0, healer_capable = 0.0, concentrating = 1.0)
@@ -258,9 +249,6 @@ def test_full_depletion_eliminates_offensive_and_healer_bonus_entirely():
     assert policy._priority_bonus(belief) == 0.0
 
 def test_a_heavily_depleted_confirmed_caster_can_score_below_an_unobserved_unknown():
-    # emergent consequence of the design, confirmed explicitly: an unknown target carries the
-    # uninformative 0.5/0.5 priors undiscounted, which can outscore a confirmed caster who's
-    # been observed casting enough leveled spells to be believed mostly spent
     policy = BeliefUpdatingPolicy()
     unknown = CombatantBelief(hypotheses = {}, offensive_capable = 0.5, healer_capable = 0.5, concentrating = 0.0, depleted = 0.0)
     confirmed_but_spent = CombatantBelief(hypotheses = {}, offensive_capable = 1.0, healer_capable = 1.0, concentrating = 0.0, depleted = 0.9)
@@ -287,7 +275,6 @@ def test_score_attack_discounts_expected_damage_for_a_believed_resistant_target(
     assert resistant_score < normal_score
 
 def test_score_attack_does_not_discount_a_different_damage_type(make_player, make_monster, melee_weapon, make_combat_state):
-    # believed-immune to fire shouldn't discount a cold attack against the same target
     attacker = make_player()
     weapon = melee_weapon(damage_type = DamageType.COLD)
     target = make_monster(ac = 10)
@@ -305,8 +292,6 @@ def test_score_attack_does_not_discount_a_different_damage_type(make_player, mak
     assert abs(normal_score - cold_score) < 1e-9
 
 def test_policy_stops_preferring_a_fire_attack_once_immunity_is_believed(make_player, make_monster, melee_weapon, make_combat_state):
-    # the concrete scenario from the discussion: an AI shouldn't keep throwing fire at something
-    # demonstrably immune to it, once offered an equally-good non-fire option
     attacker = make_player()
     fire_weapon = melee_weapon(name = "Flaming Sword", damage_type = DamageType.FIRE)
     cold_weapon = melee_weapon(name = "Frost Sword", damage_type = DamageType.COLD)
@@ -322,3 +307,111 @@ def test_policy_stops_preferring_a_fire_attack_once_immunity_is_believed(make_pl
     score, action = policy.best_attack(attacker, combat_state, beliefs, bonus_action = False)
 
     assert action.weapon is cold_weapon
+
+# --- target_priority: CreatureAIProfile-configured attack target selection ---
+
+def test_nearest_priority_prefers_the_closer_of_two_identical_enemies(make_monster, melee_weapon, make_combat_state):
+    attacker = make_monster(ac = 10)
+    attacker.ai.profile = CreatureAIProfile(target_priority = TargetPriority.NEAREST)
+    attacker.weapons = [melee_weapon(reach = 999)]
+    near = make_monster(name = "Near", ac = 10)
+    far = make_monster(name = "Far", ac = 10)
+    near.team = far.team = "party"
+    combat_state = make_combat_state(attacker, near, far)
+    combat_state.grid.place(near, 1, 0)
+    combat_state.grid.place(far, 9, 0)
+    policy = BeliefUpdatingPolicy()
+
+    score, action = policy.best_attack(attacker, combat_state, {}, bonus_action = False)
+
+    assert action.target is near
+
+def test_weakest_priority_prefers_the_believed_lower_hp_of_two_identical_enemies(make_monster, melee_weapon, make_combat_state):
+    attacker = make_monster(ac = 10)
+    attacker.ai.profile = CreatureAIProfile(target_priority = TargetPriority.WEAKEST)
+    attacker.weapons = [melee_weapon(reach = 999)]
+    weak = make_monster(name = "Weak", ac = 10, max_hp = 20)
+    weak.hp = 20
+    tough = make_monster(name = "Tough", ac = 10, max_hp = 20)
+    tough.hp = 20
+    weak.team = tough.team = "party"
+    combat_state = make_combat_state(attacker, weak, tough)
+    policy = BeliefUpdatingPolicy()
+
+    beliefs = {
+        weak: CombatantBelief.initial_prior_for(weak),
+        tough: CombatantBelief.initial_prior_for(tough),
+    }
+    beliefs[weak].observe_damage(15) # believed nearly dead, even though ground truth hp is identical
+
+    score, action = policy.best_attack(attacker, combat_state, beliefs, bonus_action = False)
+
+    assert action.target is weak
+
+def test_highest_threat_priority_doubles_the_belief_derived_threat_signal(make_monster, melee_weapon, make_combat_state):
+    attacker = make_monster(ac = 10)
+    attacker.weapons = [melee_weapon(reach = 999)]
+    believed_healer = make_monster(name = "Healer", ac = 10)
+    plain_target = make_monster(name = "Plain", ac = 10)
+    believed_healer.team = plain_target.team = "party"
+    combat_state = make_combat_state(attacker, believed_healer, plain_target)
+
+    beliefs = {
+        believed_healer: CombatantBelief.initial_prior_for(believed_healer),
+        plain_target: CombatantBelief.initial_prior_for(plain_target),
+    }
+    beliefs[believed_healer].observe_healing_cast()
+    policy = BeliefUpdatingPolicy()
+
+    attacker.ai.profile = CreatureAIProfile(target_priority = TargetPriority.WEAKEST)
+    weakest_score = policy.score_attack(attacker, believed_healer, attacker.weapons[0], combat_state, beliefs)
+
+    attacker.ai.profile = CreatureAIProfile(target_priority = TargetPriority.HIGHEST_THREAT)
+    highest_threat_score = policy.score_attack(attacker, believed_healer, attacker.weapons[0], combat_state, beliefs)
+
+    assert highest_threat_score > weakest_score
+
+def test_target_priority_does_not_apply_to_player_characters(make_player, make_monster, melee_weapon, make_combat_state):
+    attacker = make_player()
+    attacker.weapons = [melee_weapon(reach = 999)]
+    near = make_monster(name = "Near")
+    far = make_monster(name = "Far")
+    combat_state = make_combat_state(attacker, near, far)
+    combat_state.grid.place(near, 1, 0)
+    combat_state.grid.place(far, 9, 0)
+    policy = BeliefUpdatingPolicy()
+
+    score, action = policy.best_attack(attacker, combat_state, {}, bonus_action = False)
+
+    assert action is not None
+
+# --- Horizon.ONE integration (shared _horizon_penalty base logic covered in test_policy_greedyutility.py) ---
+
+def test_horizon_one_makes_a_melee_attack_score_lower_than_an_otherwise_identical_ranged_one(make_player, make_monster, melee_weapon, ranged_weapon, make_combat_state):
+    attacker = make_player()
+    attacker.ai.profile.tactical_horizon = Horizon.ONE
+    target = make_monster(ac = 10)
+    target.hp = target.max_hp
+    threatening_enemy = make_monster(name = "Threat", ac = 10)
+    threatening_enemy.weapons = [melee_weapon(damage_dice = 4, damage_sides = 10)]
+    combat_state = make_combat_state(attacker, target, threatening_enemy)
+    policy = BeliefUpdatingPolicy()
+    beliefs = {}
+
+    melee_score = policy.score_attack(attacker, target, melee_weapon(reach = 999), combat_state, beliefs)
+    ranged_score = policy.score_attack(attacker, target, ranged_weapon(optimal_distance = 999, maximum_distance = 999), combat_state, beliefs)
+
+    assert ranged_score > melee_score
+
+def test_horizon_none_does_not_penalise_melee_attacks(make_player, make_monster, melee_weapon, ranged_weapon, make_combat_state):
+    attacker = make_player() # default tactical_horizon is NONE
+    target = make_monster(ac = 10)
+    target.hp = target.max_hp
+    combat_state = make_combat_state(attacker, target)
+    combat_state.grid.place(target, 9, 0) # keep the target itself out of melee range too
+    policy = BeliefUpdatingPolicy()
+
+    melee_score = policy.score_attack(attacker, target, melee_weapon(reach = 999), combat_state, {})
+    ranged_score = policy.score_attack(attacker, target, ranged_weapon(optimal_distance = 999, maximum_distance = 999), combat_state, {})
+
+    assert abs(melee_score - ranged_score) < 1e-9

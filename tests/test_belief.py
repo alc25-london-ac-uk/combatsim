@@ -1,5 +1,5 @@
 from belief import CombatantBelief
-from enums import DamageType
+from enums import DamageType, TargetType
 
 # --- CombatantBelief.initial_prior_for ---
 
@@ -204,6 +204,91 @@ def test_observe_damage_mitigation_ignores_a_zero_expected_damage_observation():
     belief.observe_damage_mitigation(DamageType.FIRE, expected_damage = 0, actual_damage = 0)
 
     assert belief.damage_multiplier(DamageType.FIRE) == 1.0
+
+# --- CombatantBelief.ground_truth_for ---
+
+def test_ground_truth_hp_is_an_exact_point_mass(make_monster):
+    monster = make_monster(max_hp = 20)
+    monster.hp = 13
+
+    belief = CombatantBelief.ground_truth_for(monster)
+
+    assert belief.hypotheses == {(13, 20): 1.0}
+    assert belief.expected_hp() == 13
+    assert belief.believed_max_hp == 20
+
+def test_ground_truth_offensive_and_healer_capable_reflect_the_real_spell_list(make_player):
+    from spell import Spell
+    from enums import Ability
+
+    caster = make_player()
+    damage_spell = Spell(
+        name = "Damage Spell", level = 1, target_type = TargetType.ENEMY, damage_type = DamageType.FIRE,
+        damage_dice = 1, damage_sides = 6, range = 60, requires_attack_roll = False,
+        save_allowed = False, save_attribute = Ability.DEXTERITY
+    )
+    heal_spell = Spell(
+        name = "Heal Spell", level = 1, target_type = TargetType.ALLY, damage_type = None,
+        damage_dice = 1, damage_sides = 8, range = 5, requires_attack_roll = False,
+        save_allowed = False, save_attribute = Ability.WISDOM, is_healing = True
+    )
+    caster.spells = [damage_spell, heal_spell]
+
+    belief = CombatantBelief.ground_truth_for(caster)
+
+    assert belief.offensive_capable == 1.0
+    assert belief.healer_capable == 1.0
+
+def test_ground_truth_capability_is_zero_for_a_non_caster(make_monster):
+    monster = make_monster()
+    monster.spells = []
+
+    belief = CombatantBelief.ground_truth_for(monster)
+
+    assert belief.offensive_capable == 0.0
+    assert belief.healer_capable == 0.0
+
+def test_ground_truth_concentrating_reflects_the_real_effect(make_player):
+    from effects import Concentrating, Barkskin
+
+    caster = make_player()
+    not_concentrating = CombatantBelief.ground_truth_for(caster)
+    assert not_concentrating.concentrating == 0.0
+
+    caster.add_effect(Concentrating(maintained_effect = Barkskin(), maintained_target = caster))
+    concentrating = CombatantBelief.ground_truth_for(caster)
+
+    assert concentrating.concentrating == 1.0
+
+def test_ground_truth_depleted_is_zero_while_any_slot_remains(make_player):
+    caster = make_player()
+    caster.spell_slots = {1: 0, 2: 1, 3: 0}
+
+    belief = CombatantBelief.ground_truth_for(caster)
+
+    assert belief.depleted == 0.0
+
+def test_ground_truth_depleted_is_one_once_every_slot_is_spent(make_player):
+    caster = make_player()
+    caster.spell_slots = {1: 0, 2: 0, 3: 0}
+
+    belief = CombatantBelief.ground_truth_for(caster)
+
+    assert belief.depleted == 1.0
+
+def test_ground_truth_damage_multipliers_match_the_real_resistances(make_monster):
+    monster = make_monster(
+        damage_resistances = [DamageType.BLUDGEONING],
+        damage_vulnerabilities = [DamageType.FIRE],
+        damage_immunities = [DamageType.POISON]
+    )
+
+    belief = CombatantBelief.ground_truth_for(monster)
+
+    assert belief.damage_multiplier(DamageType.BLUDGEONING) == 0.5
+    assert belief.damage_multiplier(DamageType.FIRE) == 2.0
+    assert belief.damage_multiplier(DamageType.POISON) == 0.0
+    assert belief.damage_multiplier(DamageType.COLD) == 1.0 # untouched type stays at the default
 
 # --- CombatantBelief.for_monster ---
 

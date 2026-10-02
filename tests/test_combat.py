@@ -143,8 +143,6 @@ def test_broadcast_observations_counts_an_aoe_concentration_spell_as_one_cast(ma
     ]
     broadcast_observations(caster, results, combat_state)
 
-    # a direct assignment is idempotent regardless of dedup, but this confirms the dedup path still
-    # runs correctly for concentration alongside the offensive/healing flags on the same result set
     assert abs(bystander.ai.beliefs[caster].concentrating - 0.95) < 1e-9
 
 def test_broadcast_observations_decays_concentration_belief_via_the_existing_damage_path(make_player, make_monster, make_combat_state):
@@ -317,9 +315,10 @@ def test_run_combat_returns_party_when_all_enemies_are_defeated(monkeypatch, mak
     enemy = make_monster(ac = 1, max_hp = 1)
     enemy.weapons = [] # cannot fight back
 
-    winner = run_combat([attacker], [enemy], log = False)
+    winner, round_num = run_combat([attacker], [enemy], log = False)
 
     assert winner == "party"
+    assert round_num >= 1
 
 def test_run_combat_returns_enemies_when_the_party_is_defeated(monkeypatch, make_player, make_monster, melee_weapon):
     monkeypatch.setattr("random.randint", lambda a, b: 15)
@@ -329,9 +328,10 @@ def test_run_combat_returns_enemies_when_the_party_is_defeated(monkeypatch, make
     enemy = make_monster()
     enemy.weapons = [melee_weapon()]
 
-    winner = run_combat([defender], [enemy], log = False)
+    winner, round_num = run_combat([defender], [enemy], log = False)
 
     assert winner == "enemies"
+    assert round_num >= 1
 
 def test_run_combat_returns_draw_when_neither_side_can_deal_damage(make_player, make_monster):
     passive_player = make_player()
@@ -339,16 +339,17 @@ def test_run_combat_returns_draw_when_neither_side_can_deal_damage(make_player, 
     passive_monster = make_monster()
     passive_monster.weapons = []
 
-    winner = run_combat([passive_player], [passive_monster], log = False)
+    winner, round_num = run_combat([passive_player], [passive_monster], log = False)
 
     assert winner == "draw"
+    assert round_num == 51 # hits the round cap, since neither side can ever defeat the other
 
 # --- monte_carlo: aggregation, independent of actual combat mechanics ---
 
 def test_monte_carlo_aggregates_percentages_correctly(monkeypatch):
-    outcomes = iter(["party", "party", "party", "enemies", "draw"])
+    outcomes = iter([("party", 3), ("party", 5), ("party", 4), ("enemies", 10), ("draw", 51)])
     monkeypatch.setattr(combat, "run_combat", lambda party, enemies, log: next(outcomes))
 
     results = monte_carlo([], [], n = 5, log = False)
 
-    assert results == {"party_win_pct": 60.0, "enemy_win_pct": 20.0, "draw_pct": 20.0, "n": 5}
+    assert results == {"party_win_pct": 60.0, "enemy_win_pct": 20.0, "draw_pct": 20.0, "average_rounds": 14.6, "n": 5}

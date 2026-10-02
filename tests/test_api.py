@@ -6,12 +6,11 @@ from api import app
 client = TestClient(app)
 
 def test_simulate_returns_win_rate_percentages_summing_to_100():
-    # small n keeps this fast; the real app defaults to 10000
     response = client.get("/simulate", params = {"goblins": 1, "hobgoblins": 0, "n": 20})
 
     assert response.status_code == 200
     data = response.json()
-    assert set(data.keys()) == {"party_win_pct", "enemy_win_pct", "draw_pct", "n"}
+    assert set(data.keys()) == {"party_win_pct", "enemy_win_pct", "draw_pct", "average_rounds", "n"}
     assert data["n"] == 20
     assert data["party_win_pct"] + data["enemy_win_pct"] + data["draw_pct"] == pytest.approx(100.0)
 

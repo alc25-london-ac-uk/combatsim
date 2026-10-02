@@ -1,6 +1,6 @@
 from typing import Optional
 
-from enums import TargetType
+from enums import TargetType, TargetPriority
 from weapon import Weapon, MeleeWeapon, RangedWeapon
 from spell import Spell
 from effects import Concentrating
@@ -9,8 +9,27 @@ from world import CombatState
 from combatant import Combatant
 from policy import Policy
 from belief import CombatantBelief
+from ai_profile import CreatureAIProfile
+
+NEAREST_WEIGHT = 0.05
+WEAKEST_WEIGHT = 2.0
 
 class GreedyUtilityPolicy(Policy):
+    def _target_priority_bonus(self, combatant: Combatant, target: Combatant, distance: int) -> float:
+        profile = combatant.ai.profile
+        if not isinstance(profile, CreatureAIProfile):
+            return 0.0
+
+        match profile.target_priority:
+            case TargetPriority.NEAREST:
+                return -distance * NEAREST_WEIGHT
+            case TargetPriority.WEAKEST:
+                return (1 - target.hp / target.max_hp) * WEAKEST_WEIGHT
+            case TargetPriority.HIGHEST_THREAT:
+                return 0.0
+
+        return 0.0
+
     def decide(self, combatant: Combatant, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief], bonus_action: bool = False) -> Action:
         best_score = -1.0
         best_action = None
@@ -63,11 +82,13 @@ class GreedyUtilityPolicy(Policy):
         )
         kill_bonus = min(1, expected_damage / max(1, target.hp)) * 2.0
         distance = combat_state.grid.distance(combatant, target)
+        target_priority_bonus = self._target_priority_bonus(combatant, target, distance)
+        horizon_penalty = self._horizon_penalty(combatant, combat_state, isinstance(weapon, MeleeWeapon))
         movement_penalty = max(0, distance - weapon.range) / combatant.speed
         if any(e.forbids_approaching(target) for e in combatant.effects):
             movement_penalty = 100
 
-        return expected_damage + kill_bonus - movement_penalty
+        return expected_damage + kill_bonus + target_priority_bonus + horizon_penalty - movement_penalty
 
     def best_spell(self, combatant: Combatant, combat_state: CombatState, bonus_action: bool = False) -> tuple[float, Optional[Action]]:
         best_score = -1.0
@@ -95,11 +116,12 @@ class GreedyUtilityPolicy(Policy):
             movement_penalty = 100
 
         concentration_penalty = 3.0 if spell.concentration and combatant.has_effect(Concentrating) else 0.0
+        horizon_penalty = self._horizon_penalty(combatant, combat_state, spell.range <= 5)
 
-        targets = determine_targets(target, spell, combat_state)        
+        targets = determine_targets(target, spell, combat_state)
         total = sum(self.score_spell_hit(combatant, t, spell, combat_state) for t in targets)
 
-        return total - movement_penalty - concentration_penalty
+        return total - movement_penalty - concentration_penalty + horizon_penalty
     
     def score_spell_hit(self, combatant: Combatant, target: Combatant, spell: Spell, combat_state: CombatState) -> float:
         is_ally = target.team == combatant.team

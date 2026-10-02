@@ -23,15 +23,9 @@ def log_action(combatant: Combatant, results: list[ActionResult]) -> list[str]:
     return log
 
 def broadcast_observations(actor: Combatant, results: list[ActionResult], combat_state: CombatState) -> None:
-    # Deduplicated per turn, not per result: an AoE spell produces one ActionResult per target hit,
-    # but that's still only one witnessed cast, not one per target. A main action and a bonus action
-    # spell in the same turn are genuinely two separate casts, so both can be True independently.
     cast_offensive = any(r.action_type == ActionType.SPELL and not r.is_healing for r in results)
     cast_healing = any(r.action_type == ActionType.SPELL and r.is_healing for r in results)
     cast_concentration = any(r.action_type == ActionType.SPELL and r.concentration for r in results)
-    # Deduped by distinct spell name, not a single boolean: a main action and a bonus action spell in
-    # the same turn are two genuinely separate slot expenditures, while an AoE spell hitting several
-    # targets (several ActionResults, same spell name) is still only one.
     leveled_spells_cast = {r.spell for r in results if r.action_type == ActionType.SPELL and r.spell_level > 0}
 
     if cast_offensive or cast_healing or cast_concentration or leveled_spells_cast:
@@ -172,7 +166,7 @@ def run_combat_live(party: list[Combatant], enemies: list[Combatant]):
             if winner:
                 return
 
-def run_combat(party: list[Combatant], enemies: list[Combatant], log: bool = False) -> str:
+def run_combat(party: list[Combatant], enemies: list[Combatant], log: bool = False) -> tuple[str, int]:
     combat_state = CombatState(
         grid = Grid(10, 10),
         initiative_order = sorted(party + enemies,
@@ -229,22 +223,25 @@ def run_combat(party: list[Combatant], enemies: list[Combatant], log: bool = Fal
             print()
 
         if (not enemies_alive and not party_alive) or round_num > 50:
-            return "draw"
+            return "draw", round_num
         if not enemies_alive:
-            return "party"
+            return "party", round_num
         if not party_alive:
-            return "enemies"
-        
+            return "enemies", round_num
+
 def monte_carlo(party: list[Combatant], enemies: list[Combatant], n: int = 10000, log: bool = False) -> dict:
     results = {"party": 0, "enemies": 0, "draw": 0}
+    total_rounds = 0
 
     for _ in range(n):
-        winner = run_combat(party, enemies, log)
+        winner, round_num = run_combat(party, enemies, log)
         results[winner] += 1
+        total_rounds += round_num
 
     return {
         "party_win_pct": results["party"] / n * 100,
         "enemy_win_pct": results["enemies"] / n * 100,
         "draw_pct": results["draw"] / n * 100,
+        "average_rounds": total_rounds / n,
         "n": n
     }

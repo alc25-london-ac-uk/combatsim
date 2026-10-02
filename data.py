@@ -1,10 +1,13 @@
 import json
 import copy
+from typing import Optional
 
 from enums import TargetType, DamageType
 from combatant import Combatant, PlayerCharacter, Monster, AbilityScores, Weapon, MeleeWeapon, RangedWeapon, Spell, Ability
 from effects import Effect, EFFECT_REGISTRY, AcidArrow, Barkskin, Blind, Concentrating, Paralysed
 from ai import CombatantAI
+from policy import Policy
+from ai_profile import AIProfile
 
 def load_weapons(filepath: str) -> dict[str, Weapon]:
     with open(filepath) as f:
@@ -105,7 +108,8 @@ def parse_spell(entry: dict) -> Spell:
         upcastable_extra_damage_die = entry.get("upcastable_extra_damage_die", False),
         upcastable_extra_target = entry.get("upcastable_extra_target", False),
         target_type = TargetType(entry.get("target_type")) if entry.get("target_type") else None,
-        is_healing = entry.get("is_healing", False)
+        is_healing = entry.get("is_healing", False),
+        is_bonus_action = entry.get("is_bonus_action", False)
     )
 
 def parse_monster(entry: dict, weapon_registry: dict[str, Weapon], spell_registry: dict[str, Spell]) -> Monster:
@@ -134,6 +138,7 @@ def parse_monster(entry: dict, weapon_registry: dict[str, Weapon], spell_registr
         attack_bonus = entry["attack_bonus"],
         spell_bonus = entry.get("spell_bonus", 0),
         spellcaster_level = entry.get("spellcaster_level", 0),
+        challenge_rating = entry["challenge_rating"],
         weapons = weapons,
         spells = spells,
         damage_vulnerabilities = [DamageType[v] for v in entry.get("damage_vulnerabilities", [])],
@@ -171,8 +176,12 @@ def parse_player_character(entry: dict, weapon_registry: dict[str, Weapon], spel
         spells = spells
     )
 
-def spawn(registry: dict[str, Combatant], name: str, label: str = "") -> Combatant:
+def spawn(registry: dict[str, Combatant], name: str, label: str = "", policy: Optional[Policy] = None, profile: Optional[AIProfile] = None) -> Combatant:
     combatant = copy.deepcopy(registry[name])
     combatant.name = label or name
     combatant.ai = CombatantAI(combatant)
+    if policy is not None:
+        combatant.ai.policy = policy
+    if profile is not None:
+        combatant.ai.profile = profile
     return combatant

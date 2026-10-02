@@ -45,7 +45,11 @@
             "Blindness",
             "Cure Wounds",
             "Sacred Flame",
-            "Hold Person"
+            "Hold Person",
+            "Inflict Wounds",
+            "Healing Word",
+            "Barkskin",
+            "Spirit Guardians"
         ]
     },
     {
@@ -73,7 +77,10 @@
             "Acid Arrow",
             "Blindness",
             "Fireball",
-            "Hold Person"
+            "Hold Person",
+            "Fire Bolt",
+            "Magic Missile",
+            "Vampiric Touch"
         ]
     }
 ]

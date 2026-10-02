@@ -3,9 +3,12 @@ from pathlib import Path
 
 import pytest
 
-from data import load_weapons, load_spells, load_monsters, load_players, parse_player_character, parse_monster
-from enums import DamageType, TargetType
+from data import load_weapons, load_spells, load_monsters, load_players, parse_player_character, parse_monster, spawn
+from enums import DamageType, TargetType, TargetPriority
 from weapon import MeleeWeapon
+from policy_greedyutility import GreedyUtilityPolicy
+from policy_beliefupdating import BeliefUpdatingPolicy
+from ai_profile import CreatureAIProfile
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -84,6 +87,39 @@ def test_duplicate_weapon_names_produce_independent_objects_for_players(weapon_r
     assert first_weapon.is_off_hand is False
     assert second_weapon.is_off_hand is True
 
+# --- spawn() ---
+
+def test_spawn_defaults_to_the_greedy_utility_policy(monster_registry):
+    goblin = spawn(monster_registry, "Goblin")
+
+    assert isinstance(goblin.ai.policy, GreedyUtilityPolicy)
+
+def test_spawn_accepts_an_explicit_policy_override(monster_registry):
+    goblin = spawn(monster_registry, "Goblin", policy = BeliefUpdatingPolicy())
+
+    assert isinstance(goblin.ai.policy, BeliefUpdatingPolicy)
+
+def test_spawn_gives_each_combatant_their_own_beliefs_dict(monster_registry):
+    shared_policy = BeliefUpdatingPolicy()
+    first = spawn(monster_registry, "Goblin", label = "A", policy = shared_policy)
+    second = spawn(monster_registry, "Goblin", label = "B", policy = shared_policy)
+
+    assert first.ai.policy is second.ai.policy # sharing one stateless policy instance is fine
+    assert first.ai.beliefs is not second.ai.beliefs # but beliefs must never be shared
+
+def test_spawn_defaults_to_a_creature_ai_profile_for_monsters(monster_registry):
+    goblin = spawn(monster_registry, "Goblin")
+
+    assert isinstance(goblin.ai.profile, CreatureAIProfile)
+
+def test_spawn_accepts_an_explicit_profile_override(monster_registry):
+    custom_profile = CreatureAIProfile(target_priority = TargetPriority.HIGHEST_THREAT)
+
+    goblin = spawn(monster_registry, "Goblin", profile = custom_profile)
+
+    assert goblin.ai.profile is custom_profile
+    assert goblin.ai.profile.target_priority == TargetPriority.HIGHEST_THREAT
+
 def test_duplicate_weapon_names_produce_independent_objects_for_monsters(weapon_registry, spell_registry):
     entry = {
         "name": "Test Dual Wielding Monster",
@@ -93,6 +129,7 @@ def test_duplicate_weapon_names_produce_independent_objects_for_monsters(weapon_
         "intelligence": 10, "wisdom": 10, "charisma": 10,
         "attack_count": 2,
         "attack_bonus": 3,
+        "challenge_rating": 1,
         "weapons": [
             {"name": "Scimitar", "is_off_hand": False},
             {"name": "Scimitar", "is_off_hand": True}

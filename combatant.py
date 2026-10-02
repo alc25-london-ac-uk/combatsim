@@ -57,6 +57,7 @@ class Combatant(ABC):
     team: str = "unassigned"
     hp: int = 1
     movement: int = field(init = False)
+    max_spell_slots: dict[int, int] = field(init = False, default_factory = dict)
     attack_count: int = 1
     has_action: bool = True
     has_bonus_action: bool = True
@@ -68,6 +69,7 @@ class Combatant(ABC):
 
     def __post_init__(self):
         self.movement = self.speed
+        self.max_spell_slots = dict(self.spell_slots)
 
     @property
     def alive(self) -> bool:
@@ -108,10 +110,14 @@ class Combatant(ABC):
     def reset(self) -> None:
         self.hp = self.max_hp
         self.movement = self.speed
+        self.spell_slots = dict(self.max_spell_slots)
 
         self.has_action = True
         self.has_bonus_action = True
         self.has_reaction = True
+
+        if self.ai is not None:
+            self.ai.reset()
 
         for e in list(self.effects):
             self.remove_effect(e)
@@ -237,6 +243,7 @@ class Monster(Combatant):
     attack_bonus: int = 0
     spell_bonus: int = 0
     spellcaster_level: int = 0
+    challenge_rating: float = 0.0
 
     def get_attack_bonus(self, weapon: Weapon) -> int:
         return self.attack_bonus

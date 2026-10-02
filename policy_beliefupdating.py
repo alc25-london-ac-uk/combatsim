@@ -1,6 +1,6 @@
 from typing import Optional
 
-from enums import TargetType
+from enums import TargetType, TargetPriority
 from weapon import Weapon, MeleeWeapon, RangedWeapon
 from spell import Spell
 from effects import Concentrating
@@ -9,12 +9,20 @@ from world import CombatState
 from combatant import Combatant
 from policy import Policy
 from belief import CombatantBelief
+from ai_profile import CreatureAIProfile
 
 HEALER_PRIORITY_WEIGHT = 1.5
 CONCENTRATION_PRIORITY_WEIGHT = 1.0
 OFFENSIVE_PRIORITY_WEIGHT = 0.5
 
+NEAREST_WEIGHT = 0.05
+WEAKEST_WEIGHT = 2.0
+HIGHEST_THREAT_WEIGHT = 1.0
+
 class BeliefUpdatingPolicy(Policy):
+    def _belief_for(self, target: Combatant, beliefs: dict[Combatant, CombatantBelief]) -> CombatantBelief:
+        return beliefs.setdefault(target, CombatantBelief.initial_prior_for(target))
+
     def _priority_bonus(self, belief: CombatantBelief) -> float:
         remaining_resource_confidence = 1 - belief.depleted
         return (
@@ -22,6 +30,22 @@ class BeliefUpdatingPolicy(Policy):
             + belief.concentrating * CONCENTRATION_PRIORITY_WEIGHT
             + belief.offensive_capable * remaining_resource_confidence * OFFENSIVE_PRIORITY_WEIGHT
         )
+
+    def _target_priority_bonus(self, combatant: Combatant, target: Combatant, distance: int, belief: CombatantBelief) -> float:
+        profile = combatant.ai.profile
+        if not isinstance(profile, CreatureAIProfile):
+            return 0.0
+
+        match profile.target_priority:
+            case TargetPriority.NEAREST:
+                return -distance * NEAREST_WEIGHT
+            case TargetPriority.WEAKEST:
+                believed_hp_fraction = belief.expected_hp() / belief.believed_max_hp if belief.believed_max_hp > 0 else 0.0
+                return (1 - believed_hp_fraction) * WEAKEST_WEIGHT
+            case TargetPriority.HIGHEST_THREAT:
+                return self._priority_bonus(belief) * HIGHEST_THREAT_WEIGHT
+
+        return 0.0
 
     def decide(self, combatant: Combatant, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief], bonus_action: bool = False) -> Action:
         action_candidates = [
@@ -70,17 +94,19 @@ class BeliefUpdatingPolicy(Policy):
             + combatant.get_damage_bonus(weapon)
         )
 
-        belief = beliefs.setdefault(target, CombatantBelief.initial_prior_for(target))
+        belief = self._belief_for(target, beliefs)
         expected_damage *= belief.damage_multiplier(weapon.damage_type)
         kill_bonus = belief.probability_at_or_below(round(expected_damage)) * 2.0
         priority_bonus = self._priority_bonus(belief)
 
         distance = combat_state.grid.distance(combatant, target)
+        target_priority_bonus = self._target_priority_bonus(combatant, target, distance, belief)
+        horizon_penalty = self._horizon_penalty(combatant, combat_state, isinstance(weapon, MeleeWeapon))
         movement_penalty = max(0, distance - weapon.range) / combatant.speed
         if any(e.forbids_approaching(target) for e in combatant.effects):
             movement_penalty = 100
 
-        return expected_damage + kill_bonus + priority_bonus - movement_penalty
+        return expected_damage + kill_bonus + priority_bonus + target_priority_bonus + horizon_penalty - movement_penalty
 
     def best_spell(self, combatant: Combatant, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief], bonus_action: bool = False) -> tuple[float, Optional[Action]]:
         best_score = -1.0
@@ -108,15 +134,16 @@ class BeliefUpdatingPolicy(Policy):
             movement_penalty = 100
 
         concentration_penalty = 3.0 if spell.concentration and combatant.has_effect(Concentrating) else 0.0
+        horizon_penalty = self._horizon_penalty(combatant, combat_state, spell.range <= 5)
 
         targets = determine_targets(target, spell, combat_state)
         total = sum(self.score_spell_hit(combatant, t, spell, combat_state, beliefs) for t in targets)
 
-        return total - movement_penalty - concentration_penalty
+        return total - movement_penalty - concentration_penalty + horizon_penalty
 
     def score_spell_hit(self, combatant: Combatant, target: Combatant, spell: Spell, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief]) -> float:
         is_ally = target.team == combatant.team
-        belief = beliefs.setdefault(target, CombatantBelief.initial_prior_for(target))
+        belief = self._belief_for(target, beliefs)
         believed_hp_fraction = belief.expected_hp() / belief.believed_max_hp if belief.believed_max_hp > 0 else 0.0
 
         if spell.is_healing:

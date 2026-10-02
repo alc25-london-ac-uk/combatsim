@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 
 from combatant import Combatant, Monster, PlayerCharacter
 from enums import DamageType
+from effects import Concentrating
 
 PC_HIT_DICE = {"cleric": 8, "rogue": 8, "fighter": 10, "wizard": 6}
 PC_CON_MOD_RANGE = range(-1, 5)
@@ -77,6 +78,30 @@ class CombatantBelief:
             return CombatantBelief.for_player_character(combatant.character_class, combatant.level)
         else:
             raise TypeError(f"No belief prior defined for combatant type {type(combatant).__name__}")
+
+    @staticmethod
+    def ground_truth_for(combatant: Combatant) -> "CombatantBelief":
+        offensive_capable = 1.0 if any(not spell.is_healing for spell in combatant.spells) else 0.0
+        healer_capable = 1.0 if any(spell.is_healing for spell in combatant.spells) else 0.0
+        concentrating = 1.0 if combatant.has_effect(Concentrating) else 0.0
+        depleted = 0.0 if any(count > 0 for count in combatant.spell_slots.values()) else 1.0
+
+        damage_multipliers = {}
+        for damage_type in combatant.damage_resistances:
+            damage_multipliers[damage_type] = 0.5
+        for damage_type in combatant.damage_vulnerabilities:
+            damage_multipliers[damage_type] = 2.0
+        for damage_type in combatant.damage_immunities:
+            damage_multipliers[damage_type] = 0.0
+
+        return CombatantBelief(
+            hypotheses = {(combatant.hp, combatant.max_hp): 1.0},
+            offensive_capable = offensive_capable,
+            healer_capable = healer_capable,
+            concentrating = concentrating,
+            depleted = depleted,
+            damage_multipliers = damage_multipliers
+        )
 
     def observe_damage(self, damage: int) -> None:
         new_hypotheses: dict[tuple[int, int], float] = {}

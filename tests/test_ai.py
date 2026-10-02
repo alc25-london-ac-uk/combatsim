@@ -1,5 +1,18 @@
 from enums import ActionType
 from effects import Paralysed
+from ai_profile import CreatureAIProfile, PlayerAIProfile
+
+# --- CombatantAI: AIProfile dispatch ---
+
+def test_combatant_ai_gives_monsters_a_creature_ai_profile(make_monster):
+    monster = make_monster()
+
+    assert isinstance(monster.ai.profile, CreatureAIProfile)
+
+def test_combatant_ai_gives_players_a_player_ai_profile(make_player):
+    player = make_player()
+
+    assert isinstance(player.ai.profile, PlayerAIProfile)
 
 # --- take_turn(): action-economy resource consumption ---
 

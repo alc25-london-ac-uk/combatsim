@@ -1,22 +1,37 @@
 from typing import Optional
 
 from enums import AttackResult, ActionType, TargetType
-from combatant import Combatant, Weapon, MeleeWeapon, RangedWeapon, Spell, Ability
+from combatant import Combatant, Monster, PlayerCharacter, Weapon, MeleeWeapon, RangedWeapon, Spell, Ability
 from effects import Effect, AcidArrow, Barkskin, Blind, Concentrating, Paralysed
 from world import CombatState, Position
 from actions import Action, ActionResult, SpellHitResult, move_towards_target, attack, cast_spell, determine_targets
 from policy import Policy
 from policy_greedyutility import GreedyUtilityPolicy
 from belief import CombatantBelief
+from ai_profile import AIProfile, CreatureAIProfile, PlayerAIProfile
 
 class CombatantAI:
     combatant: Combatant
     policy: Policy
     beliefs: dict[Combatant, CombatantBelief]
+    profile: AIProfile
 
     def __init__(self, combatant: Combatant):
         self.combatant = combatant
         self.policy = GreedyUtilityPolicy()
+        self.beliefs = {}
+        if isinstance(combatant, Monster):
+            self.profile = CreatureAIProfile()
+        elif isinstance(combatant, PlayerCharacter):
+            self.profile = PlayerAIProfile()
+        else:
+            self.profile = AIProfile()
+
+    def reset(self) -> None:
+        # Beliefs are per-encounter learned state -- each new combat is a fresh encounter with no
+        # memory of unrelated previous ones, even when the same object instances are reused across
+        # repeated Monte Carlo trials. policy/profile are deliberate, persistent configuration and
+        # are left untouched.
         self.beliefs = {}
 
     def take_turn(self, combat_state: CombatState) -> list[ActionResult]:
