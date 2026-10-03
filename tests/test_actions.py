@@ -365,6 +365,7 @@ def test_leaving_melee_reach_triggers_an_opportunity_attack(monkeypatch):
     assert len(opportunity_attacks) == 1
     assert opportunity_attacks[0].actor == "Reactor"
     assert opportunity_attacks[0].target is mover
+    assert opportunity_attacks[0].opportunity_attack is True
     assert reactor.has_reaction is False
 
 def test_no_opportunity_attack_when_reactor_has_no_reaction_left(monkeypatch):

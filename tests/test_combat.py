@@ -299,6 +299,66 @@ def test_format_spell_result_reports_healing(make_player):
 
     assert "heals 7" in text
 
+def test_an_attack_that_drops_the_target_below_zero_reports_it_dead_not_its_negative_hp(make_player):
+    attacker = make_player(name = "Attacker")
+    target = make_player(name = "Target")
+    killing_blow = ActionResult(action_type = ActionType.ATTACK, target = target, actor = "Attacker", weapon = "Sword", amount = 30, attack_result = AttackResult.HIT, target_hp_after_action = -22)
+
+    text = format_attack_result(attacker, killing_blow)
+
+    assert text == "Attacker attacks Target with Sword - 30 damage. Target is dead."
+
+def test_a_target_left_at_exactly_zero_hp_is_dead(make_player):
+    attacker = make_player(name = "Attacker")
+    target = make_player(name = "Target")
+    result = ActionResult(action_type = ActionType.ATTACK, target = target, actor = "Attacker", weapon = "Sword", amount = 5, attack_result = AttackResult.HIT, target_hp_after_action = 0)
+
+    assert format_attack_result(attacker, result).endswith("Target is dead.")
+
+def test_a_target_left_alive_still_reports_its_remaining_hp(make_player):
+    attacker = make_player(name = "Attacker")
+    target = make_player(name = "Target")
+    result = ActionResult(action_type = ActionType.ATTACK, target = target, actor = "Attacker", weapon = "Sword", amount = 5, attack_result = AttackResult.HIT, target_hp_after_action = 1)
+
+    assert format_attack_result(attacker, result).endswith("Target has 1 HP remaining.")
+
+def test_a_spell_that_kills_reports_the_target_dead(make_player):
+    caster = make_player(name = "Wizard")
+    target = make_player(name = "Ant")
+    result = _spell_hit(target)
+    result.target_hp_after_action = -9
+
+    lines = log_action(caster, [result])
+
+    assert lines[0] == "Wizard casts Fireball on Ant - 8 damage. Ant is dead."
+
+def test_each_target_of_a_multi_target_spell_is_reported_dead_or_alive_individually(make_player):
+    caster = make_player(name = "Wizard")
+    dead, alive = make_player(name = "Ant"), make_player(name = "Bee")
+    killed, survived = _spell_hit(dead), _spell_hit(alive)
+    killed.target_hp_after_action = -3
+
+    lines = log_action(caster, [killed, survived])
+
+    assert "  Ant - 8 damage. Ant is dead." in lines
+    assert "  Bee - 8 damage. Bee has 12 HP remaining." in lines
+
+def test_an_opportunity_attack_is_reported_as_one(make_player):
+    mover = make_player(name = "Mover")
+    result = ActionResult(
+        action_type = ActionType.ATTACK, target = mover, actor = "Reactor", weapon = "Sword", amount = 7,
+        attack_result = AttackResult.HIT, target_hp_after_action = 10, opportunity_attack = True
+    )
+
+    assert format_attack_result(mover, result) == "Reactor makes an opportunity attack on Mover with Sword - 7 damage. Mover has 10 HP remaining."
+
+def test_an_ordinary_attack_is_not_reported_as_an_opportunity_attack(make_player):
+    attacker = make_player(name = "Attacker")
+    target = make_player(name = "Target")
+    result = ActionResult(action_type = ActionType.ATTACK, target = target, actor = "Attacker", weapon = "Sword", attack_result = AttackResult.MISS)
+
+    assert "opportunity" not in format_attack_result(attacker, result)
+
 def test_log_action_reports_none_action_as_skipped(make_player):
     turn_holder = make_player(name = "Idle")
     result = ActionResult(action_type = ActionType.NONE, target = turn_holder)
@@ -306,6 +366,102 @@ def test_log_action_reports_none_action_as_skipped(make_player):
     lines = log_action(turn_holder, [result])
 
     assert lines == ["Idle skipped their turn."]
+
+# --- log_action: movement, skipped turns and multi-target spells ---
+
+def _move(target, x, y):
+    return ActionResult(action_type = ActionType.MOVE, target = target, combatant_x = x, combatant_y = y)
+
+def _attack(target, actor = "Mover"):
+    return ActionResult(action_type = ActionType.ATTACK, target = target, actor = actor, weapon = "Sword", attack_result = AttackResult.MISS, rationale = "closest")
+
+def _spell_hit(target, spell = "Fireball", actor = "Wizard"):
+    return ActionResult(action_type = ActionType.SPELL, target = target, actor = actor, spell = spell, amount = 8, attack_result = AttackResult.HIT, target_hp_after_action = 12, rationale = "best score")
+
+def test_a_single_step_is_logged_without_a_path(make_player):
+    mover = make_player(name = "Mover")
+
+    assert log_action(mover, [_move(mover, 4, 8)]) == ["Mover moved to 4,8"]
+
+def test_consecutive_steps_are_logged_as_one_move_listing_the_squares_passed(make_player):
+    mover = make_player(name = "Mover")
+    steps = [_move(mover, 4, 8), _move(mover, 3, 7), _move(mover, 2, 6), _move(mover, 1, 5)]
+
+    assert log_action(mover, steps) == ["Mover moved to 1,5 (via 4,8, 3,7, 2,6)"]
+
+def test_steps_either_side_of_an_attack_are_logged_as_separate_moves(make_player):
+    mover = make_player(name = "Mover")
+    target = make_player(name = "Target")
+
+    lines = log_action(mover, [_move(mover, 1, 1), _attack(target), _move(mover, 2, 2)])
+
+    assert lines[0] == "Mover moved to 1,1"
+    assert lines[1].startswith("Mover attacks Target")
+    assert lines[-1] == "Mover moved to 2,2"
+
+def test_an_unused_bonus_action_after_an_attack_is_not_logged_as_a_skipped_turn(make_player):
+    mover = make_player(name = "Mover")
+    target = make_player(name = "Target")
+    no_bonus_action = ActionResult(action_type = ActionType.NONE, target = mover)
+
+    lines = log_action(mover, [_attack(target), no_bonus_action])
+
+    assert not any("skipped" in line for line in lines)
+
+def test_a_turn_spent_only_moving_is_not_logged_as_skipped_even_with_no_other_action(make_player):
+    mover = make_player(name = "Mover")
+    no_bonus_action = ActionResult(action_type = ActionType.NONE, target = mover)
+
+    lines = log_action(mover, [_move(mover, 1, 1), no_bonus_action])
+
+    assert lines == ["Mover moved to 1,1"]
+
+def test_a_turn_with_nothing_to_do_is_logged_as_skipped_only_once(make_player):
+    idle = make_player(name = "Idle")
+    nothing = ActionResult(action_type = ActionType.NONE, target = idle)
+
+    assert log_action(idle, [nothing, nothing]) == ["Idle skipped their turn."]
+
+def test_a_turn_lost_to_an_effect_names_the_effect(make_player):
+    held = make_player(name = "Held")
+    lost = ActionResult(action_type = ActionType.NONE, target = held, rationale = "Paralysed")
+
+    assert log_action(held, [lost]) == ["Held is paralysed and loses their turn."]
+
+def test_a_spell_that_hit_several_targets_is_one_heading_with_an_indented_line_per_target(make_player):
+    targets = [make_player(name = name) for name in ("Ant", "Bee", "Cat")]
+
+    lines = log_action(make_player(name = "Wizard"), [_spell_hit(t) for t in targets])
+
+    assert lines[0] == "Wizard casts Fireball:"
+    assert [line for line in lines if line.startswith("  ")] == [
+        "  Ant - 8 damage. Ant has 12 HP remaining.",
+        "  Bee - 8 damage. Bee has 12 HP remaining.",
+        "  Cat - 8 damage. Cat has 12 HP remaining.",
+    ]
+
+def test_a_multi_target_spell_logs_its_rationale_once(make_player):
+    targets = [make_player(name = name) for name in ("Ant", "Bee")]
+
+    lines = log_action(make_player(name = "Wizard"), [_spell_hit(t) for t in targets])
+
+    assert [line for line in lines if line.strip().startswith("->")] == [" -> best score"]
+
+def test_a_spell_with_one_target_stays_on_one_line(make_player):
+    target = make_player(name = "Ant")
+
+    lines = log_action(make_player(name = "Wizard"), [_spell_hit(target)])
+
+    assert lines[0] == "Wizard casts Fireball on Ant - 8 damage. Ant has 12 HP remaining."
+    assert not any(line.startswith("  ") for line in lines)
+
+def test_two_different_spells_in_one_turn_are_not_grouped(make_player):
+    target = make_player(name = "Ant")
+
+    lines = log_action(make_player(name = "Wizard"), [_spell_hit(target, "Fireball"), _spell_hit(target, "Shield of Faith")])
+
+    assert lines[0].startswith("Wizard casts Fireball on Ant")
+    assert any(line.startswith("Wizard casts Shield of Faith on Ant") for line in lines)
 
 # --- run_combat: win/draw conditions ---
 

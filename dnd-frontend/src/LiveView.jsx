@@ -12,11 +12,11 @@ function Roster({ positions, actingName }) {
   const slotText = p => Object.entries(p.max_spell_slots).map(([level, max]) => `L${level} ${p.spell_slots[level] ?? 0}/${max}`).join("  ")
 
   return (
-    <div style={{ ...panelStyle, boxSizing: "border-box", marginTop: 16, fontFamily: FONT, fontSize: 11 }}>
+    <div style={{ ...panelStyle, boxSizing: "border-box", width: 480, flexShrink: 0, fontFamily: FONT, fontSize: 11 }}>
       <div style={{ ...headingStyle, marginBottom: 12 }}>Combatants</div>
       <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
         {[["party", "PCs", C.party], ["enemies", "Monsters", C.enemy]].map(([team, title, colour]) => (
-          <div key={team} style={{ width: 214 }}>
+          <div key={team} style={{ flex: "1 1 200px" }}>
             <div style={{ ...labelStyle, color: colour, marginBottom: 4 }}>{title}</div>
             {side(team).map(p => (
               <div key={p.name} style={{ marginBottom: 4, opacity: p.alive ? 1 : 0.4 }}>
@@ -101,7 +101,6 @@ export default function LiveView() {
   const decisions = frame?.decisions ?? []
   const actingName = decisions[0]?.combatant
   const actingTeam = frame?.positions.find(p => p.name === actingName)?.team
-  const log = frames.slice(0, index + 1).flatMap(f => f.log)
   const chosen = encounters.find(e => e.id === encounter)
   const step = to => { setPlaying(false); setIndex(to) }
 
@@ -149,7 +148,7 @@ export default function LiveView() {
 
       {frames.length > 0 && (
         <>
-          <div style={{ ...panelStyle, display: "flex", gap: 8, alignItems: "center", marginBottom: 16, flexWrap: "wrap", padding: "10px 14px" }}>
+          <div style={{ ...panelStyle, position: "sticky", top: 0, zIndex: 5, display: "flex", gap: 8, alignItems: "center", marginBottom: 16, flexWrap: "wrap", padding: "10px 14px" }}>
             <Button onClick={() => step(0)} disabled={index === 0} variant="secondary">⏮</Button>
             <Button onClick={() => step(Math.max(0, index - 1))} disabled={index === 0} variant="secondary">◀</Button>
             <Button onClick={() => setPlaying(p => !p)} disabled={index === last}>{playing ? "⏸" : "▶"}</Button>
@@ -172,13 +171,17 @@ export default function LiveView() {
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap" }}>
-            <div style={{ width: 480, flexShrink: 0 }}>
-              <CombatGrid positions={frame.positions} actingName={actingName} />
-              <Roster positions={frame.positions} actingName={actingName} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ display: "flex", gap: 16, alignItems: "stretch", flexWrap: "wrap" }}>
+              <div style={{ width: 480, flexShrink: 0 }}>
+                <CombatGrid positions={frame.positions} actingName={actingName} />
+              </div>
+              <CombatLog frames={frames.slice(0, index + 1)} />
             </div>
-            <CombatLog log={log} />
-            <DecisionPanel decisions={decisions} team={actingTeam} actingName={actingName} />
+            <div style={{ display: "flex", gap: 16, alignItems: "stretch", flexWrap: "wrap" }}>
+              <Roster positions={frame.positions} actingName={actingName} />
+              <DecisionPanel decisions={decisions} team={actingTeam} actingName={actingName} />
+            </div>
           </div>
         </>
       )}

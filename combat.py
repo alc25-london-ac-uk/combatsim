@@ -7,20 +7,42 @@ from world import CombatState, Grid
 from belief import CombatantBelief, belief_for
 
 def log_action(combatant: Combatant, results: list[ActionResult]) -> list[str]:
+    # a turn that produced nothing but "no action" results (no moves, attacks or spells) is a skipped turn
+    if results and all(result.action_type == ActionType.NONE for result in results):
+        return [format_skipped_turn(combatant, results[0])]
+
     log = []
-    for result in results:
-        match result.action_type:
+    index = 0
+    while index < len(results):
+        end = end_of_run(results, index)
+        run = results[index:end]
+        index = end
+
+        match run[0].action_type:
             case ActionType.MOVE:
-                log.append(f"{combatant.name} moved to {result.combatant_x},{result.combatant_y}")
+                log.append(format_movement(combatant, run))
             case ActionType.SPELL:
-                log.append(format_spell_result(combatant, result))
-                log.append(f" -> {result.rationale}")
+                log.extend(format_spell_cast(combatant, run))
+                log.append(f" -> {run[0].rationale}")
             case ActionType.ATTACK:
-                log.append(format_attack_result(combatant, result))
-                log.append(f" -> {result.rationale}")
-            case ActionType.NONE:
-                log.append(f"{combatant.name} skipped their turn.")
+                log.append(format_attack_result(combatant, run[0]))
+                log.append(f" -> {run[0].rationale}")
     return log
+
+def end_of_run(results: list[ActionResult], start: int) -> int:
+    # index just past the results that belong on one log entry: consecutive moves, or the hits of a single spell cast
+    first = results[start]
+    end = start + 1
+    while end < len(results) and belongs_with(first, results[end]):
+        end += 1
+    return end
+
+def belongs_with(first: ActionResult, other: ActionResult) -> bool:
+    if first.action_type == ActionType.MOVE:
+        return other.action_type == ActionType.MOVE
+    if first.action_type == ActionType.SPELL:
+        return other.action_type == ActionType.SPELL and other.actor == first.actor and other.spell == first.spell
+    return False
 
 def broadcast_observations(actor: Combatant, results: list[ActionResult], combat_state: CombatState) -> None:
     cast_offensive = any(r.action_type == ActionType.SPELL and not r.is_healing for r in results)
@@ -83,35 +105,70 @@ def observe_defences(actor: Combatant, result: ActionResult, combat_state: Comba
         if learns_save_outcome:
             belief.observe_save(result.save_ability, result.save_dc, result.save_succeeded)
 
+def format_hp_after(result: ActionResult) -> str:
+    # HP can drop below zero; a combatant at zero or less is simply dead
+    if result.target_hp_after_action <= 0:
+        return f"{result.target.name} is dead."
+
+    return f"{result.target.name} has {result.target_hp_after_action} HP remaining."
+
 def format_attack_result(combatant: Combatant, result: ActionResult) -> str:
-    prefix = f"{result.actor} attacks {result.target.name} with {result.weapon} - "
+    verb = "makes an opportunity attack on" if result.opportunity_attack else "attacks"
+    prefix = f"{result.actor} {verb} {result.target.name} with {result.weapon} - "
 
     if result.attack_result != AttackResult.MISS:
-        return f"{prefix}{result.amount} damage. {result.target.name} has {result.target_hp_after_action} HP remaining."
+        return f"{prefix}{result.amount} damage. {format_hp_after(result)}"
     else:
         return f"{prefix}miss."
 
-def format_spell_result(combatant: Combatant, result: ActionResult) -> str:
-    prefix = f"{result.actor} casts {result.spell} on {result.target.name} - "
+def format_movement(combatant: Combatant, moves: list[ActionResult]) -> str:
+    destination = moves[-1]
+    line = f"{combatant.name} moved to {destination.combatant_x},{destination.combatant_y}"
 
+    if len(moves) > 1:
+        squares_passed = ", ".join(f"{move.combatant_x},{move.combatant_y}" for move in moves[:-1])
+        line += f" (via {squares_passed})"
+
+    return line
+
+def format_skipped_turn(combatant: Combatant, result: ActionResult) -> str:
+    # a turn lost to an effect such as Paralysed carries the effect's name as its rationale
+    if result.rationale:
+        return f"{combatant.name} is {result.rationale.lower()} and loses their turn."
+
+    return f"{combatant.name} skipped their turn."
+
+def format_spell_outcome(result: ActionResult) -> str:
     # healing spells
     if result.is_healing:
-        return f"{prefix}heals {result.amount}. {result.target.name} has {result.target_hp_after_action} HP remaining."
-    
+        return f"heals {result.amount}. {format_hp_after(result)}"
+
     # control spells
     if result.amount == 0:
         if result.effect_applied:
-            return f"{prefix}{result.effect_applied} applied."
+            return f"{result.effect_applied} applied."
 
         if result.save_made:
-            return f"{prefix}save succeeded; no effect."
+            return "save succeeded; no effect."
 
     # damage spells
     if result.attack_result != AttackResult.MISS:
         suffix = f" {result.effect_applied} applied." if result.effect_applied else ""
-        return f"{prefix}{result.amount} damage. {result.target.name} has {result.target_hp_after_action} HP remaining.{suffix}"
+        return f"{result.amount} damage. {format_hp_after(result)}{suffix}"
 
-    return f"{prefix}miss."
+    return "miss."
+
+def format_spell_result(combatant: Combatant, result: ActionResult) -> str:
+    return f"{result.actor} casts {result.spell} on {result.target.name} - {format_spell_outcome(result)}"
+
+def format_spell_cast(combatant: Combatant, hits: list[ActionResult]) -> list[str]:
+    if len(hits) == 1:
+        return [format_spell_result(combatant, hits[0])]
+
+    # one cast that hit several times (e.g. Fireball, Scorching Ray): one heading, then an indented line per hit
+    lines = [f"{hits[0].actor} casts {hits[0].spell}:"]
+    lines.extend(f"  {hit.target.name} - {format_spell_outcome(hit)}" for hit in hits)
+    return lines
 
 def run_combat_live(party: list[Combatant], enemies: list[Combatant], explain: bool = False):
     combat_state = CombatState(
@@ -129,9 +186,10 @@ def run_combat_live(party: list[Combatant], enemies: list[Combatant], explain: b
     for c in combat_state.initiative_order:
         c.reset()
 
-    def snapshot(log_lines, winner = None, decisions = None):
+    def snapshot(log_lines, winner = None, decisions = None, actor = None):
         return {
             "round": round_num,
+            "actor": actor, # whose turn the log lines are; None for a round heading
             "log": log_lines,
             "winner": winner,
             "decisions": decisions or [],
@@ -197,7 +255,7 @@ def run_combat_live(party: list[Combatant], enemies: list[Combatant], explain: b
             elif not party_alive:
                 winner = "enemies"
         
-            yield(snapshot(log_lines, winner, decisions))
+            yield(snapshot(log_lines, winner, decisions, combatant.name))
 
             if winner:
                 return
@@ -249,8 +307,9 @@ def run_combat(party: list[Combatant], enemies: list[Combatant], log: bool = Fal
             broadcast_observations(combatant, results, combat_state)
 
             if log:
+                print(f"{combatant.name}'s turn")
                 for log_line in log_action(combatant, results):
-                    print(log_line)
+                    print(f"  {log_line}")
         
         party_alive = any(c.alive for c in party)
         enemies_alive = any(c.alive for c in enemies)

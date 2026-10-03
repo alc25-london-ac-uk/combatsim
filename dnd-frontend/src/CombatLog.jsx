@@ -1,18 +1,53 @@
 import { useEffect, useRef } from "react"
-import { C, FONT, BORDER, headingStyle, panelStyle } from "./theme"
+import { C, FONT, caps, headingStyle, panelStyle } from "./theme"
 import { PANEL_HEIGHT } from "./CombatGrid"
 
-export default function CombatLog({ log }) {
-  const bottomRef = useRef(null)
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
-  }, [log])
+// the per-decision score lines ("-> attack score ...") are shown in the decision panel instead
+const entries = lines => lines.filter(line => !line.trim().startsWith("->"))
 
-  const lines = log.filter(line => !line.trim().startsWith("->"))
+function lineColour(line) {
+  if (line.includes("is dead")) return C.red
+  if (line.includes("heals")) return C.green
+  if (line.includes("miss")) return C.textDim
+  return C.text
+}
+
+function RoundHeading({ round }) {
+  return (
+    <div style={{ backgroundColor: C.text, color: C.onFill, fontWeight: 700, padding: "3px 8px", margin: "12px 0 6px", ...caps }}>
+      Round {round}
+    </div>
+  )
+}
+
+function Turn({ frame }) {
+  const team = frame.positions.find(p => p.name === frame.actor)?.team
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <div style={{ color: team === "party" ? C.party : C.enemy, fontWeight: 700, borderBottom: `1px solid ${C.textMuted}`, paddingBottom: 2, marginBottom: 3 }}>
+        {frame.actor}
+      </div>
+      {entries(frame.log).map((line, i) => (
+        // pre-wrap keeps the indentation of the lines grouped under a multi-target spell
+        <div key={i} style={{ color: lineColour(line), whiteSpace: "pre-wrap", paddingLeft: 10, marginBottom: 2 }}>{line}</div>
+      ))}
+    </div>
+  )
+}
+
+export default function CombatLog({ frames }) {
+  const boxRef = useRef(null)
+
+  // keep the newest entry in view; scrolling the box itself (not scrollIntoView) leaves the page where it is
+  useEffect(() => {
+    const box = boxRef.current
+    if (box) box.scrollTop = box.scrollHeight
+  }, [frames.length])
 
   return (
-    <div style={{
-      width: 340,
+    <div ref={boxRef} style={{
+      flex: "1 1 340px",
+      minWidth: 0,
       height: PANEL_HEIGHT,
       overflowY: "auto",
       ...panelStyle,
@@ -23,30 +58,12 @@ export default function CombatLog({ log }) {
       boxSizing: "border-box",
     }}>
       <div style={{ ...headingStyle, marginBottom: 8 }}>Combat log</div>
-      {lines.length === 0 && <div style={{ color: C.textDim }}>Awaiting combat...</div>}
-      {lines.map((line, i) => {
-        const isRound = line.startsWith("---")
-        const isMiss  = line.includes("miss")
-        const isHeal  = line.includes("heals")
-        const isDead  = line.includes("-1 HP") || line.includes("dead")
-        const colour  = isRound ? C.gold
-          : isDead  ? C.red
-          : isHeal  ? C.green
-          : isMiss  ? C.textDim
-          : C.text
-        return (
-          <div key={i} style={{
-            color: colour,
-            marginBottom: isRound ? 6 : 2,
-            borderTop: isRound ? BORDER : "none",
-            paddingTop: isRound ? 6 : 0,
-            fontWeight: isRound ? 700 : 400,
-          }}>
-            {line}
-          </div>
-        )
-      })}
-      <div ref={bottomRef} />
+      {frames.length === 0 && <div style={{ color: C.textDim }}>Awaiting combat...</div>}
+      {frames.map((frame, i) => (
+        frame.actor === null
+          ? <RoundHeading key={i} round={frame.round} />
+          : <Turn key={i} frame={frame} />
+      ))}
     </div>
   )
 }

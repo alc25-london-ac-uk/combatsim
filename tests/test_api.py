@@ -109,9 +109,17 @@ def test_simulate_live_returns_the_encounter_the_seed_and_a_list_of_frames(live_
     assert live_fight["encounter"] == "mage_and_priest_with_gargoyles" and live_fight["seed"] == 5
     assert isinstance(live_fight["frames"], list) and len(live_fight["frames"]) > 1
 
-def test_every_frame_has_a_round_a_log_and_positions(live_fight):
+def test_every_frame_has_a_round_an_actor_a_log_and_positions(live_fight):
     for frame in live_fight["frames"]:
-        assert set(frame) == {"round", "log", "winner", "decisions", "positions"}
+        assert set(frame) == {"round", "actor", "log", "winner", "decisions", "positions"}
+
+def test_a_frame_names_whose_turn_it_logs_and_round_headings_name_nobody(live_fight):
+    combatants = {p["name"] for p in live_fight["frames"][0]["positions"]}
+
+    for frame in live_fight["frames"]:
+        is_round_heading = frame["log"][0].startswith("--- Round")
+        assert (frame["actor"] is None) == is_round_heading
+        assert is_round_heading or frame["actor"] in combatants
 
 def test_positions_include_hp_slots_and_effects(live_fight):
     entry = live_fight["frames"][-1]["positions"][0]

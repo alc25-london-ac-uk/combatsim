@@ -296,7 +296,7 @@ class UtilityPolicy(Policy):
             score = 5.0 * threat
 
             if is_ally:
-                return {"control_value": -score}
+                return {"friendly_fire": -score}
             return {"control_value": score, "priority_bonus": self._priority_bonus(belief)}
 
         if not spell.requires_attack_roll:
@@ -324,5 +324,5 @@ class UtilityPolicy(Policy):
         priority_bonus = self._priority_bonus(belief)
 
         if is_ally:
-            return {"expected_damage": -expected_damage}
+            return {"friendly_fire": -expected_damage}
         return {"expected_damage": expected_damage, "kill_bonus": kill_bonus, "priority_bonus": priority_bonus}

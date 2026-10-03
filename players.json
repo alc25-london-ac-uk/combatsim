@@ -18,15 +18,15 @@
         },
         "weapons": [
             {
-                "name": "Longsword",
+                "id": "Longsword",
                 "is_off_hand": false
             },
             {
-                "name": "Warhammer",
+                "id": "Warhammer",
                 "is_off_hand": false
             },
             {
-                "name": "Longbow",
+                "id": "Longbow",
                 "is_off_hand": false
             }
         ]
@@ -51,7 +51,7 @@
         },
         "weapons": [
             {
-                "name": "Mace",
+                "id": "Mace",
                 "is_off_hand": false
             }
         ],
@@ -87,7 +87,7 @@
         },
         "weapons": [
             {
-                "name": "Quarterstaff"
+                "id": "Quarterstaff"
             }
         ],
         "spells": [

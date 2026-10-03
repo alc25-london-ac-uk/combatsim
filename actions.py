@@ -46,6 +46,7 @@ class ActionResult:
     save_made: bool = False
     effect_applied: str = ""
     rationale: str = ""
+    opportunity_attack: bool = False
     attack_roll_bonus: Optional[int] = None
     save_ability: Optional[Ability] = None
     save_dc: Optional[int] = None
@@ -128,7 +129,8 @@ def move_towards_target(actor: Combatant, target: Combatant, combat_state: Comba
                     combatant_y = reactor_position.y,
                     target_x = new_position.x,
                     target_y = new_position.y,
-                    rationale = "Opportunity attack"
+                    rationale = "Opportunity attack",
+                    opportunity_attack = True
                 ))
     
     return results

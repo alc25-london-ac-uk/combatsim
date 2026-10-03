@@ -15,10 +15,10 @@
         "attack_bonus": 5,
         "weapons": [
             {
-                "name": "Fist"
+                "id": "Fist"
             },
             {
-                "name": "Rock"
+                "id": "Rock"
             }
         ]
     },
@@ -38,7 +38,7 @@
         "attack_bonus": 6,
         "weapons": [
             {
-                "name": "Slam"
+                "id": "Slam"
             }
         ],
         "damage_vulnerabilities": [
@@ -66,7 +66,7 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Beak"
+                "id": "Beak"
             }
         ]
     },
@@ -86,10 +86,10 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Bite"
+                "id": "Bite"
             },
             {
-                "name": "Claws",
+                "id": "Claws",
                 "is_off_hand": true
             }
         ]
@@ -111,7 +111,7 @@
         "attack_bonus": 3,
         "weapons": [
             {
-                "name": "Bite"
+                "id": "Bite"
             }
         ]
     },
@@ -132,7 +132,7 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Beak - Small"
+                "id": "Beak - Small"
             }
         ],
         "feats": [
@@ -155,7 +155,7 @@
         "attack_bonus": 3,
         "weapons": [
             {
-                "name": "Tusk"
+                "id": "Tusk"
             }
         ],
         "feats": [
@@ -179,10 +179,10 @@
         "attack_bonus": 6,
         "weapons": [
             {
-                "name": "Bite - Large"
+                "id": "Bite - Large"
             },
             {
-                "name": "Claws - Large",
+                "id": "Claws - Large",
                 "is_off_hand": true
             }
         ]
@@ -202,10 +202,10 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Morningstar"
+                "id": "Morningstar"
             },
             {
-                "name": "Javelin"
+                "id": "Javelin"
             }
         ]
     },
@@ -225,7 +225,7 @@
         "attack_bonus": 5,
         "weapons": [
             {
-                "name": "Bite - Blunt"
+                "id": "Bite - Blunt"
             }
         ]
     },
@@ -245,10 +245,10 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Bite"
+                "id": "Bite"
             },
             {
-                "name": "Constrict"
+                "id": "Constrict"
             }
         ]
     },
@@ -268,7 +268,7 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Bite - Grappling"
+                "id": "Bite - Grappling"
             }
         ]
     },
@@ -288,7 +288,7 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Bite - Death Dog"
+                "id": "Bite - Death Dog"
             }
         ],
         "feats": [
@@ -311,7 +311,7 @@
         "attack_bonus": 5,
         "weapons": [
             {
-                "name": "Bite - Dire Wolf"
+                "id": "Bite - Dire Wolf"
             }
         ],
         "feats": [
@@ -334,7 +334,7 @@
         "attack_bonus": 6,
         "weapons": [
             {
-                "name": "Hooves"
+                "id": "Hooves"
             }
         ]
     },
@@ -354,10 +354,10 @@
         "attack_bonus": 8,
         "weapons": [
             {
-                "name": "Gore"
+                "id": "Gore - Elephant"
             },
             {
-                "name": "Stomp",
+                "id": "Stomp",
                 "is_off_hand": true,
                 "required_effect": "Prone"
             }
@@ -382,10 +382,10 @@
         "attack_bonus": 5,
         "weapons": [
             {
-                "name": "Ram"
+                "id": "Ram"
             },
             {
-                "name": "Hooves",
+                "id": "Hooves",
                 "required_effect": "Prone"
             }
         ],
@@ -410,7 +410,7 @@
         "attack_bonus": 6,
         "weapons": [
             {
-                "name": "Bite - Flying Snake"
+                "id": "Bite - Flying Snake"
             }
         ]
     },
@@ -430,10 +430,10 @@
         "attack_bonus": 9,
         "weapons": [
             {
-                "name": "Fist - Giant Ape"
+                "id": "Fist - Giant Ape"
             },
             {
-                "name": "Rock - Giant Ape"
+                "id": "Rock - Giant Ape"
             }
         ]
     },
@@ -453,10 +453,10 @@
         "attack_bonus": 3,
         "weapons": [
             {
-                "name": "Bite"
+                "id": "Bite"
             },
             {
-                "name": "Claws",
+                "id": "Claws",
                 "is_off_hand": true
             }
         ]
@@ -477,7 +477,7 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Bite"
+                "id": "Bite"
             }
         ]
     },
@@ -497,7 +497,7 @@
         "attack_bonus": 5,
         "weapons": [
             {
-                "name": "Tusk - Giant Boar"
+                "id": "Tusk - Giant Boar"
             }
         ],
         "feats": [
@@ -521,7 +521,7 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Bite - Giant Centipede"
+                "id": "Bite - Giant Centipede"
             }
         ]
     },
@@ -541,10 +541,10 @@
         "attack_bonus": 6,
         "weapons": [
             {
-                "name": "Bite - Giant Constrictor Snake"
+                "id": "Bite - Giant Constrictor Snake"
             },
             {
-                "name": "Constrict - Giant Constrictor Snake"
+                "id": "Constrict - Giant Constrictor Snake"
             }
         ]
     },
@@ -564,7 +564,7 @@
         "attack_bonus": 3,
         "weapons": [
             {
-                "name": "Claw"
+                "id": "Claw"
             }
         ]
     },
@@ -584,10 +584,10 @@
         "attack_bonus": 8,
         "weapons": [
             {
-                "name": "Bite - Giant Crocodile"
+                "id": "Bite - Giant Crocodile"
             },
             {
-                "name": "Tail - Giant Crocodile",
+                "id": "Tail - Giant Crocodile",
                 "is_off_hand": true
             }
         ]
@@ -609,10 +609,10 @@
         "attack_bonus": 5,
         "weapons": [
             {
-                "name": "Beak - Giant Eagle"
+                "id": "Beak - Giant Eagle"
             },
             {
-                "name": "Talons",
+                "id": "Talons",
                 "is_off_hand": true
             }
         ]
@@ -633,10 +633,10 @@
         "attack_bonus": 6,
         "weapons": [
             {
-                "name": "Ram - Giant Elk"
+                "id": "Ram - Giant Elk"
             },
             {
-                "name": "Hooves - Giant Elk",
+                "id": "Hooves - Giant Elk",
                 "required_effect": "Prone"
             }
         ]
@@ -657,7 +657,7 @@
         "attack_bonus": 3,
         "weapons": [
             {
-                "name": "Bite - Giant Frog"
+                "id": "Bite - Giant Frog"
             }
         ]
     },
@@ -677,7 +677,7 @@
         "attack_bonus": 5,
         "weapons": [
             {
-                "name": "Ram - Giant Goat"
+                "id": "Ram - Giant Goat"
             }
         ],
         "feats": [
@@ -701,7 +701,7 @@
         "attack_bonus": 5,
         "weapons": [
             {
-                "name": "Bite - Giant Hyena"
+                "id": "Bite - Giant Hyena"
             }
         ]
     },
@@ -721,7 +721,7 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Bite - Giant Lizard"
+                "id": "Bite - Giant Lizard"
             }
         ]
     },
@@ -742,7 +742,7 @@
         "attack_bonus": 3,
         "weapons": [
             {
-                "name": "Talons"
+                "id": "Talons"
             }
         ]
     },
@@ -762,7 +762,7 @@
         "attack_bonus": 6,
         "weapons": [
             {
-                "name": "Bite - Giant Poisonous Snake"
+                "id": "Bite - Giant Poisonous Snake"
             }
         ]
     },
@@ -782,7 +782,7 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Bite - Small"
+                "id": "Bite - Small"
             }
         ],
         "feats": [
@@ -805,10 +805,10 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Claw - Giant Scorpion"
+                "id": "Claw - Giant Scorpion"
             },
             {
-                "name": "Sting",
+                "id": "Sting",
                 "is_off_hand": true
             }
         ]
@@ -829,7 +829,7 @@
         "attack_bonus": 5,
         "weapons": [
             {
-                "name": "Bite - Giant Spider"
+                "id": "Bite - Giant Spider"
             }
         ],
         "feats": [
@@ -852,7 +852,7 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Bite - Giant Toad"
+                "id": "Bite - Giant Toad"
             }
         ],
         "feats": [
@@ -876,10 +876,10 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Beak - Giant Vulture"
+                "id": "Beak - Giant Vulture"
             },
             {
-                "name": "Talons",
+                "id": "Talons",
                 "is_off_hand": true
             }
         ]
@@ -901,7 +901,7 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Sting - Giant Wasp"
+                "id": "Sting - Giant Wasp"
             }
         ]
     },
@@ -921,7 +921,7 @@
         "attack_bonus": 5,
         "weapons": [
             {
-                "name": "Bite - Giant Weasel"
+                "id": "Bite - Giant Weasel"
             }
         ]
     },
@@ -941,7 +941,7 @@
         "attack_bonus": 3,
         "weapons": [
             {
-                "name": "Bite - Giant Wolf Spider"
+                "id": "Bite - Giant Wolf Spider"
             }
         ]
     },
@@ -960,10 +960,10 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Scimitar"
+                "id": "Scimitar"
             },
             {
-                "name": "Shortbow"
+                "id": "Shortbow"
             }
         ]
     },
@@ -982,13 +982,13 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Bite - Small"
+                "id": "Bite - Small"
             },
             {
-                "name": "Spear"
+                "id": "Spear"
             },
             {
-                "name": "Longbow"
+                "id": "Longbow"
             }
         ]
     },
@@ -1007,10 +1007,10 @@
         "attack_bonus": 3,
         "weapons": [
             {
-                "name": "Longsword"
+                "id": "Longsword"
             },
             {
-                "name": "Longbow"
+                "id": "Longbow"
             }
         ]
     },
@@ -1030,10 +1030,10 @@
         "attack_bonus": 5,
         "weapons": [
             {
-                "name": "Bite - Lion"
+                "id": "Bite - Lion"
             },
             {
-                "name": "Claw - Lion"
+                "id": "Claw - Lion"
             }
         ],
         "feats": [
@@ -1057,10 +1057,10 @@
         "attack_bonus": 10,
         "weapons": [
             {
-                "name": "Gore - Mammoth"
+                "id": "Gore - Mammoth"
             },
             {
-                "name": "Stomp - Mammoth",
+                "id": "Stomp - Mammoth",
                 "required_effect": "Prone"
             }
         ],
@@ -1084,7 +1084,7 @@
         "attack_bonus": 3,
         "weapons": [
             {
-                "name": "Bite - Mastiff"
+                "id": "Bite - Mastiff"
             }
         ]
     },
@@ -1103,10 +1103,10 @@
         "attack_bonus": 6,
         "weapons": [
             {
-                "name": "Greataxe"
+                "id": "Greataxe"
             },
             {
-                "name": "Gore"
+                "id": "Gore"
             }
         ]
     },
@@ -1126,7 +1126,7 @@
         "attack_bonus": 2,
         "weapons": [
             {
-                "name": "Hooves - Mule"
+                "id": "Hooves - Mule"
             }
         ]
     },
@@ -1145,10 +1145,10 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Shortsword"
+                "id": "Shortsword"
             },
             {
-                "name": "Shortbow"
+                "id": "Shortbow"
             }
         ],
         "damage_vulnerabilities": [
@@ -1173,7 +1173,7 @@
         "attack_bonus": 3,
         "weapons": [
             {
-                "name": "Slam - Zombie"
+                "id": "Slam - Zombie"
             }
         ],
         "damage_immunities": [
@@ -1195,7 +1195,7 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Touch - Magmin"
+                "id": "Touch - Magmin"
             }
         ],
         "damage_resistances": [
@@ -1222,10 +1222,10 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Bite"
+                "id": "Bite"
             },
             {
-                "name": "Claws - Gargoyle"
+                "id": "Claws - Gargoyle"
             }
         ],
         "damage_resistances": [
@@ -1252,7 +1252,7 @@
         "attack_bonus": 5,
         "weapons": [
             {
-                "name": "Rotting Fist"
+                "id": "Rotting Fist"
             }
         ],
         "damage_vulnerabilities": [
@@ -1283,7 +1283,7 @@
         "attack_bonus": 2,
         "weapons": [
             {
-                "name": "Club"
+                "id": "Club"
             }
         ],
         "spells": [
@@ -1312,7 +1312,7 @@
         "attack_bonus": 2,
         "weapons": [
             {
-                "name": "Mace"
+                "id": "Mace"
             }
         ],
         "spells": [
@@ -1344,7 +1344,7 @@
         "attack_bonus": 5,
         "weapons": [
             {
-                "name": "Dagger"
+                "id": "Dagger"
             }
         ],
         "spells": [
@@ -1376,7 +1376,7 @@
         "attack_bonus": 6,
         "weapons": [
             {
-                "name": "Hooves - Warhorse Skeleton"
+                "id": "Hooves - Warhorse Skeleton"
             }
         ],
         "damage_vulnerabilities": [
@@ -1402,10 +1402,10 @@
         "attack_bonus": 6,
         "weapons": [
             {
-                "name": "Greataxe - Minotaur Skeleton"
+                "id": "Greataxe - Minotaur Skeleton"
             },
             {
-                "name": "Gore - Minotaur Skeleton"
+                "id": "Gore - Minotaur Skeleton"
             }
         ],
         "damage_vulnerabilities": [
@@ -1431,7 +1431,7 @@
         "attack_bonus": 6,
         "weapons": [
             {
-                "name": "Morningstar - Ogre Zombie"
+                "id": "Morningstar - Ogre Zombie"
             }
         ],
         "damage_immunities": [
@@ -1454,7 +1454,7 @@
         "attack_bonus": 8,
         "weapons": [
             {
-                "name": "Slam - Earth Elemental"
+                "id": "Slam - Earth Elemental"
             }
         ],
         "damage_vulnerabilities": [
@@ -1485,7 +1485,7 @@
         "attack_bonus": 6,
         "weapons": [
             {
-                "name": "Claws and Bite - Xorn"
+                "id": "Claws and Bite - Xorn"
             }
         ],
         "damage_resistances": [
@@ -1509,10 +1509,10 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Tentacles - Grick"
+                "id": "Tentacles - Grick"
             },
             {
-                "name": "Beak - Grick"
+                "id": "Beak - Grick"
             }
         ],
         "damage_resistances": [
@@ -1537,10 +1537,10 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Longsword"
+                "id": "Longsword"
             },
             {
-                "name": "Longbow"
+                "id": "Longbow"
             }
         ],
         "damage_resistances": [
@@ -1569,10 +1569,10 @@
         "attack_bonus": 2,
         "weapons": [
             {
-                "name": "Bite"
+                "id": "Bite"
             },
             {
-                "name": "Claws"
+                "id": "Claws"
             }
         ],
         "damage_resistances": [
@@ -1600,10 +1600,10 @@
         "attack_bonus": 7,
         "weapons": [
             {
-                "name": "Spear - Salamander"
+                "id": "Spear - Salamander"
             },
             {
-                "name": "Tail - Salamander"
+                "id": "Tail - Salamander"
             }
         ],
         "damage_vulnerabilities": [
@@ -1634,7 +1634,7 @@
         "attack_bonus": 4,
         "weapons": [
             {
-                "name": "Dagger"
+                "id": "Dagger"
             }
         ],
         "spells": [
@@ -1667,7 +1667,7 @@
         "attack_bonus": 2,
         "weapons": [
             {
-                "name": "Quarterstaff"
+                "id": "Quarterstaff"
             }
         ],
         "spells": [

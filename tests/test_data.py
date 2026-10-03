@@ -51,6 +51,50 @@ def test_all_players_parse_without_skipping(capsys, player_registry):
 def test_weapon_damage_type_is_a_real_enum_member(weapon_registry):
     assert weapon_registry["Longsword"].damage_type == DamageType.SLASHING
 
+# --- weapon ids (what creatures refer to) are separate from weapon names (what is shown) ---
+
+def test_every_weapon_has_a_unique_id_and_a_display_name():
+    weapons = _load_json("weapons.json")
+
+    assert all(weapon.get("id") and weapon.get("name") for weapon in weapons)
+    assert len({weapon["id"] for weapon in weapons}) == len(weapons)
+
+def test_a_weapon_is_displayed_by_its_name_not_its_id(weapon_registry):
+    assert weapon_registry["Greataxe - Minotaur Skeleton"].name == "Greataxe"
+    assert weapon_registry["Claws and Bite - Xorn"].name == "Claws and Bite"
+    assert weapon_registry["Longsword"].name == "Longsword"
+
+def test_no_weapon_name_carries_a_variant_suffix():
+    assert not [weapon["name"] for weapon in _load_json("weapons.json") if " - " in weapon["name"]]
+
+@pytest.mark.parametrize("filename", ["monsters.json", "players.json"])
+def test_creatures_refer_to_weapons_by_an_id_that_exists(filename):
+    weapon_ids = {weapon["id"] for weapon in _load_json("weapons.json")}
+    references = [ref for creature in _load_json(filename) for ref in creature.get("weapons", [])]
+
+    assert references
+    assert all("name" not in ref and ref["id"] in weapon_ids for ref in references)
+
+def test_a_weapon_made_for_one_creature_is_actually_used_by_it():
+    # "Gore - Elephant" exists for the Elephant; a creature left on the generic "Gore" would silently hit too weakly
+    monsters = {monster["name"]: monster for monster in _load_json("monsters.json")}
+    weapon_ids = [weapon["id"] for weapon in _load_json("weapons.json")]
+    made_for = [(weapon_id, weapon_id.split(" - ")[-1]) for weapon_id in weapon_ids if " - " in weapon_id]
+
+    for weapon_id, creature_name in made_for:
+        if creature_name in monsters:
+            assert weapon_id in {ref["id"] for ref in monsters[creature_name]["weapons"]}, f"{creature_name} does not use {weapon_id}"
+
+def test_the_elephants_gore_is_3d8(monster_registry):
+    gore = monster_registry["Elephant"].weapons[0]
+
+    assert (gore.damage_dice, gore.damage_sides) == (3, 8)
+
+def test_no_creature_carries_two_weapons_with_the_same_displayed_name(monster_registry, player_registry):
+    for creature in [*monster_registry.values(), *player_registry.values()]:
+        names = [weapon.name for weapon in creature.weapons]
+        assert len(names) == len(set(names)), creature.name
+
 def test_cure_wounds_is_flagged_as_healing_and_ally_targeted(spell_registry):
     cure_wounds = spell_registry["Cure Wounds"]
     assert cure_wounds.is_healing is True
@@ -73,8 +117,8 @@ def test_duplicate_weapon_names_produce_independent_objects_for_players(weapon_r
         "strength": 10, "dexterity": 16, "constitution": 12,
         "intelligence": 10, "wisdom": 10, "charisma": 10,
         "weapons": [
-            {"name": "Scimitar", "is_off_hand": False},
-            {"name": "Scimitar", "is_off_hand": True}
+            {"id": "Scimitar", "is_off_hand": False},
+            {"id": "Scimitar", "is_off_hand": True}
         ]
     }
 
@@ -131,8 +175,8 @@ def test_duplicate_weapon_names_produce_independent_objects_for_monsters(weapon_
         "attack_bonus": 3,
         "challenge_rating": 1,
         "weapons": [
-            {"name": "Scimitar", "is_off_hand": False},
-            {"name": "Scimitar", "is_off_hand": True}
+            {"id": "Scimitar", "is_off_hand": False},
+            {"id": "Scimitar", "is_off_hand": True}
         ]
     }
 

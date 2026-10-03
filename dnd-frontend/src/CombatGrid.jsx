@@ -3,7 +3,7 @@ import { C, FONT, BORDER, BORDER_HI, headingStyle, panelStyle, abbrev, hpColour 
 const GRID_SIZE = 10
 const CELL = 44
 
-// the grid box, the combat log and the decision panel share one height so they line up
+// every box in the two rows of the live view (grid, log, roster, decision panel) shares this height
 const PANEL_HEIGHT = 540
 
 export { GRID_SIZE, CELL, PANEL_HEIGHT }

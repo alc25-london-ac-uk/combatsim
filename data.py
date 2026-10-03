@@ -17,9 +17,9 @@ def load_weapons(filepath: str) -> dict[str, Weapon]:
     for entry in data:
         try:
             weapon = parse_weapon(entry)
-            weapons[entry["name"]] = weapon
+            weapons[entry["id"]] = weapon # creatures refer to a weapon by id; its name is only what is displayed
         except (KeyError, ValueError):
-            print(f"Skipping {entry.get('name', 'unknown')}")
+            print(f"Skipping {entry.get('id', 'unknown')}")
     
     return weapons
 
@@ -117,7 +117,7 @@ def parse_spell(entry: dict) -> Spell:
 def parse_monster(entry: dict, weapon_registry: dict[str, Weapon], spell_registry: dict[str, Spell]) -> Monster:
     weapons = []
     for w in entry.get("weapons", []):
-        weapon = copy.deepcopy(weapon_registry[w["name"]])
+        weapon = copy.deepcopy(weapon_registry[w["id"]])
         if isinstance(weapon, MeleeWeapon):
             weapon.is_off_hand = w.get("is_off_hand", False)
         weapons.append(weapon)
@@ -154,7 +154,7 @@ def parse_monster(entry: dict, weapon_registry: dict[str, Weapon], spell_registr
 def parse_player_character(entry: dict, weapon_registry: dict[str, Weapon], spell_registry: dict[str, Spell]) -> PlayerCharacter:
     weapons = []
     for w in entry.get("weapons", []):
-        weapon = copy.deepcopy(weapon_registry[w["name"]])
+        weapon = copy.deepcopy(weapon_registry[w["id"]])
         if isinstance(weapon, MeleeWeapon):
             weapon.is_off_hand = w.get("is_off_hand", False)
         weapons.append(weapon)

@@ -1,8 +1,8 @@
 import { C, FONT, BORDER, labelStyle, headingStyle, panelStyle } from "./theme"
 import { PANEL_HEIGHT } from "./CombatGrid"
-
 const TERMS = {
-  expected_damage:       { colour: C.party,  label: "damage",    help: "Expected damage: chance to hit (or the target failing its save) × average damage, scaled by how resistant or vulnerable the target is believed to be. Negative if the spell would hurt allies." },
+  expected_damage:       { colour: C.party,  label: "damage",    help: "Expected damage: chance to hit (or the target failing its save) × average damage, scaled by how resistant or vulnerable the target is believed to be. For an area spell this is summed over every enemy it catches." },
+  friendly_fire:         { colour: C.red,    label: "friendly fire", help: "Expected damage to allies (or the caster) caught in the area of the spell. It is counted against the spell, so a cast that hits several enemies can still lose to one that hits fewer but spares your own side." },
   kill_bonus:            { colour: C.gold,   label: "kill",      help: "2 × the believed probability that this hit leaves the target at 0 HP." },
   priority_bonus:        { colour: C.purple, label: "priority",  help: "Extra value for opponents believed to be healers, concentrating on a spell, or still able to cast." },
   target_priority_bonus: { colour: C.teal,   label: "preferred", help: "The monsters' standing preference for weaker targets (the PCs have no such preference)." },
@@ -144,7 +144,7 @@ export default function DecisionPanel({ decisions, team, actingName }) {
   const beliefs = decisions[0]?.beliefs ?? []
 
   return (
-    <div style={{ ...panelStyle, flex: "1 1 520px", minWidth: 520, maxWidth: 820, height: PANEL_HEIGHT, overflowY: "auto", boxSizing: "border-box", fontFamily: FONT }}>
+    <div style={{ ...panelStyle, flex: "1 1 520px", minWidth: 0, height: PANEL_HEIGHT, overflowY: "auto", boxSizing: "border-box", fontFamily: FONT }}>
       <div style={{ ...headingStyle, marginBottom: 8 }}>Decision panel</div>
 
       {decisions.length === 0 && (
@@ -165,7 +165,7 @@ export default function DecisionPanel({ decisions, team, actingName }) {
           {decisions.map((decision, i) => <DecisionBlock key={i} decision={decision} />)}
 
           <div style={{ ...labelStyle, marginTop: 4, marginBottom: 6 }}>
-            {isPc ? "What it believes about its enemies — belief / truth" : "What it assumes about its enemies — assumed / truth"}
+            {isPc ? "What it believes about its enemies" : "What it assumes about its enemies"}
           </div>
           {beliefs.length === 0
             ? <div style={{ fontSize: 11, color: C.textDim }}>No living enemies.</div>
@@ -181,6 +181,7 @@ export default function DecisionPanel({ decisions, team, actingName }) {
               </table>
             )}
           <div style={{ fontSize: 10, color: C.textDim, marginTop: 8, lineHeight: 1.5 }}>
+            HP and AC are shown as believed / true; in the other columns the true value is in brackets.
             Amber marks where the belief is wrong or undiscovered. Hover any chip for what it means.
             Damage-type multipliers: ×0.5 resistant, ×2 vulnerable, ×0 immune; "?" means that type has not been tried yet.
           </div>

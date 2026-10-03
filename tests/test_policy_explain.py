@@ -68,6 +68,32 @@ def test_the_spell_breakdown_adds_up_to_the_spell_score(make_player, make_monste
     assert math.isclose(sum(breakdown.values()), policy.score_spell(caster, target, burst, combat_state, {}), rel_tol = 1e-9)
     assert "movement_penalty" in breakdown
 
+def test_damage_to_your_own_side_is_reported_as_friendly_fire_not_netted_into_expected_damage(make_player, make_monster, make_combat_state):
+    caster = make_player(name = "Caster")
+    ally = make_player(name = "Ally")
+    enemy = make_monster(name = "Enemy")
+    combat_state = make_combat_state(caster, ally, enemy) # one square, so the burst catches the enemy and both PCs
+    policy = BeliefUpdatingPolicy()
+    burst = _damage_spell(name = "Test Burst", aoe_radius = 20, save_allowed = True, damage_pct_on_save = 0.5)
+
+    breakdown = policy._spell_breakdown(caster, enemy, burst, combat_state, {})
+    enemy_only = policy._spell_hit_terms(caster, enemy, burst, combat_state, {})
+    ally_only = policy._spell_hit_terms(caster, ally, burst, combat_state, {})
+
+    assert breakdown["expected_damage"] == enemy_only["expected_damage"] > 0 # the enemy's damage is no longer reduced by the allies caught in the blast
+    assert breakdown["friendly_fire"] < 0
+    assert set(ally_only) == {"friendly_fire"}
+    assert math.isclose(sum(breakdown.values()), policy.score_spell(caster, enemy, burst, combat_state, {}), rel_tol = 1e-9)
+
+def test_a_spell_that_catches_no_allies_has_no_friendly_fire_component(make_player, make_monster, make_combat_state):
+    caster = make_player()
+    enemy = make_monster()
+    combat_state = make_combat_state(caster, enemy)
+
+    breakdown = BeliefUpdatingPolicy()._spell_breakdown(caster, enemy, _damage_spell(), combat_state, {})
+
+    assert "friendly_fire" not in breakdown
+
 def test_a_spell_without_a_slot_is_reported_as_unavailable(make_player, make_monster, make_combat_state):
     caster = make_player()
     caster.spell_slots = {}
