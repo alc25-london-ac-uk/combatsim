@@ -796,5 +796,113 @@
         "range": "melee",
         "reach": 5,
         "finesse": false
+    },
+    {
+        "name": "Dagger",
+        "damage_dice": 1,
+        "damage_sides": 4,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": true
+    },
+    {
+        "name": "Club",
+        "damage_dice": 1,
+        "damage_sides": 4,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
+        "name": "Hooves - Warhorse Skeleton",
+        "damage_dice": 2,
+        "damage_sides": 6,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
+        "name": "Greataxe - Minotaur Skeleton",
+        "damage_dice": 2,
+        "damage_sides": 12,
+        "damage_type": "SLASHING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
+        "name": "Gore - Minotaur Skeleton",
+        "damage_dice": 2,
+        "damage_sides": 8,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
+        "name": "Morningstar - Ogre Zombie",
+        "damage_dice": 2,
+        "damage_sides": 8,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
+        "name": "Slam - Earth Elemental",
+        "damage_dice": 2,
+        "damage_sides": 8,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 10,
+        "finesse": false
+    },
+    {
+        "name": "Claws and Bite - Xorn",
+        "damage_dice": 1,
+        "damage_sides": 10,
+        "damage_type": "SLASHING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
+        "name": "Tentacles - Grick",
+        "damage_dice": 2,
+        "damage_sides": 6,
+        "damage_type": "SLASHING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
+        "name": "Beak - Grick",
+        "damage_dice": 1,
+        "damage_sides": 6,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
+        "name": "Spear - Salamander",
+        "damage_dice": 2,
+        "damage_sides": 6,
+        "damage_type": "PIERCING",
+        "range": "melee",
+        "reach": 5,
+        "finesse": false
+    },
+    {
+        "name": "Tail - Salamander",
+        "damage_dice": 2,
+        "damage_sides": 6,
+        "damage_type": "BLUDGEONING",
+        "range": "melee",
+        "reach": 10,
+        "finesse": false
     }
 ]

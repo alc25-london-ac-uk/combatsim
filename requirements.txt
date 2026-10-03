@@ -1,4 +1,4 @@
-# Runtime dependencies (needed to run api.py / main.py)
+# Runtime dependencies (needed to run api.py / evaluation.py)
 fastapi==0.141.1
 uvicorn==0.53.0
 

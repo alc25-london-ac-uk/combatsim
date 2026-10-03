@@ -1,4 +1,4 @@
-from enums import TargetType, Ability, DamageType, TargetPriority, Horizon
+from enums import TargetType, Ability, DamageType, TargetPriority
 from spell import Spell
 from belief import CombatantBelief
 from policy_beliefupdating import BeliefUpdatingPolicy
@@ -385,57 +385,6 @@ def test_target_priority_does_not_apply_to_player_characters(make_player, make_m
 
     assert action is not None
 
-# --- Horizon.ONE integration (shared _horizon_penalty base logic covered in test_policy_greedyutility.py) ---
-
-def test_horizon_one_makes_a_melee_attack_score_lower_than_an_otherwise_identical_ranged_one(make_player, make_monster, melee_weapon, ranged_weapon, make_combat_state):
-    attacker = make_player()
-    attacker.ai.profile.tactical_horizon = Horizon.ONE
-    target = make_monster(ac = 10)
-    target.hp = target.max_hp
-    threatening_enemy = make_monster(name = "Threat", ac = 10)
-    threatening_enemy.weapons = [melee_weapon(damage_dice = 4, damage_sides = 10)]
-    combat_state = make_combat_state(attacker, target, threatening_enemy)
-    policy = BeliefUpdatingPolicy()
-    beliefs = {}
-
-    melee_score = policy.score_attack(attacker, target, melee_weapon(reach = 999), combat_state, beliefs)
-    ranged_score = policy.score_attack(attacker, target, ranged_weapon(optimal_distance = 999, maximum_distance = 999), combat_state, beliefs)
-
-    assert ranged_score > melee_score
-
-def test_horizon_none_does_not_penalise_melee_attacks(make_player, make_monster, melee_weapon, ranged_weapon, make_combat_state):
-    attacker = make_player() # default tactical_horizon is NONE
-    target = make_monster(ac = 10)
-    target.hp = target.max_hp
-    combat_state = make_combat_state(attacker, target)
-    combat_state.grid.place(target, 9, 0) # keep the target itself out of melee range too
-    policy = BeliefUpdatingPolicy()
-
-    melee_score = policy.score_attack(attacker, target, melee_weapon(reach = 999), combat_state, {})
-    ranged_score = policy.score_attack(attacker, target, ranged_weapon(optimal_distance = 999, maximum_distance = 999), combat_state, {})
-
-    assert abs(melee_score - ranged_score) < 1e-9
-
-def test_best_spell_offers_a_cantrip_regardless_of_spell_slots(make_player, make_monster, make_combat_state):
-    from spell import Spell
-    from enums import Ability
-
-    caster = make_player()
-    caster.spell_slots = {}
-    caster.spells = [Spell(
-        name = "Test Cantrip", level = 0, target_type = TargetType.ENEMY, damage_type = None,
-        damage_dice = 1, damage_sides = 8, range = 60, requires_attack_roll = False,
-        save_allowed = False, save_attribute = Ability.DEXTERITY
-    )]
-    target = make_monster()
-    combat_state = make_combat_state(caster, target)
-    policy = BeliefUpdatingPolicy()
-
-    score, action = policy.best_spell(caster, combat_state, {}, bonus_action = False)
-
-    assert action is not None
-
-
 # --- spell scoring: expected dice ---
 
 def _scoring_spell(level):
@@ -589,3 +538,244 @@ def test_omniscient_never_explores_because_it_already_knows_every_damage_type(ma
     combat_state = make_combat_state(attacker, target)
 
     assert _best_weapon_name(OmniscientPolicy(), attacker, target, combat_state, {}) == "Longsword"
+
+# --- allies are not hidden ---
+
+def test_belief_updating_uses_the_true_hp_of_allies_when_scoring_healing(make_player, make_combat_state):
+    healer = make_player(name = "Healer")
+    wounded_ally = make_player(name = "Wounded Ally")
+    wounded_ally.hp = 1
+    heal = Spell(
+        name = "Test Heal", level = 0, target_type = TargetType.ALLY, damage_type = None,
+        damage_dice = 1, damage_sides = 8, range = 60, requires_attack_roll = False,
+        save_allowed = False, save_attribute = Ability.WISDOM, is_healing = True
+    )
+    combat_state = make_combat_state(healer, wounded_ally)
+    stale_belief = {wounded_ally: CombatantBelief(hypotheses = {(wounded_ally.max_hp, wounded_ally.max_hp): 1.0})} # believes the ally is unhurt
+
+    score = BeliefUpdatingPolicy().score_spell_hit(healer, wounded_ally, heal, combat_state, stale_belief)
+
+    assert score > 0
+
+
+# --- scoring agrees with what the engine rolls ---
+
+def test_expected_spell_damage_includes_the_spells_own_flat_bonus_and_nothing_else(make_monster, make_combat_state):
+    from belief import CombatantBelief
+
+    caster = make_monster(name = "Caster", spellcaster_level = 1, spell_bonus = 9)
+    target = make_monster(name = "Target", max_hp = 1000, team = "party")
+    combat_state = make_combat_state(caster, target)
+    plain = Spell(name = "Plain", level = 1, target_type = TargetType.ENEMY, damage_type = None, damage_dice = 3, damage_sides = 4, range = 120, requires_attack_roll = False, save_allowed = False, save_attribute = Ability.DEXTERITY)
+    missile = Spell(name = "Missile", level = 1, target_type = TargetType.ENEMY, damage_type = None, damage_dice = 3, damage_sides = 4, range = 120, requires_attack_roll = False, save_allowed = False, save_attribute = Ability.DEXTERITY, damage_bonus = 3)
+    policy = BeliefUpdatingPolicy()
+    beliefs = {target: CombatantBelief.initial_prior_for(target)}
+
+    assert abs(policy.score_spell_hit(caster, target, missile, combat_state, beliefs) - policy.score_spell_hit(caster, target, plain, combat_state, beliefs) - 3) < 1e-9
+
+def test_expected_damage_of_a_multi_ray_spell_scales_with_the_ray_count(make_monster, make_combat_state):
+    from belief import CombatantBelief
+
+    caster = make_monster(name = "Caster", spellcaster_level = 1, spell_bonus = 30) # hits every time
+    target = make_monster(name = "Target", max_hp = 100000, team = "party")
+    combat_state = make_combat_state(caster, target)
+    one_ray = Spell(name = "One", level = 2, target_type = TargetType.ENEMY, damage_type = None, damage_dice = 2, damage_sides = 6, range = 120, requires_attack_roll = True, save_allowed = False, save_attribute = Ability.DEXTERITY, ray_count = 1)
+    three_rays = Spell(name = "Three", level = 2, target_type = TargetType.ENEMY, damage_type = None, damage_dice = 2, damage_sides = 6, range = 120, requires_attack_roll = True, save_allowed = False, save_attribute = Ability.DEXTERITY, ray_count = 3)
+    policy = BeliefUpdatingPolicy()
+    no_priority = CombatantBelief.initial_prior_for(target)
+    no_priority.offensive_capable = 0.0
+    no_priority.healer_capable = 0.0
+    beliefs = {target: no_priority}
+
+    assert abs(policy.score_spell_hit(caster, target, three_rays, combat_state, beliefs) - 3 * policy.score_spell_hit(caster, target, one_ray, combat_state, beliefs)) < 1e-9
+
+def test_expected_healing_uses_the_spells_own_dice(make_player, make_combat_state):
+    healer = make_player(name = "Healer")
+    ally = make_player(name = "Ally")
+    ally.hp = 1
+    combat_state = make_combat_state(healer, ally)
+    small_heal = Spell(name = "Small", level = 0, target_type = TargetType.ALLY, damage_type = None, damage_dice = 1, damage_sides = 4, range = 60, requires_attack_roll = False, save_allowed = False, save_attribute = Ability.WISDOM, is_healing = True)
+    big_heal = Spell(name = "Big", level = 0, target_type = TargetType.ALLY, damage_type = None, damage_dice = 3, damage_sides = 8, range = 60, requires_attack_roll = False, save_allowed = False, save_attribute = Ability.WISDOM, is_healing = True)
+    policy = BeliefUpdatingPolicy()
+
+    assert policy.score_spell_hit(healer, ally, big_heal, combat_state, {}) > policy.score_spell_hit(healer, ally, small_heal, combat_state, {})
+
+
+# --- ally buff valuation ---
+
+def _shield_of_faith_spell():
+    from effects import ShieldOfFaith
+
+    return Spell(
+        name = "Shield of Faith", level = 1, target_type = TargetType.ALLY, damage_type = None,
+        damage_dice = 0, damage_sides = 0, range = 60, requires_attack_roll = False,
+        save_allowed = False, save_attribute = Ability.WISDOM, effect = ShieldOfFaith, is_bonus_action = True
+    )
+
+def test_an_ac_buff_on_an_ally_is_worth_more_when_enemies_hit_harder(make_player, make_monster, melee_weapon, make_combat_state):
+    cleric = make_player(name = "Cleric")
+    ally = make_player(name = "Ally")
+    weak_enemy = make_monster(name = "Weak")
+    weak_enemy.weapons = [melee_weapon(damage_dice = 1, damage_sides = 4)]
+    strong_enemy = make_monster(name = "Strong")
+    strong_enemy.weapons = [melee_weapon(damage_dice = 4, damage_sides = 10)]
+    policy = BeliefUpdatingPolicy()
+    spell = _shield_of_faith_spell()
+
+    weak_value = policy.score_spell_hit(cleric, ally, spell, make_combat_state(cleric, ally, weak_enemy), {})
+    strong_value = policy.score_spell_hit(cleric, ally, spell, make_combat_state(cleric, ally, strong_enemy), {})
+
+    assert 0 < weak_value < strong_value
+
+def test_an_ac_buff_is_worth_nothing_when_there_are_no_enemies(make_player, make_combat_state):
+    cleric = make_player(name = "Cleric")
+    ally = make_player(name = "Ally")
+
+    value = BeliefUpdatingPolicy().score_spell_hit(cleric, ally, _shield_of_faith_spell(), make_combat_state(cleric, ally), {})
+
+    assert value == 0
+
+def test_an_ac_buff_is_not_stacked_on_an_ally_who_already_has_it(make_player, make_monster, melee_weapon, make_combat_state):
+    from effects import ShieldOfFaith
+
+    cleric = make_player(name = "Cleric")
+    ally = make_player(name = "Ally")
+    enemy = make_monster()
+    enemy.weapons = [melee_weapon(damage_dice = 2, damage_sides = 8)]
+    ally.add_effect(ShieldOfFaith())
+
+    value = BeliefUpdatingPolicy().score_spell_hit(cleric, ally, _shield_of_faith_spell(), make_combat_state(cleric, ally, enemy), {})
+
+    assert value < 0
+
+def test_a_cleric_with_nothing_better_to_do_chooses_to_buff_a_threatened_ally_as_a_bonus_action(make_player, make_monster, melee_weapon, make_combat_state):
+    cleric = make_player(name = "Cleric")
+    cleric.spells = [_shield_of_faith_spell()]
+    cleric.spell_slots = {1: 1}
+    ally = make_player(name = "Ally")
+    enemy = make_monster()
+    enemy.weapons = [melee_weapon(damage_dice = 3, damage_sides = 10)]
+    combat_state = make_combat_state(cleric, ally, enemy)
+
+    score, action = BeliefUpdatingPolicy().best_spell(cleric, combat_state, {}, bonus_action = True)
+
+    assert action is not None and action.spell.name == "Shield of Faith"
+
+
+# --- reachable this turn: an action that cannot be made this turn is worth no damage ---
+
+def _state_with_target_at(attacker, target, squares_away):
+    from world import Grid, CombatState
+
+    grid = Grid(30, 30)
+    grid.place(attacker, 0, 0)
+    grid.place(target, squares_away, 0)
+    return CombatState(grid = grid, initiative_order = [attacker, target])
+
+def test_a_melee_attack_beyond_this_turns_reach_is_worth_no_damage(make_player, make_monster, melee_weapon):
+    attacker = make_player() # speed 30: can move 30 ft then hit at 5 ft reach, i.e. 35 ft away at most
+    target = make_monster()
+    policy = BeliefUpdatingPolicy()
+    weapon = melee_weapon(reach = 5)
+
+    reachable = policy.score_attack(attacker, target, weapon, _state_with_target_at(attacker, target, 7), {}) # 35 ft
+    out_of_reach = policy.score_attack(attacker, target, weapon, _state_with_target_at(attacker, target, 8), {}) # 40 ft
+
+    assert reachable > 1 # still carries its movement penalty, but is worth real damage
+    assert -1 < out_of_reach <= 0
+
+def test_the_reach_boundary_is_exactly_movement_plus_weapon_range(make_player, make_monster, melee_weapon):
+    attacker = make_player()
+    attacker.movement = 10
+    target = make_monster()
+    policy = BeliefUpdatingPolicy()
+    weapon = melee_weapon(reach = 5)
+
+    assert policy.score_attack(attacker, target, weapon, _state_with_target_at(attacker, target, 3), {}) > 1 # 15 ft = 10 + 5
+    assert policy.score_attack(attacker, target, weapon, _state_with_target_at(attacker, target, 4), {}) <= 0 # 20 ft
+
+def test_movement_already_spent_this_turn_shrinks_what_can_be_reached(make_player, make_monster, melee_weapon):
+    attacker = make_player()
+    target = make_monster()
+    policy = BeliefUpdatingPolicy()
+    weapon = melee_weapon(reach = 5)
+    combat_state = _state_with_target_at(attacker, target, 6) # 30 ft
+
+    fresh = policy.score_attack(attacker, target, weapon, combat_state, {})
+    attacker.movement = 0
+    spent = policy.score_attack(attacker, target, weapon, combat_state, {})
+
+    assert fresh > 1 and spent <= 0
+
+def test_a_distant_target_is_attacked_with_the_bow_rather_than_a_sword_that_cannot_reach(make_player, make_monster, melee_weapon, ranged_weapon):
+    attacker = make_player()
+    attacker.weapons = [melee_weapon(name = "Sword", damage_dice = 1, damage_sides = 10), ranged_weapon(name = "Bow", damage_dice = 1, damage_sides = 8)]
+    target = make_monster()
+    combat_state = _state_with_target_at(attacker, target, 12) # 60 ft
+    policy = BeliefUpdatingPolicy()
+
+    _, action = policy.best_attack(attacker, combat_state, {}, bonus_action = False)
+
+    assert action.weapon.name == "Bow"
+
+def test_the_sword_is_still_preferred_when_it_can_reach_this_turn(make_player, make_monster, melee_weapon, ranged_weapon):
+    attacker = make_player()
+    attacker.weapons = [melee_weapon(name = "Sword", damage_dice = 1, damage_sides = 10), ranged_weapon(name = "Bow", damage_dice = 1, damage_sides = 8)]
+    target = make_monster()
+    combat_state = _state_with_target_at(attacker, target, 4) # 20 ft
+    policy = BeliefUpdatingPolicy()
+
+    _, action = policy.best_attack(attacker, combat_state, {}, bonus_action = False)
+
+    assert action.weapon.name == "Sword"
+
+def test_a_combatant_with_nothing_in_reach_still_chooses_to_close_on_the_nearest_enemy(make_player, make_monster, melee_weapon):
+    from world import Grid, CombatState
+
+    attacker = make_player()
+    attacker.weapons = [melee_weapon(reach = 5)]
+    near = make_monster(name = "Near")
+    far = make_monster(name = "Far")
+    grid = Grid(30, 30)
+    grid.place(attacker, 0, 0)
+    grid.place(near, 10, 0) # 50 ft
+    grid.place(far, 20, 0) # 100 ft
+    combat_state = CombatState(grid = grid, initiative_order = [attacker, near, far])
+
+    score, action = BeliefUpdatingPolicy().best_attack(attacker, combat_state, {}, bonus_action = False)
+
+    assert action is not None and action.target is near
+
+def test_a_target_that_cannot_be_approached_is_not_chosen_even_to_close_in(make_player, make_monster, melee_weapon):
+    from effects import Effect
+
+    class Cannot(Effect):
+        def forbids_approaching(self, other):
+            return True
+
+    attacker = make_player()
+    attacker.weapons = [melee_weapon(reach = 5)]
+    attacker.effects.append(Cannot())
+    target = make_monster()
+    combat_state = _state_with_target_at(attacker, target, 12)
+
+    score, action = BeliefUpdatingPolicy().best_attack(attacker, combat_state, {}, bonus_action = False)
+
+    assert action is None
+
+def test_a_spell_out_of_reach_this_turn_is_worth_no_damage(make_player, make_monster):
+    caster = make_player()
+    caster.spell_slots = {1: 1}
+    target = make_monster()
+    touch_spell = Spell(
+        name = "Touch Spell", level = 1, target_type = TargetType.ENEMY, damage_type = None,
+        damage_dice = 3, damage_sides = 10, range = 5, requires_attack_roll = False,
+        save_allowed = False, save_attribute = Ability.DEXTERITY
+    )
+    policy = BeliefUpdatingPolicy()
+
+    in_reach = policy.score_spell(caster, target, touch_spell, _state_with_target_at(caster, target, 4), {})
+    out_of_reach = policy.score_spell(caster, target, touch_spell, _state_with_target_at(caster, target, 9), {})
+
+    assert in_reach > 10
+    assert -1 < out_of_reach <= 0

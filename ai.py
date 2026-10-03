@@ -8,24 +8,19 @@ from actions import Action, ActionResult, SpellHitResult, move_towards_target, a
 from policy import Policy
 from policy_greedyutility import GreedyUtilityPolicy
 from belief import CombatantBelief
-from ai_profile import AIProfile, CreatureAIProfile, PlayerAIProfile
+from ai_profile import CreatureAIProfile
 
 class CombatantAI:
     combatant: Combatant
     policy: Policy
     beliefs: dict[Combatant, CombatantBelief]
-    profile: AIProfile
+    profile: Optional[CreatureAIProfile] # only monsters have a profile (their target priority); PCs have none
 
     def __init__(self, combatant: Combatant):
         self.combatant = combatant
         self.policy = GreedyUtilityPolicy()
         self.beliefs = {}
-        if isinstance(combatant, Monster):
-            self.profile = CreatureAIProfile()
-        elif isinstance(combatant, PlayerCharacter):
-            self.profile = PlayerAIProfile()
-        else:
-            self.profile = AIProfile()
+        self.profile = CreatureAIProfile() if isinstance(combatant, Monster) else None
 
     def reset(self) -> None:
         # Beliefs are per-encounter learned state -- each new combat is a fresh encounter with no

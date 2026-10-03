@@ -28,6 +28,8 @@ class Spell:
     upcastable_extra_damage_die: bool = False
     upcastable_extra_target: bool = False
     is_bonus_action: bool = False
+    damage_bonus: int = 0
+    ray_count: int = 1
 
     @property
     def is_cantrip(self) -> bool:

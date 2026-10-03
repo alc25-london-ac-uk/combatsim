@@ -1,4 +1,4 @@
-from enums import TargetType, TargetPriority, Horizon
+from enums import TargetType, TargetPriority
 from policy_greedyutility import GreedyUtilityPolicy
 from ai_profile import CreatureAIProfile
 
@@ -150,146 +150,6 @@ def test_target_priority_does_not_apply_to_player_characters(make_player, make_m
 
     assert action is not None
 
-# --- _horizon_penalty (Policy base class, shared by all policies) ---
-
-def test_horizon_penalty_is_zero_at_the_default_horizon_none(make_player, make_monster, melee_weapon, make_combat_state):
-    combatant = make_player()
-    enemy = make_monster()
-    enemy.weapons = [melee_weapon()]
-    combat_state = make_combat_state(combatant, enemy)
-    policy = GreedyUtilityPolicy()
-
-    assert combatant.ai.profile.tactical_horizon == Horizon.NONE
-    assert policy._horizon_penalty(combatant, combat_state, exposed_to_melee = True) == 0.0
-
-def test_horizon_penalty_is_zero_when_not_exposed_to_melee(make_player, make_monster, melee_weapon, make_combat_state):
-    combatant = make_player()
-    combatant.ai.profile.tactical_horizon = Horizon.ONE
-    enemy = make_monster()
-    enemy.weapons = [melee_weapon()]
-    combat_state = make_combat_state(combatant, enemy)
-    policy = GreedyUtilityPolicy()
-
-    assert policy._horizon_penalty(combatant, combat_state, exposed_to_melee = False) == 0.0
-
-def test_horizon_penalty_is_zero_at_horizon_multi(make_player, make_monster, melee_weapon, make_combat_state):
-    combatant = make_player()
-    combatant.ai.profile.tactical_horizon = Horizon.MULTI
-    enemy = make_monster()
-    enemy.weapons = [melee_weapon()]
-    combat_state = make_combat_state(combatant, enemy)
-    policy = GreedyUtilityPolicy()
-
-    assert policy._horizon_penalty(combatant, combat_state, exposed_to_melee = True) == 0.0
-
-def test_horizon_penalty_is_negative_when_exposed_at_horizon_one(make_player, make_monster, melee_weapon, make_combat_state):
-    combatant = make_player()
-    combatant.ai.profile.tactical_horizon = Horizon.ONE
-    enemy = make_monster()
-    enemy.weapons = [melee_weapon()]
-    combat_state = make_combat_state(combatant, enemy)
-    policy = GreedyUtilityPolicy()
-
-    assert policy._horizon_penalty(combatant, combat_state, exposed_to_melee = True) < 0.0
-
-def test_horizon_penalty_picks_the_worst_of_several_enemies(make_player, make_monster, melee_weapon, make_combat_state):
-    combatant = make_player()
-    combatant.ai.profile.tactical_horizon = Horizon.ONE
-    weak_enemy = make_monster(name = "Weak")
-    weak_enemy.weapons = [melee_weapon(damage_dice = 1, damage_sides = 4)]
-    strong_enemy = make_monster(name = "Strong")
-    strong_enemy.weapons = [melee_weapon(damage_dice = 4, damage_sides = 10)]
-    combat_state = make_combat_state(combatant, weak_enemy, strong_enemy)
-    policy = GreedyUtilityPolicy()
-
-    penalty_with_both = policy._horizon_penalty(combatant, combat_state, exposed_to_melee = True)
-
-    weak_only_state = make_combat_state(combatant, weak_enemy)
-    penalty_weak_only = policy._horizon_penalty(combatant, weak_only_state, exposed_to_melee = True)
-
-    assert penalty_with_both < penalty_weak_only
-
-def test_horizon_penalty_ignores_dead_and_allied_combatants(make_player, make_monster, melee_weapon, make_combat_state):
-    combatant = make_player()
-    combatant.ai.profile.tactical_horizon = Horizon.ONE
-    dead_enemy = make_monster(name = "Dead")
-    dead_enemy.weapons = [melee_weapon(damage_dice = 10, damage_sides = 10)]
-    dead_enemy.hp = 0
-    ally = make_player(name = "Ally")
-    ally.weapons = [melee_weapon(damage_dice = 10, damage_sides = 10)]
-    combat_state = make_combat_state(combatant, dead_enemy, ally)
-    policy = GreedyUtilityPolicy()
-
-    assert policy._horizon_penalty(combatant, combat_state, exposed_to_melee = True) == 0.0
-
-# --- Horizon.ONE integration: score_attack / score_spell ---
-
-def test_horizon_one_makes_a_melee_attack_score_lower_than_an_otherwise_identical_ranged_one(make_player, make_monster, melee_weapon, ranged_weapon, make_combat_state):
-    attacker = make_player()
-    attacker.ai.profile.tactical_horizon = Horizon.ONE
-    target = make_monster(ac = 10)
-    threatening_enemy = make_monster(name = "Threat", ac = 10)
-    threatening_enemy.weapons = [melee_weapon(damage_dice = 4, damage_sides = 10)]
-    combat_state = make_combat_state(attacker, target, threatening_enemy)
-    policy = GreedyUtilityPolicy()
-
-    melee_score = policy.score_attack(attacker, target, melee_weapon(reach = 999), combat_state, {})
-    ranged_score = policy.score_attack(attacker, target, ranged_weapon(optimal_distance = 999, maximum_distance = 999), combat_state, {})
-
-    assert ranged_score > melee_score
-
-def test_horizon_one_penalises_a_melee_range_spell(make_player, make_monster, make_combat_state):
-    from spell import Spell
-    from enums import Ability
-
-    caster = make_player()
-    caster.ai.profile.tactical_horizon = Horizon.ONE
-    caster.spell_slots = {1: 1}
-    target = make_monster(ac = 10)
-    threatening_enemy = make_monster(name = "Threat", ac = 10)
-    from weapon import MeleeWeapon
-    from enums import DamageType
-    threatening_enemy.weapons = [MeleeWeapon(name = "Claws", damage_dice = 4, damage_sides = 10, damage_type = DamageType.SLASHING, reach = 5, finesse = False)]
-    combat_state = make_combat_state(caster, target, threatening_enemy)
-
-    melee_spell = Spell(
-        name = "Melee Spell", level = 1, target_type = TargetType.ENEMY, damage_type = DamageType.FORCE,
-        damage_dice = 2, damage_sides = 6, range = 5, requires_attack_roll = False,
-        save_allowed = False, save_attribute = Ability.DEXTERITY
-    )
-    ranged_spell = Spell(
-        name = "Ranged Spell", level = 1, target_type = TargetType.ENEMY, damage_type = DamageType.FORCE,
-        damage_dice = 2, damage_sides = 6, range = 60, requires_attack_roll = False,
-        save_allowed = False, save_attribute = Ability.DEXTERITY
-    )
-    policy = GreedyUtilityPolicy()
-
-    melee_score = policy.score_spell(caster, target, melee_spell, combat_state, {})
-    caster.spell_slots = {1: 1} # score_spell doesn't mutate slots, but keep state obviously fresh
-    ranged_score = policy.score_spell(caster, target, ranged_spell, combat_state, {})
-
-    assert ranged_score > melee_score
-
-def test_best_spell_offers_a_cantrip_regardless_of_spell_slots(make_player, make_monster, make_combat_state):
-    from spell import Spell
-    from enums import Ability
-
-    caster = make_player()
-    caster.spell_slots = {}
-    caster.spells = [Spell(
-        name = "Test Cantrip", level = 0, target_type = TargetType.ENEMY, damage_type = None,
-        damage_dice = 1, damage_sides = 8, range = 60, requires_attack_roll = False,
-        save_allowed = False, save_attribute = Ability.DEXTERITY
-    )]
-    target = make_monster()
-    combat_state = make_combat_state(caster, target)
-    policy = GreedyUtilityPolicy()
-
-    score, action = policy.best_spell(caster, combat_state, {}, bonus_action = False)
-
-    assert action is not None
-
-
 # --- spell scoring: expected dice ---
 
 def _scoring_spell(level):
@@ -313,7 +173,7 @@ def test_leveled_spell_scoring_ignores_the_cantrip_extra_die(make_monster, make_
     high_score = policy.score_spell_hit(high, target, spell, combat_state, {})
 
     assert low_score == high_score
-    assert low_score > 7 # 2d6 averages 7; kill bonus on top, never zero dice
+    assert low_score >= 7 # 2d6 averages 7; never zero dice
 
 def test_cantrip_scoring_gains_a_die_only_from_caster_level_5(make_monster, make_combat_state):
     low = make_monster(name = "Low", spellcaster_level = 4, max_hp = 1000)
@@ -328,39 +188,6 @@ def test_cantrip_scoring_gains_a_die_only_from_caster_level_5(make_monster, make
 
     assert 3.4 < high_score - low_score < 3.6 # one extra d6 averages 3.5
 
-# --- point-estimate HP (no peeking at true HP) ---
-
-def test_score_attack_uses_estimated_hp_not_the_targets_true_hp(make_player, make_monster, melee_weapon, make_combat_state):
-    from belief import CombatantBelief
-
-    attacker = make_player()
-    weapon = melee_weapon()
-    target = make_monster(max_hp = 100)
-    target.hp = 1 # truly almost dead
-    combat_state = make_combat_state(attacker, target)
-    policy = GreedyUtilityPolicy()
-
-    believed_healthy = {target: CombatantBelief(hypotheses = {(100, 100): 1.0})}
-    believed_dying = {target: CombatantBelief(hypotheses = {(1, 100): 1.0})}
-
-    healthy_score = policy.score_attack(attacker, target, weapon, combat_state, believed_healthy)
-    dying_score = policy.score_attack(attacker, target, weapon, combat_state, believed_dying)
-
-    assert dying_score > healthy_score # the belief drives the kill bonus, not target.hp
-
-def test_weakest_priority_follows_the_estimated_hp_fraction(make_player, make_monster, make_combat_state):
-    from belief import CombatantBelief
-
-    attacker = make_monster(name = "Attacker")
-    attacker.ai = type("AI", (), {"profile": CreatureAIProfile(target_priority = TargetPriority.WEAKEST)})()
-    target = make_player()
-    combat_state = make_combat_state(attacker, target)
-    policy = GreedyUtilityPolicy()
-
-    hurt = {target: CombatantBelief(hypotheses = {(10, 100): 1.0})}
-    fresh = {target: CombatantBelief(hypotheses = {(100, 100): 1.0})}
-
-    assert policy._target_priority_bonus(attacker, target, 5, hurt) > policy._target_priority_bonus(attacker, target, 5, fresh)
 
 # --- assumed AC and save modifiers (no peeking at target defences) ---
 
@@ -391,3 +218,62 @@ def test_score_spell_hit_ignores_the_targets_actual_save_modifier_and_armour_cla
     policy = GreedyUtilityPolicy()
 
     assert policy.score_spell_hit(caster, quick, spell, combat_state, {}) == policy.score_spell_hit(caster, clumsy, spell, combat_state, {})
+
+
+# --- fixed guesses: Greedy never updates and never peeks at an opponent's true state ---
+
+def test_greedy_scores_identically_whatever_has_been_observed_about_the_target(make_player, make_monster, melee_weapon, make_combat_state):
+    from belief import CombatantBelief
+
+    attacker = make_player()
+    weapon = melee_weapon()
+    target = make_monster(max_hp = 100)
+    combat_state = make_combat_state(attacker, target)
+    policy = GreedyUtilityPolicy()
+
+    untouched = {target: CombatantBelief.initial_prior_for(target)}
+    wounded = {target: CombatantBelief.initial_prior_for(target)}
+    wounded[target].observe_damage(95)
+    wounded[target].observe_attack_roll(attack_bonus = 5, hit = False)
+
+    assert policy.score_attack(attacker, target, weapon, combat_state, untouched) == policy.score_attack(attacker, target, weapon, combat_state, wounded)
+
+def test_greedy_scoring_ignores_the_targets_true_hit_points(make_player, make_monster, melee_weapon, make_combat_state):
+    attacker = make_player()
+    weapon = melee_weapon()
+    healthy = make_monster(name = "Healthy", max_hp = 40)
+    dying = make_monster(name = "Dying", max_hp = 40)
+    dying.hp = 1
+    combat_state = make_combat_state(attacker, healthy, dying)
+    policy = GreedyUtilityPolicy()
+
+    assert policy.score_attack(attacker, healthy, weapon, combat_state, {}) == policy.score_attack(attacker, dying, weapon, combat_state, {})
+
+def test_greedy_assumes_the_class_typical_armour_class_for_player_characters(make_player, make_monster, melee_weapon, make_combat_state):
+    attacker = make_monster(name = "Attacker", attack_bonus = 5)
+    wizard = make_player(name = "Wizard", character_class = "wizard", ac = 25)
+    fighter = make_player(name = "Fighter", character_class = "fighter", ac = 5)
+    weapon = melee_weapon()
+    combat_state = make_combat_state(attacker, wizard, fighter)
+    policy = GreedyUtilityPolicy()
+
+    # the guess comes from the class prior (wizards are assumed squishier), not from the true AC
+    assert policy.score_attack(attacker, wizard, weapon, combat_state, {}) > policy.score_attack(attacker, fighter, weapon, combat_state, {})
+
+def test_greedy_still_knows_the_true_state_of_its_allies(make_player, make_combat_state):
+    from spell import Spell
+    from enums import Ability
+
+    healer = make_player(name = "Healer")
+    wounded_ally = make_player(name = "Wounded Ally")
+    wounded_ally.hp = 1
+    healthy_ally = make_player(name = "Healthy Ally")
+    heal = Spell(
+        name = "Test Heal", level = 0, target_type = TargetType.ALLY, damage_type = None,
+        damage_dice = 1, damage_sides = 8, range = 60, requires_attack_roll = False,
+        save_allowed = False, save_attribute = Ability.WISDOM, is_healing = True
+    )
+    combat_state = make_combat_state(healer, wounded_ally, healthy_ally)
+    policy = GreedyUtilityPolicy()
+
+    assert policy.score_spell_hit(healer, wounded_ally, heal, combat_state, {}) > policy.score_spell_hit(healer, healthy_ally, heal, combat_state, {})

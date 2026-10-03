@@ -150,6 +150,9 @@ class Combatant(ABC):
         self.effects.append(effect)
 
     def remove_effect(self, effect: Effect) -> None:
+        if not any(e is effect for e in self.effects):
+            return # removing an effect twice must not undo its on_remove side effects twice (e.g. an AC bonus)
+
         effect.on_remove(self)
         self.effects = [e for e in self.effects if e is not effect]
 

@@ -42,18 +42,7 @@ class RollType(Enum):
     ATTACK = auto()
     SAVE = auto()
 
-class Horizon(Enum):
-    NONE = auto()
-    ONE = auto()
-    MULTI = auto()
-
 class TargetPriority(Enum):
     NEAREST = auto()
     WEAKEST = auto()
     HIGHEST_THREAT = auto()
-
-class PartyRole(Enum):
-    DAMAGE = auto()
-    SUPPORT = auto()
-    CONTROL = auto()
-    TANK = auto()

@@ -57,6 +57,9 @@ class Effect(ABC):
     def forbids_approaching(self, other: Combatant) -> bool:
         return False
 
+    def ac_gain(self, target: Combatant) -> int:
+        return 0
+
 @dataclass
 class AcidArrow(Effect):
     name: str = "Acid Arrow"
@@ -82,6 +85,23 @@ class Barkskin(Effect):
 
     def on_remove(self, target: Combatant) -> None:
         target.ac = self.previous_ac
+
+    def ac_gain(self, target: Combatant) -> int:
+        return max(0, 16 - target.ac)
+
+@dataclass
+class ShieldOfFaith(Effect):
+    name: str = "Shield of Faith"
+    duration: int = 100
+
+    def on_apply(self, target: Combatant) -> None:
+        target.ac += 2
+
+    def on_remove(self, target: Combatant) -> None:
+        target.ac -= 2
+
+    def ac_gain(self, target: Combatant) -> int:
+        return 2
 
 @dataclass
 class Blind(Effect):

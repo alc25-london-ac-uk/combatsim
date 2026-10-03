@@ -236,8 +236,7 @@ def test_cantrip_gains_an_extra_damage_die_at_caster_level_5(monkeypatch):
     spell_hit_results = cast_spell(caster, target, fire_bolt, combat_state)
     amount = spell_hit_results[0].amount
 
-    expected_bonus = caster.get_spell_attack_bonus()
-    assert amount == 4 * 2 + expected_bonus # base die + 1 extra die at level 5
+    assert amount == 4 * 2 # base die + 1 extra die at level 5, and no caster bonus
 
 def test_cantrip_has_no_extra_die_below_caster_level_5(monkeypatch):
     monkeypatch.setattr("dice.random.randint", lambda a, b: 4)
@@ -254,8 +253,7 @@ def test_cantrip_has_no_extra_die_below_caster_level_5(monkeypatch):
     spell_hit_results = cast_spell(caster, target, fire_bolt, combat_state)
     amount = spell_hit_results[0].amount
 
-    expected_bonus = caster.get_spell_attack_bonus()
-    assert amount == 4 * 1 + expected_bonus
+    assert amount == 4 * 1
 
 # --- cast_spell() AoE ---
 
@@ -484,3 +482,74 @@ def test_attack_roll_bonus_observed_is_none_for_an_automatic_melee_crit():
 
     target.add_effect(Paralysed())
     assert attack_roll_bonus_observed(attacker, target, weapon) is None
+
+
+# --- spell damage follows RAW: no caster bonus unless the spell has its own ---
+
+def _bonus_test_spell(**overrides):
+    defaults: dict[str, Any] = dict(
+        name = "Test Spell", level = 1, target_type = TargetType.ENEMY, damage_type = DamageType.FORCE,
+        damage_dice = 3, damage_sides = 4, range = 120, requires_attack_roll = False,
+        save_allowed = False, save_attribute = Ability.DEXTERITY
+    )
+    defaults.update(overrides)
+    return Spell(**defaults)
+
+def test_a_damage_spell_adds_no_caster_bonus_to_its_damage(monkeypatch):
+    monkeypatch.setattr("dice.random.randint", lambda a, b: 2)
+    caster = _make_player(ability_scores = AbilityScores(intelligence = 18))
+    caster.spell_slots = {1: 1}
+    target = _make_monster()
+    combat_state = _combat_state(caster, target)
+
+    result = cast_spell(caster, target, _bonus_test_spell(), combat_state)[0]
+
+    assert result.amount == 3 * 2 # a +7 spell attack bonus must not leak into damage
+
+def test_a_spell_with_a_flat_damage_bonus_adds_exactly_that_bonus(monkeypatch):
+    monkeypatch.setattr("dice.random.randint", lambda a, b: 2)
+    caster = _make_player()
+    caster.spell_slots = {1: 1}
+    target = _make_monster()
+    combat_state = _combat_state(caster, target)
+
+    result = cast_spell(caster, target, _bonus_test_spell(damage_bonus = 3), combat_state)[0]
+
+    assert result.amount == 3 * 2 + 3 # Magic Missile: three darts of 1d4 + 1
+
+def test_a_healing_spell_adds_the_spellcasting_modifier(monkeypatch):
+    monkeypatch.setattr("dice.random.randint", lambda a, b: 5)
+    cleric = _make_player(ability_scores = AbilityScores(wisdom = 16), spellcasting_ability = Ability.WISDOM)
+    cleric.spell_slots = {1: 1}
+    ally = _make_player(name = "Ally")
+    ally.hp = 1
+    combat_state = _combat_state(cleric, ally)
+    cure = _bonus_test_spell(name = "Cure Wounds", target_type = TargetType.ALLY, damage_type = None, is_healing = True, damage_dice = 1, damage_sides = 8, range = 5)
+
+    result = cast_spell(cleric, ally, cure, combat_state)[0]
+
+    assert result.amount == 5 + 3 # 1d8 + WIS modifier (+3), not the +6 spell attack bonus
+
+def test_a_multi_ray_spell_makes_one_attack_roll_per_ray_for_a_single_slot(monkeypatch):
+    monkeypatch.setattr("dice.random.randint", lambda a, b: 3)
+    caster = _make_player()
+    caster.spell_slots = {2: 1}
+    target = _make_monster(ac = 1) # everything hits
+    combat_state = _combat_state(caster, target)
+    rays = _bonus_test_spell(name = "Scorching Ray", level = 2, damage_dice = 2, damage_sides = 6, requires_attack_roll = True, ray_count = 3)
+
+    results = cast_spell(caster, target, rays, combat_state)
+
+    assert len(results) == 3
+    assert all(r.attack_roll_bonus == caster.get_spell_attack_bonus() for r in results)
+    assert sum(r.amount for r in results) == 3 * (2 * 3)
+    assert caster.spell_slots[2] == 0 # one slot, not three
+
+def test_a_single_ray_spell_still_makes_exactly_one_attack(monkeypatch):
+    monkeypatch.setattr("dice.random.randint", lambda a, b: 3)
+    caster = _make_player()
+    target = _make_monster(ac = 1)
+    combat_state = _combat_state(caster, target)
+    bolt = _bonus_test_spell(name = "Test Bolt", level = 0, damage_dice = 1, damage_sides = 10, requires_attack_roll = True)
+
+    assert len(cast_spell(caster, target, bolt, combat_state)) == 1

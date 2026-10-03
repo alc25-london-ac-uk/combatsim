@@ -38,9 +38,6 @@ def test_belief_for_reflects_hp_changes_immediately_with_no_memory_of_the_past(m
 
 # --- OmniscientPolicy inherits BeliefUpdatingPolicy's scoring unchanged ---
 
-def test_omniscient_policy_is_a_belief_updating_policy_subclass():
-    assert issubclass(OmniscientPolicy, BeliefUpdatingPolicy)
-
 def test_omniscient_policy_scores_identically_to_belief_updating_given_an_accurate_belief(make_player, make_monster, melee_weapon, make_combat_state):
     attacker = make_player()
     target = make_monster(ac = 10, max_hp = 20)

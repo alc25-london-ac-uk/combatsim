@@ -3,14 +3,14 @@ from pathlib import Path
 import pytest
 
 from data import load_weapons, load_spells, load_players, load_monsters
-from evaluation import build_party
+from scenarios import build_party
 from cr_calibration import (
     XP_BY_CR, XP_THRESHOLDS_BY_LEVEL, TIERS,
     encounter_multiplier, classify_difficulty, generate_random_encounter, run_cr_calibration,
     has_damage_modifiers, run_policy_sweep, summarise_sweep,
 )
 from policy_greedyutility import GreedyUtilityPolicy
-from evaluation import POLICIES
+from scenarios import POLICIES
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 

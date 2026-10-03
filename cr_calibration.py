@@ -5,7 +5,7 @@ from combatant import PlayerCharacter
 from data import spawn
 from combat import monte_carlo
 from policy import Policy
-from evaluation import build_party, POLICIES
+from scenarios import build_party, POLICIES
 from policy_greedyutility import GreedyUtilityPolicy
 
 XP_THRESHOLDS_BY_LEVEL: dict[int, dict[str, int]] = {

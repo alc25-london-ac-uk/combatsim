@@ -17,8 +17,18 @@
             "3": 0
         },
         "weapons": [
-            {"name": "Longsword", "is_off_hand": false},
-            {"name": "Warhammer", "is_off_hand": false}
+            {
+                "name": "Longsword",
+                "is_off_hand": false
+            },
+            {
+                "name": "Warhammer",
+                "is_off_hand": false
+            },
+            {
+                "name": "Longbow",
+                "is_off_hand": false
+            }
         ]
     },
     {
@@ -40,17 +50,21 @@
             "3": 2
         },
         "weapons": [
-            {"name": "Mace", "is_off_hand": false}
+            {
+                "name": "Mace",
+                "is_off_hand": false
+            }
         ],
         "spells": [
-            "Blindness",
-            "Cure Wounds",
             "Sacred Flame",
-            "Hold Person",
-            "Inflict Wounds",
+            "Cure Wounds",
             "Healing Word",
-            "Barkskin",
-            "Spirit Guardians"
+            "Guiding Bolt",
+            "Inflict Wounds",
+            "Hold Person",
+            "Blindness",
+            "Spirit Guardians",
+            "Shield of Faith"
         ]
     },
     {
@@ -72,16 +86,24 @@
             "3": 2
         },
         "weapons": [
-            {"name": "Quarterstaff"}
+            {
+                "name": "Quarterstaff"
+            }
         ],
         "spells": [
-            "Acid Arrow",
-            "Blindness",
-            "Fireball",
-            "Hold Person",
             "Fire Bolt",
+            "Ray of Frost",
+            "Shocking Grasp",
+            "Poison Spray",
             "Magic Missile",
-            "Vampiric Touch"
+            "Thunderwave",
+            "Acid Arrow",
+            "Shatter",
+            "Scorching Ray",
+            "Hold Person",
+            "Fireball",
+            "Vampiric Touch",
+            "Glyph of Warding"
         ]
     }
 ]

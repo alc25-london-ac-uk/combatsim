@@ -7,7 +7,7 @@ from combatant import Combatant, PlayerCharacter, Monster, AbilityScores, Weapon
 from effects import Effect, EFFECT_REGISTRY, AcidArrow, Barkskin, Blind, Concentrating, Paralysed
 from ai import CombatantAI
 from policy import Policy
-from ai_profile import AIProfile
+from ai_profile import CreatureAIProfile
 
 def load_weapons(filepath: str) -> dict[str, Weapon]:
     with open(filepath) as f:
@@ -109,7 +109,9 @@ def parse_spell(entry: dict) -> Spell:
         upcastable_extra_target = entry.get("upcastable_extra_target", False),
         target_type = TargetType(entry.get("target_type")) if entry.get("target_type") else None,
         is_healing = entry.get("is_healing", False),
-        is_bonus_action = entry.get("is_bonus_action", False)
+        is_bonus_action = entry.get("is_bonus_action", False),
+        damage_bonus = entry.get("damage_bonus", 0),
+        ray_count = entry.get("ray_count", 1)
     )
 
 def parse_monster(entry: dict, weapon_registry: dict[str, Weapon], spell_registry: dict[str, Spell]) -> Monster:
@@ -138,6 +140,7 @@ def parse_monster(entry: dict, weapon_registry: dict[str, Weapon], spell_registr
         attack_bonus = entry["attack_bonus"],
         spell_bonus = entry.get("spell_bonus", 0),
         spellcaster_level = entry.get("spellcaster_level", 0),
+        spellcasting_ability = Ability(entry.get("spellcasting_ability", "intelligence")),
         spell_slots = {int(k): v for k, v in entry.get("spell_slots", {}).items()},
         challenge_rating = entry["challenge_rating"],
         weapons = weapons,
@@ -177,7 +180,7 @@ def parse_player_character(entry: dict, weapon_registry: dict[str, Weapon], spel
         spells = spells
     )
 
-def spawn(registry: dict[str, Combatant], name: str, label: str = "", policy: Optional[Policy] = None, profile: Optional[AIProfile] = None) -> Combatant:
+def spawn(registry: dict[str, Combatant], name: str, label: str = "", policy: Optional[Policy] = None, profile: Optional[CreatureAIProfile] = None) -> Combatant:
     combatant = copy.deepcopy(registry[name])
     combatant.name = label or name
     combatant.type_name = name

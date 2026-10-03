@@ -160,3 +160,57 @@ def test_unrelated_effect_removal_does_not_touch_concentration():
 
     assert caster.has_effect(Concentrating)
     assert target.has_effect(Barkskin)
+
+
+# --- effects must never leave permanent changes behind (AC drift regression) ---
+
+def test_removing_the_same_effect_twice_only_undoes_it_once(make_player):
+    from effects import ShieldOfFaith
+
+    ally = make_player(ac = 15)
+    effect = ShieldOfFaith()
+    ally.add_effect(effect)
+
+    ally.remove_effect(effect)
+    ally.remove_effect(effect)
+
+    assert ally.ac == 15
+
+def test_removing_an_effect_that_was_never_applied_changes_nothing(make_player):
+    from effects import ShieldOfFaith
+
+    ally = make_player(ac = 15)
+
+    ally.remove_effect(ShieldOfFaith())
+
+    assert ally.ac == 15
+
+def test_a_broken_concentration_removes_the_maintained_buff_exactly_once(make_player):
+    from effects import ShieldOfFaith, Concentrating
+
+    caster = make_player(name = "Caster")
+    ally = make_player(name = "Ally", ac = 15)
+    shield = ShieldOfFaith()
+    ally.add_effect(shield)
+    concentration = Concentrating(maintained_effect = shield, maintained_target = ally)
+    caster.add_effect(concentration)
+
+    # the exact sequence Concentrating.on_damage_taken runs when the save is failed
+    caster.remove_effect(concentration)
+    ally.remove_effect(shield)
+
+    assert ally.ac == 15
+
+def test_resetting_combatants_after_a_fight_restores_every_armour_class(make_player):
+    from effects import ShieldOfFaith, Concentrating
+
+    caster = make_player(name = "Caster")
+    ally = make_player(name = "Ally", ac = 15)
+    shield = ShieldOfFaith()
+    ally.add_effect(shield)
+    caster.add_effect(Concentrating(maintained_effect = shield, maintained_target = ally))
+
+    for combatant in (caster, ally):
+        combatant.reset()
+
+    assert ally.ac == 15 and caster.ac == 15

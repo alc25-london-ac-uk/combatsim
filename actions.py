@@ -72,6 +72,12 @@ def attack_roll_bonus_observed(actor: Combatant, target: Combatant, weapon: Weap
         return None
     return actor.get_attack_bonus(weapon)
 
+def spell_flat_bonus(actor: Combatant, spell: Spell) -> int:
+    # RAW: a spell adds no caster bonus to its damage unless it says so (e.g. Magic Missile's +1 per dart); healing spells add the spellcasting modifier.
+    if spell.is_healing:
+        return actor.ability_scores.modifier_for(actor.spellcasting_ability)
+    return spell.damage_bonus
+
 def move_towards_target(actor: Combatant, target: Combatant, combat_state: CombatState) -> list[ActionResult]:
     results = []
 
@@ -167,10 +173,11 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: 
 
     if spell.requires_attack_roll:
         for t in targets:
-            results.append(resolve_spell_against_target(actor, t, spell, combat_state))
+            for _ in range(spell.ray_count):
+                results.append(resolve_spell_against_target(actor, t, spell, combat_state))
     else:
         damage_dice_used = spell.damage_dice + (1 if spell.is_cantrip and actor.caster_level >= 5 else 0)
-        amount = damage_roll(damage_dice_used, spell.damage_sides, actor.get_spell_attack_bonus(), is_crit = False)
+        amount = damage_roll(damage_dice_used, spell.damage_sides, spell_flat_bonus(actor, spell), is_crit = False)
         for t in targets:
             results.append(resolve_spell_against_target(actor, t, spell, combat_state, amount))
 
@@ -203,7 +210,7 @@ def resolve_spell_against_target(actor: Combatant, target: Combatant, spell: Spe
         else:
             damage_dice_used = spell.damage_dice_on_miss
 
-        damage = damage_roll(damage_dice_used, spell.damage_sides, attack_bonus, attack_result == AttackResult.CRIT)
+        damage = damage_roll(damage_dice_used, spell.damage_sides, spell_flat_bonus(actor, spell), attack_result == AttackResult.CRIT)
     else:
         damage = amount
 

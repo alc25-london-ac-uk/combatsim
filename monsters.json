@@ -1283,7 +1283,7 @@
         "attack_bonus": 2,
         "weapons": [
             {
-                "name": "Mace"
+                "name": "Club"
             }
         ],
         "spells": [
@@ -1294,7 +1294,8 @@
             "1": 3
         },
         "spellcaster_level": 1,
-        "spell_bonus": 4
+        "spell_bonus": 4,
+        "spellcasting_ability": "wisdom"
     },
     {
         "name": "Priest",
@@ -1317,16 +1318,16 @@
         "spells": [
             "Sacred Flame",
             "Cure Wounds",
-            "Hold Person",
+            "Guiding Bolt",
             "Spirit Guardians"
         ],
         "spell_slots": {
             "1": 4,
-            "2": 3,
             "3": 2
         },
         "spellcaster_level": 5,
-        "spell_bonus": 5
+        "spell_bonus": 5,
+        "spellcasting_ability": "wisdom"
     },
     {
         "name": "Mage",
@@ -1343,21 +1344,343 @@
         "attack_bonus": 5,
         "weapons": [
             {
-                "name": "Quarterstaff"
+                "name": "Dagger"
             }
         ],
         "spells": [
             "Fire Bolt",
             "Magic Missile",
-            "Acid Arrow",
             "Fireball"
         ],
         "spell_slots": {
             "1": 4,
-            "2": 3,
             "3": 3
         },
         "spellcaster_level": 9,
-        "spell_bonus": 6
+        "spell_bonus": 6,
+        "spellcasting_ability": "intelligence"
+    },
+    {
+        "name": "Warhorse Skeleton",
+        "armor_class": 13,
+        "hit_points": 22,
+        "speed": 60,
+        "strength": 18,
+        "dexterity": 12,
+        "constitution": 15,
+        "intelligence": 2,
+        "wisdom": 8,
+        "charisma": 5,
+        "challenge_rating": 0.5,
+        "attack_count": 1,
+        "attack_bonus": 6,
+        "weapons": [
+            {
+                "name": "Hooves - Warhorse Skeleton"
+            }
+        ],
+        "damage_vulnerabilities": [
+            "BLUDGEONING"
+        ],
+        "damage_immunities": [
+            "POISON"
+        ]
+    },
+    {
+        "name": "Minotaur Skeleton",
+        "armor_class": 12,
+        "hit_points": 67,
+        "speed": 40,
+        "strength": 18,
+        "dexterity": 11,
+        "constitution": 15,
+        "intelligence": 6,
+        "wisdom": 8,
+        "charisma": 5,
+        "challenge_rating": 2,
+        "attack_count": 1,
+        "attack_bonus": 6,
+        "weapons": [
+            {
+                "name": "Greataxe - Minotaur Skeleton"
+            },
+            {
+                "name": "Gore - Minotaur Skeleton"
+            }
+        ],
+        "damage_vulnerabilities": [
+            "BLUDGEONING"
+        ],
+        "damage_immunities": [
+            "POISON"
+        ]
+    },
+    {
+        "name": "Ogre Zombie",
+        "armor_class": 8,
+        "hit_points": 85,
+        "speed": 30,
+        "strength": 19,
+        "dexterity": 6,
+        "constitution": 18,
+        "intelligence": 3,
+        "wisdom": 6,
+        "charisma": 5,
+        "challenge_rating": 2,
+        "attack_count": 1,
+        "attack_bonus": 6,
+        "weapons": [
+            {
+                "name": "Morningstar - Ogre Zombie"
+            }
+        ],
+        "damage_immunities": [
+            "POISON"
+        ]
+    },
+    {
+        "name": "Earth Elemental",
+        "armor_class": 17,
+        "hit_points": 126,
+        "speed": 30,
+        "strength": 20,
+        "dexterity": 8,
+        "constitution": 20,
+        "intelligence": 5,
+        "wisdom": 10,
+        "charisma": 5,
+        "challenge_rating": 5,
+        "attack_count": 2,
+        "attack_bonus": 8,
+        "weapons": [
+            {
+                "name": "Slam - Earth Elemental"
+            }
+        ],
+        "damage_vulnerabilities": [
+            "THUNDER"
+        ],
+        "damage_resistances": [
+            "BLUDGEONING",
+            "PIERCING",
+            "SLASHING"
+        ],
+        "damage_immunities": [
+            "POISON"
+        ]
+    },
+    {
+        "name": "Xorn",
+        "armor_class": 19,
+        "hit_points": 73,
+        "speed": 20,
+        "strength": 17,
+        "dexterity": 10,
+        "constitution": 22,
+        "intelligence": 11,
+        "wisdom": 10,
+        "charisma": 11,
+        "challenge_rating": 5,
+        "attack_count": 4,
+        "attack_bonus": 6,
+        "weapons": [
+            {
+                "name": "Claws and Bite - Xorn"
+            }
+        ],
+        "damage_resistances": [
+            "PIERCING",
+            "SLASHING"
+        ]
+    },
+    {
+        "name": "Grick",
+        "armor_class": 14,
+        "hit_points": 27,
+        "speed": 30,
+        "strength": 14,
+        "dexterity": 14,
+        "constitution": 11,
+        "intelligence": 3,
+        "wisdom": 14,
+        "charisma": 5,
+        "challenge_rating": 2,
+        "attack_count": 2,
+        "attack_bonus": 4,
+        "weapons": [
+            {
+                "name": "Tentacles - Grick"
+            },
+            {
+                "name": "Beak - Grick"
+            }
+        ],
+        "damage_resistances": [
+            "BLUDGEONING",
+            "PIERCING",
+            "SLASHING"
+        ]
+    },
+    {
+        "name": "Wight",
+        "armor_class": 14,
+        "hit_points": 45,
+        "speed": 30,
+        "strength": 15,
+        "dexterity": 14,
+        "constitution": 16,
+        "intelligence": 10,
+        "wisdom": 13,
+        "charisma": 15,
+        "challenge_rating": 3,
+        "attack_count": 2,
+        "attack_bonus": 4,
+        "weapons": [
+            {
+                "name": "Longsword"
+            },
+            {
+                "name": "Longbow"
+            }
+        ],
+        "damage_resistances": [
+            "NECROTIC",
+            "BLUDGEONING",
+            "PIERCING",
+            "SLASHING"
+        ],
+        "damage_immunities": [
+            "POISON"
+        ]
+    },
+    {
+        "name": "Dretch",
+        "armor_class": 11,
+        "hit_points": 18,
+        "speed": 20,
+        "strength": 11,
+        "dexterity": 11,
+        "constitution": 12,
+        "intelligence": 5,
+        "wisdom": 8,
+        "charisma": 3,
+        "challenge_rating": 0.25,
+        "attack_count": 2,
+        "attack_bonus": 2,
+        "weapons": [
+            {
+                "name": "Bite"
+            },
+            {
+                "name": "Claws"
+            }
+        ],
+        "damage_resistances": [
+            "COLD",
+            "FIRE",
+            "LIGHTNING"
+        ],
+        "damage_immunities": [
+            "POISON"
+        ]
+    },
+    {
+        "name": "Salamander",
+        "armor_class": 15,
+        "hit_points": 90,
+        "speed": 30,
+        "strength": 18,
+        "dexterity": 14,
+        "constitution": 15,
+        "intelligence": 11,
+        "wisdom": 10,
+        "charisma": 12,
+        "challenge_rating": 5,
+        "attack_count": 2,
+        "attack_bonus": 7,
+        "weapons": [
+            {
+                "name": "Spear - Salamander"
+            },
+            {
+                "name": "Tail - Salamander"
+            }
+        ],
+        "damage_vulnerabilities": [
+            "COLD"
+        ],
+        "damage_resistances": [
+            "BLUDGEONING",
+            "PIERCING",
+            "SLASHING"
+        ],
+        "damage_immunities": [
+            "FIRE"
+        ]
+    },
+    {
+        "name": "Cult Fanatic",
+        "armor_class": 13,
+        "hit_points": 33,
+        "speed": 30,
+        "strength": 11,
+        "dexterity": 14,
+        "constitution": 12,
+        "intelligence": 10,
+        "wisdom": 13,
+        "charisma": 14,
+        "challenge_rating": 2,
+        "attack_count": 2,
+        "attack_bonus": 4,
+        "weapons": [
+            {
+                "name": "Dagger"
+            }
+        ],
+        "spells": [
+            "Sacred Flame",
+            "Inflict Wounds",
+            "Shield of Faith",
+            "Hold Person"
+        ],
+        "spell_slots": {
+            "1": 4,
+            "2": 3
+        },
+        "spellcaster_level": 4,
+        "spell_bonus": 3,
+        "spellcasting_ability": "wisdom"
+    },
+    {
+        "name": "Druid",
+        "armor_class": 11,
+        "hit_points": 27,
+        "speed": 30,
+        "strength": 10,
+        "dexterity": 12,
+        "constitution": 13,
+        "intelligence": 12,
+        "wisdom": 15,
+        "charisma": 11,
+        "challenge_rating": 2,
+        "attack_count": 1,
+        "attack_bonus": 2,
+        "weapons": [
+            {
+                "name": "Quarterstaff"
+            }
+        ],
+        "spells": [
+            "Produce Flame",
+            "Thunderwave",
+            "Barkskin"
+        ],
+        "spell_slots": {
+            "1": 4,
+            "2": 3
+        },
+        "spellcaster_level": 4,
+        "spell_bonus": 4,
+        "spellcasting_ability": "wisdom"
     }
 ]
