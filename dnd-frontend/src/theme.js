@@ -1,49 +1,56 @@
 export const C = {
-  bg:        "#383838",
-  surface:   "#13161e",
-  border:    "#1e2330",
-  borderHi:  "#2e3550",
-  party:     "#3b82f6",
-  partyDim:  "#1e3a5f",
-  enemy:     "#ef4444",
-  enemyDim:  "#5f1e1e",
-  dead:      "#2a2a2a",
-  deadText:  "#444",
-  gold:      "#f59e0b",
-  text:      "#e2e8f0",
-  textDim:   "#64748b",
-  textMuted: "#334155",
-  green:     "#22c55e",
-  red:       "#ef4444",
-  purple:    "#a78bfa",
-  teal:      "#2dd4bf",
+  bg: "#f4f4ee", surface: "#ffffff", border: "#000000", borderHi: "#000000",
+  party: "#2f5dff", partyDim: "#c2d1ff", enemy: "#ff4d4d", enemyDim: "#ffcaca",
+  dead: "#d9d9d9", deadText: "#777777", gold: "#c98a00",
+  text: "#000000", textDim: "#444444", textMuted: "#8a8a8a",
+  green: "#00a651", red: "#e00000", purple: "#6b2fd6", teal: "#00847a", onFill: "#ffffff",
 }
 
-export const MONO = "'Courier New', monospace"
+export const FONT = "'Courier New', monospace"
+export const TITLE_FONT = "'Arial Black', Arial, Helvetica, sans-serif"
+
+export const T = {
+  borderWidth: 2,
+  shadow: "4px 4px 0 #000000",
+  letterSpacing: "0.06em",
+}
+
+export const BORDER = `${T.borderWidth}px solid ${C.border}`
+export const BORDER_HI = `${T.borderWidth}px solid ${C.borderHi}`
+
+document.documentElement.style.background = C.bg
+document.documentElement.style.colorScheme = "light"
+
+export const caps = { textTransform: "uppercase", letterSpacing: T.letterSpacing }
 
 export const labelStyle = {
   fontSize: 10,
   color: C.textDim,
-  textTransform: "uppercase",
-  letterSpacing: "0.1em",
-  fontFamily: MONO,
+  ...caps,
+  fontFamily: FONT,
+}
+
+export const headingStyle = {
+  ...labelStyle,
+  fontSize: 15,
+  fontWeight: 700,
+  color: C.text,
 }
 
 export const panelStyle = {
   backgroundColor: C.surface,
-  border: `1px solid ${C.border}`,
-  borderRadius: 4,
+  border: BORDER,
   padding: "14px 16px",
+  boxShadow: T.shadow,
 }
 
 export const selectStyle = {
   backgroundColor: C.surface,
-  border: `1px solid ${C.borderHi}`,
-  borderRadius: 4,
+  border: BORDER_HI,
   color: C.text,
   padding: "4px 8px",
   fontSize: 12,
-  fontFamily: MONO,
+  fontFamily: FONT,
   cursor: "pointer",
 }
 

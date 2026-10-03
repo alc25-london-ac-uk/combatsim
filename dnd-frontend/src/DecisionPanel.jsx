@@ -1,6 +1,5 @@
-import { C, MONO, labelStyle, panelStyle } from "./theme"
+import { C, FONT, BORDER, labelStyle, headingStyle, panelStyle } from "./theme"
 
-// How each named component of a score is drawn, and what it means.
 const TERMS = {
   expected_damage:       { colour: C.party,  label: "damage",    help: "Expected damage: chance to hit (or the target failing its save) × average damage, scaled by how resistant or vulnerable the target is believed to be. Negative if the spell would hurt allies." },
   kill_bonus:            { colour: C.gold,   label: "kill",      help: "2 × the believed probability that this hit leaves the target at 0 HP." },
@@ -23,7 +22,7 @@ function Chip({ children, colour = C.textDim, title }) {
   return (
     <span title={title} style={{
       display: "inline-block", fontSize: 10, color: colour, border: `1px solid ${colour}55`,
-      borderRadius: 3, padding: "0 4px", marginRight: 4, marginBottom: 2, whiteSpace: "nowrap",
+      padding: "0 4px", marginRight: 4, marginBottom: 2, whiteSpace: "nowrap",
     }}>{children}</span>
   )
 }
@@ -39,7 +38,7 @@ function CandidateRow({ rank, candidate, scale }) {
       </td>
       <td style={{ textAlign: "right", padding: "3px 8px 3px 0", color: C.text }}>{fmt(candidate.total)}</td>
       <td style={{ padding: "3px 0", minWidth: 130 }}>
-        <div style={{ display: "flex", height: 8, width: "100%", backgroundColor: C.border, borderRadius: 2, overflow: "hidden" }}>
+        <div style={{ display: "flex", height: 8, width: "100%", backgroundColor: C.border, overflow: "hidden" }}>
           {positives.map(([name, value]) => (
             <div key={name} title={`${termInfo(name).label}: ${fmt(value)}`}
                  style={{ width: `${Math.min(100, (value / scale) * 100)}%`, backgroundColor: termInfo(name).colour }} />
@@ -70,7 +69,7 @@ function DecisionBlock({ decision }) {
           : <span style={{ color: C.textDim }}>nothing worth doing</span>}
       </div>
       {decision.candidates.length > 0 && (
-        <table style={{ borderCollapse: "collapse", fontSize: 11, fontFamily: MONO, width: "100%" }}>
+        <table style={{ borderCollapse: "collapse", fontSize: 11, fontFamily: FONT, width: "100%" }}>
           <thead>
             <tr style={{ color: C.textMuted, textAlign: "left" }}>
               <th style={{ fontWeight: 400 }}>#</th><th style={{ fontWeight: 400 }}>option</th>
@@ -101,7 +100,7 @@ function BeliefRow({ enemy, showOrdinary }) {
   const flagLabels = { healer: "healer", offensive_caster: "caster", concentrating: "concentrating", slots_depleted: "slots used up" }
 
   return (
-    <tr style={{ verticalAlign: "top", borderTop: `1px solid ${C.border}` }}>
+    <tr style={{ verticalAlign: "top", borderTop: BORDER }}>
       <td style={{ padding: "4px 6px 4px 0", color: C.text, maxWidth: 90 }}>{enemy.name}</td>
       <td style={{ padding: "4px 6px 4px 0", whiteSpace: "nowrap", color: hpOff ? C.gold : C.text }}>
         {fmt(enemy.hp.believed, 0)} <span style={{ color: C.textMuted }}>/</span> <span style={{ color: C.textDim }}>{enemy.hp.true}</span>
@@ -144,8 +143,8 @@ export default function DecisionPanel({ decisions, team, actingName }) {
   const beliefs = decisions[0]?.beliefs ?? []
 
   return (
-    <div style={{ ...panelStyle, flex: "1 1 520px", minWidth: 520, maxWidth: 820, maxHeight: 44 * 10 + 32, overflowY: "auto", boxSizing: "border-box", fontFamily: MONO }}>
-      <div style={{ ...labelStyle, marginBottom: 8 }}>Decision Panel</div>
+    <div style={{ ...panelStyle, flex: "1 1 520px", minWidth: 520, maxWidth: 820, maxHeight: 44 * 10 + 32, overflowY: "auto", boxSizing: "border-box", fontFamily: FONT }}>
+      <div style={{ ...headingStyle, marginBottom: 8 }}>Decision panel</div>
 
       {decisions.length === 0 && (
         <div style={{ fontSize: 11, color: C.textMuted }}>
@@ -170,7 +169,7 @@ export default function DecisionPanel({ decisions, team, actingName }) {
           {beliefs.length === 0
             ? <div style={{ fontSize: 11, color: C.textMuted }}>No living enemies.</div>
             : (
-              <table style={{ borderCollapse: "collapse", fontSize: 11, fontFamily: MONO, width: "100%" }}>
+              <table style={{ borderCollapse: "collapse", fontSize: 11, fontFamily: FONT, width: "100%" }}>
                 <thead>
                   <tr style={{ color: C.textMuted, textAlign: "left" }}>
                     <th style={{ fontWeight: 400 }}>enemy</th><th style={{ fontWeight: 400 }}>HP</th><th style={{ fontWeight: 400 }}>AC</th>

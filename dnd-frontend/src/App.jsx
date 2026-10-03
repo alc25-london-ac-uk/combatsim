@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { C, MONO } from "./theme"
+import { C, T, FONT, TITLE_FONT, caps } from "./theme"
 import MonteCarloView from "./MonteCarloView"
 import LiveView from "./LiveView"
 
@@ -11,16 +11,14 @@ export default function App() {
       onClick={() => setMode(id)}
       style={{
         backgroundColor: mode === id ? C.borderHi : "transparent",
-        color: mode === id ? C.text : C.textDim,
-        border: `1px solid ${mode === id ? C.borderHi : "transparent"}`,
-        borderRadius: 4,
+        color: mode === id ? C.onFill : C.textDim,
+        border: `${T.borderWidth}px solid ${mode === id ? C.borderHi : "transparent"}`,
         padding: "6px 16px",
         fontSize: 12,
         fontWeight: mode === id ? 700 : 400,
-        fontFamily: MONO,
+        fontFamily: FONT,
         cursor: "pointer",
-        textTransform: "uppercase",
-        letterSpacing: "0.08em",
+        ...caps,
       }}
     >
       {label}
@@ -28,11 +26,12 @@ export default function App() {
   )
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: C.bg, color: C.text, padding: "32px 40px", fontFamily: MONO, boxSizing: "border-box", textAlign: "left" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: C.bg, color: C.text, padding: "32px 40px", fontFamily: FONT, boxSizing: "border-box", textAlign: "left" }}>
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "0.05em" }}>D&D COMBAT SIMULATOR</div>
-        <div style={{ fontSize: 11, color: C.textDim, marginTop: 4 }}>
-          Party: level-5 Fighter, Cleric and Wizard. The monsters always play the Greedy baseline; the PCs' policy is what changes.
+        <div style={{ fontSize: 22, fontWeight: 700, fontFamily: TITLE_FONT, ...caps }}>D&D Combat Simulator</div>
+        <div style={{ fontSize: 11, color: C.textDim, marginTop: 4, lineHeight: 1.6 }}>
+          <div>Party: Fighter, Cleric, Wizard (all level 5).</div>
+          <div>Monsters use a greedy utility scorer.</div>
         </div>
       </div>
 

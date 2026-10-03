@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
-import { C, MONO, labelStyle, panelStyle, selectStyle, inputStyle } from "./theme"
+import { C, FONT, BORDER, caps, headingStyle, panelStyle, selectStyle, inputStyle } from "./theme"
 import { getMonsters, getEncounters, simulate } from "./api"
 import Button from "./Button"
+import MonsterTags from "./MonsterTags"
 
 const MAX_MONSTERS = 12
 const RUN_OPTIONS = [100, 200, 500]
@@ -16,32 +17,17 @@ const POLICY_LABELS = {
 let nextRowId = 1
 const makeRow = (name, count = 1) => ({ id: nextRowId++, name, count })
 
-function Tags({ monster }) {
-  const groups = [
-    ["vulnerable", monster.vulnerabilities, C.green],
-    ["resists", monster.resistances, C.gold],
-    ["immune", monster.immunities, C.red],
-  ]
-  return (
-    <span style={{ fontSize: 10 }}>
-      {groups.filter(([, list]) => list.length > 0).map(([label, list, colour]) => (
-        <span key={label} style={{ color: colour, marginRight: 10 }}>{label}: {list.join(", ")}</span>
-      ))}
-      {monster.spells.length > 0 && <span style={{ color: C.purple }}>casts: {monster.spells.join(", ")}</span>}
-    </span>
-  )
-}
-
 function Results({ data }) {
   const maxSe = Math.max(...data.results.map(r => r.pc_win_se))
   return (
     <div style={{ ...panelStyle, marginTop: 16 }}>
-      <div style={{ ...labelStyle, marginBottom: 12 }}>
-        Results — {data.runs.toLocaleString()} fights per policy, {data.monster_count} monsters
+      <div style={{ ...headingStyle, marginBottom: 8 }}>Results</div>
+      <div style={{ fontSize: 11, color: C.textDim, lineHeight: 1.6, marginBottom: 14 }}>
+        {data.runs.toLocaleString()} fights per policy, {data.monster_count} monsters
       </div>
-      <table style={{ borderCollapse: "collapse", width: "100%", fontFamily: MONO, fontSize: 12 }}>
+      <table style={{ borderCollapse: "collapse", width: "100%", fontFamily: FONT, fontSize: 12 }}>
         <thead>
-          <tr style={{ color: C.textDim, textAlign: "left", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          <tr style={{ color: C.textDim, textAlign: "left", fontSize: 10, ...caps }}>
             <th style={{ fontWeight: 400, paddingBottom: 6 }}>PC policy</th>
             <th style={{ fontWeight: 400, width: "38%" }}>PC win rate</th>
             <th style={{ fontWeight: 400, textAlign: "right" }}>± SE</th>
@@ -56,14 +42,14 @@ function Results({ data }) {
             const low = Math.max(0, r.pc_win_pct - r.pc_win_se)
             const high = Math.min(100, r.pc_win_pct + r.pc_win_se)
             return (
-              <tr key={r.policy} style={{ borderTop: `1px solid ${C.border}` }}>
+              <tr key={r.policy} style={{ borderTop: BORDER }}>
                 <td style={{ padding: "8px 8px 8px 0" }}>
                   <div style={{ color: C.text }}>{label?.name ?? r.policy}</div>
                   <div style={{ color: C.textMuted, fontSize: 10 }}>{label?.note}</div>
                 </td>
                 <td style={{ paddingRight: 10 }}>
-                  <div style={{ position: "relative", height: 14, backgroundColor: C.border, borderRadius: 3 }}>
-                    <div style={{ width: `${r.pc_win_pct}%`, height: "100%", backgroundColor: C.party, borderRadius: 3, transition: "width 0.6s ease" }} />
+                  <div style={{ position: "relative", height: 14, backgroundColor: C.border }}>
+                    <div style={{ width: `${r.pc_win_pct}%`, height: "100%", backgroundColor: C.party, transition: "width 0.6s ease" }} />
                     <div title={`${r.pc_win_pct.toFixed(1)}% ± ${r.pc_win_se.toFixed(1)}`}
                          style={{ position: "absolute", top: 5, height: 4, left: `${low}%`, width: `${Math.max(0.5, high - low)}%`, backgroundColor: C.gold, opacity: 0.9 }} />
                   </div>
@@ -83,7 +69,7 @@ function Results({ data }) {
         The gold bar is one standard error either side of each win rate. At {data.runs.toLocaleString()} fights it is up to about ±{maxSe.toFixed(1)} points,
         so policies that differ by less than roughly {(2 * maxSe).toFixed(0)} points cannot be told apart here. The project's own evaluation uses
         10,000 fights per policy per encounter, where the standard error is about ±0.5.
-        The monsters always play the Greedy baseline{data.seed !== null ? `. Seed ${data.seed}.` : "."}
+        {data.seed !== null && `Seed ${data.seed}.`}
       </div>
     </div>
   )
@@ -134,10 +120,15 @@ export default function MonteCarloView() {
   return (
     <div>
       <div style={{ ...panelStyle, marginBottom: 16 }}>
-        <div style={{ ...labelStyle, marginBottom: 12 }}>Build an encounter</div>
+        <div style={{ ...headingStyle, marginBottom: 8 }}>Build an encounter</div>
+        <div style={{ fontSize: 11, color: C.textDim, lineHeight: 1.6, marginBottom: 14 }}>
+          <div>Choose the monsters below, or start from one of the three preset encounters.</div>
+          <div>The PCs will fight it using each of the four policies in turn: Random, Greedy, BeliefUpdating and Omniscient.</div>
+          <div>Results appear underneath once all the fights have been run.</div>
+        </div>
 
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
-          <span style={{ fontSize: 11, color: C.textDim }}>Start from:</span>
+          <span style={{ fontSize: 11, color: C.textDim }}>Preset encounters:</span>
           {encounters.map(e => (
             <Button key={e.id} variant="secondary" onClick={() => setRows(e.monsters.map(m => makeRow(m.name, m.count)))}>{e.title}</Button>
           ))}
@@ -156,7 +147,7 @@ export default function MonteCarloView() {
                 </select>
                 <button onClick={() => setRows(rs => rs.filter(r => r.id !== row.id))} disabled={rows.length === 1} title="Remove"
                         style={{ ...selectStyle, color: rows.length === 1 ? C.textMuted : C.red, cursor: rows.length === 1 ? "not-allowed" : "pointer" }}>×</button>
-                {monster && <Tags monster={monster} />}
+                {monster && <MonsterTags monster={monster} />}
               </div>
             </div>
           )
@@ -167,13 +158,13 @@ export default function MonteCarloView() {
                   onClick={() => setRows(rs => [...rs, makeRow(monsters[0].name)])}>+ Add monster</Button>
           <span style={{ color: tooMany ? C.red : C.textDim }}>{total} / {MAX_MONSTERS} monsters</span>
           <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            Fights per policy
+            Fights per policy:
             <select value={runs} onChange={e => setRuns(Number(e.target.value))} style={selectStyle}>
               {RUN_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
             </select>
           </label>
           <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            Seed
+            Seed:
             <input value={seedText} onChange={e => setSeedText(e.target.value)} placeholder="random" style={inputStyle} />
           </label>
           <Button onClick={run} disabled={loading || tooMany || rows.length === 0}>

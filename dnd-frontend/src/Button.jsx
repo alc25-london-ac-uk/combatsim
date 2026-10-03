@@ -1,4 +1,4 @@
-import { C, MONO } from "./theme"
+import { C, T, FONT, BORDER, caps } from "./theme"
 
 export default function Button({ onClick, disabled, children, variant = "primary" }) {
   const bg = variant === "primary" ? C.party
@@ -10,16 +10,15 @@ export default function Button({ onClick, disabled, children, variant = "primary
       disabled={disabled}
       style={{
         backgroundColor: disabled ? C.borderHi : bg,
-        color: disabled ? C.textMuted : "white",
-        border: "none",
-        borderRadius: 4,
+        color: disabled ? C.textMuted : C.onFill,
+        border: BORDER,
+        boxShadow: disabled ? "none" : T.shadow,
         padding: "8px 18px",
         fontSize: 12,
         fontWeight: 700,
-        fontFamily: MONO,
+        fontFamily: FONT,
         cursor: disabled ? "not-allowed" : "pointer",
-        textTransform: "uppercase",
-        letterSpacing: "0.08em",
+        ...caps,
         transition: "opacity 0.2s",
         opacity: disabled ? 0.5 : 1,
         minWidth: 36,

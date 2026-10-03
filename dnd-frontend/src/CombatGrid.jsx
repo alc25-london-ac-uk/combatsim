@@ -1,4 +1,4 @@
-import { C, MONO, labelStyle, abbrev, hpColour } from "./theme"
+import { C, T, FONT, BORDER, BORDER_HI, headingStyle, abbrev, hpColour } from "./theme"
 
 const GRID_SIZE = 10
 const CELL = 44
@@ -30,7 +30,7 @@ export default function CombatGrid({ positions, actingName }) {
         <div key={key} title={here.map(c => `${c.name}: ${c.hp}/${c.max_hp} HP`).join("\n")} style={{
           width: CELL, height: CELL,
           boxSizing: "border-box",
-          border: acting ? `2px solid ${C.gold}` : `1px solid ${C.border}`,
+          border: acting ? `2px solid ${C.gold}` : BORDER,
           backgroundColor: bg,
           display: "flex",
           flexDirection: "column",
@@ -45,7 +45,7 @@ export default function CombatGrid({ positions, actingName }) {
               <div style={{
                 fontSize: 11,
                 fontWeight: 700,
-                fontFamily: MONO,
+                fontFamily: FONT,
                 color: !c.alive ? C.deadText : c.team === "party" ? C.party : C.enemy,
                 lineHeight: 1,
               }}>
@@ -55,7 +55,7 @@ export default function CombatGrid({ positions, actingName }) {
                 <div style={{
                   width: 28, height: 3,
                   backgroundColor: C.border,
-                  borderRadius: 2, marginTop: 2,
+                  marginTop: 2,
                   overflow: "hidden",
                 }}>
                   <div style={{
@@ -75,14 +75,15 @@ export default function CombatGrid({ positions, actingName }) {
 
   return (
     <div>
-      <div style={{ ...labelStyle, marginBottom: 8 }}>
-        Combat Grid — {GRID_SIZE}×{GRID_SIZE} (each square 5 ft)
+      <div style={{ ...headingStyle, marginBottom: 8 }}>Combat grid</div>
+      <div style={{ fontSize: 11, color: C.textDim, lineHeight: 1.6, marginBottom: 8 }}>
+        {GRID_SIZE}×{GRID_SIZE}, each square 5 ft
       </div>
       <div style={{
         display: "grid",
         gridTemplateColumns: `repeat(${GRID_SIZE}, ${CELL}px)`,
-        border: `2px solid ${C.borderHi}`,
-        borderRadius: 4,
+        border: BORDER_HI,
+        boxShadow: T.shadow,
         overflow: "hidden",
       }}>
         {cells}
@@ -90,8 +91,8 @@ export default function CombatGrid({ positions, actingName }) {
       <div style={{ display: "flex", gap: 16, marginTop: 8, flexWrap: "wrap" }}>
         {[[C.party, "PCs (BeliefUpdating)"], [C.enemy, "Monsters (Greedy)"], [C.gold, "Acting now"]].map(([col, label]) => (
           <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: col }} />
-            <span style={{ fontSize: 11, color: C.textDim, fontFamily: MONO }}>{label}</span>
+            <div style={{ width: 10, height: 10, backgroundColor: col }} />
+            <span style={{ fontSize: 11, color: C.textDim, fontFamily: FONT }}>{label}</span>
           </div>
         ))}
       </div>

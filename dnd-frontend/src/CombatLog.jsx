@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react"
-import { C, MONO, labelStyle } from "./theme"
+import { C, FONT, BORDER, headingStyle, panelStyle } from "./theme"
 import { CELL, GRID_SIZE } from "./CombatGrid"
 
 export default function CombatLog({ log }) {
@@ -8,7 +8,6 @@ export default function CombatLog({ log }) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
   }, [log])
 
-  // the per-decision score lines ("-> attack score ...") are shown in the decision panel instead
   const lines = log.filter(line => !line.trim().startsWith("->"))
 
   return (
@@ -16,16 +15,14 @@ export default function CombatLog({ log }) {
       width: 340,
       height: CELL * GRID_SIZE + 32,
       overflowY: "auto",
-      backgroundColor: C.surface,
-      border: `1px solid ${C.border}`,
-      borderRadius: 4,
+      ...panelStyle,
       padding: "10px 12px",
-      fontFamily: MONO,
+      fontFamily: FONT,
       fontSize: 11,
       color: C.text,
       boxSizing: "border-box",
     }}>
-      <div style={{ ...labelStyle, marginBottom: 8 }}>Combat Log</div>
+      <div style={{ ...headingStyle, marginBottom: 8 }}>Combat log</div>
       {lines.length === 0 && <div style={{ color: C.textMuted }}>Awaiting combat...</div>}
       {lines.map((line, i) => {
         const isRound = line.startsWith("---")
@@ -41,7 +38,7 @@ export default function CombatLog({ log }) {
           <div key={i} style={{
             color: colour,
             marginBottom: isRound ? 6 : 2,
-            borderTop: isRound ? `1px solid ${C.border}` : "none",
+            borderTop: isRound ? BORDER : "none",
             paddingTop: isRound ? 6 : 0,
             fontWeight: isRound ? 700 : 400,
           }}>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
-import { C, MONO, labelStyle, panelStyle, selectStyle, inputStyle, hpColour } from "./theme"
-import { getEncounters, simulateLive } from "./api"
+import { C, FONT, caps, labelStyle, headingStyle, panelStyle, selectStyle, inputStyle, hpColour } from "./theme"
+import { getEncounters, getMonsters, simulateLive } from "./api"
+import MonsterTags from "./MonsterTags"
 import CombatGrid from "./CombatGrid"
 import CombatLog from "./CombatLog"
 import DecisionPanel from "./DecisionPanel"
@@ -11,7 +12,7 @@ function Roster({ positions, actingName }) {
   const slotText = p => Object.entries(p.max_spell_slots).map(([level, max]) => `L${level} ${p.spell_slots[level] ?? 0}/${max}`).join("  ")
 
   return (
-    <div style={{ display: "flex", gap: 16, marginTop: 14, fontFamily: MONO, fontSize: 11, flexWrap: "wrap" }}>
+    <div style={{ display: "flex", gap: 16, marginTop: 14, fontFamily: FONT, fontSize: 11, flexWrap: "wrap" }}>
       {[["party", "PCs", C.party], ["enemies", "Monsters", C.enemy]].map(([team, title, colour]) => (
         <div key={team} style={{ width: 205 }}>
           <div style={{ ...labelStyle, color: colour, marginBottom: 4 }}>{title}</div>
@@ -37,6 +38,7 @@ function Roster({ positions, actingName }) {
 
 export default function LiveView() {
   const [encounters, setEncounters] = useState([])
+  const [monsters, setMonsters] = useState([])
   const [encounter, setEncounter] = useState("")
   const [seedText, setSeedText] = useState("")
   const [frames, setFrames] = useState([])
@@ -49,8 +51,12 @@ export default function LiveView() {
   const timer = useRef(null)
 
   useEffect(() => {
-    getEncounters()
-      .then(rows => { setEncounters(rows); if (rows.length) setEncounter(rows[0].id) })
+    Promise.all([getEncounters(), getMonsters()])
+      .then(([rows, monsterList]) => {
+        setEncounters(rows)
+        setMonsters(monsterList)
+        if (rows.length) setEncounter(rows[0].id)
+      })
       .catch(e => setError(`Could not reach the simulator: ${e.message}`))
   }, [])
 
@@ -99,30 +105,39 @@ export default function LiveView() {
   return (
     <div>
       <div style={{ ...panelStyle, marginBottom: 16 }}>
-        <div style={{ ...labelStyle, marginBottom: 12 }}>Live combat — one fight, every decision explained</div>
+        <div style={{ ...headingStyle, marginBottom: 8 }}>Live combat</div>
+        <div style={{ fontSize: 11, color: C.textDim, lineHeight: 1.6, marginBottom: 14 }}>
+          One fight, every decision explained.
+        </div>
         <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap", fontSize: 12 }}>
           <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            Encounter
+            Encounter:
             <select value={encounter} onChange={e => setEncounter(e.target.value)} style={selectStyle}>
               {encounters.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
             </select>
           </label>
           <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            Seed
+            Seed:
             <input value={seedText} onChange={e => setSeedText(e.target.value)} placeholder="random" style={inputStyle} />
           </label>
           <Button onClick={run} disabled={loading || !encounter}>{loading ? "Computing..." : "Run combat"}</Button>
         </div>
         {chosen && (
-          <div style={{ fontSize: 11, color: C.textDim, marginTop: 10, lineHeight: 1.6 }}>
-            {chosen.monsters.map(m => `${m.count} × ${m.name}`).join(", ")} — rated <b style={{ color: C.text }}>{chosen.cr_tier}</b> by the official CR system
-            ({Math.round(chosen.adjusted_xp).toLocaleString()} adjusted XP). The PCs are a level-5 Fighter, Cleric and Wizard using
-            BeliefUpdating; the monsters use the Greedy baseline.
+          <div style={{ marginTop: 14 }}>
+            {chosen.monsters.map(m => {
+              const details = monsters.find(d => d.name === m.name)
+              return (
+                <div key={m.name} style={{ display: "flex", gap: 12, alignItems: "baseline", flexWrap: "wrap", fontSize: 12, lineHeight: 1.8 }}>
+                  <span>{m.count} × {m.name}</span>
+                  {details && <MonsterTags monster={details} />}
+                </div>
+              )
+            })}
           </div>
         )}
         {usedSeed !== null && frames.length > 0 && (
           <div style={{ fontSize: 11, color: C.textDim, marginTop: 6 }}>
-            Seed <b style={{ color: C.text }}>{usedSeed}</b> — enter it above to replay this exact fight.
+            Seed: <b style={{ color: C.text }}>{usedSeed}</b>
           </div>
         )}
         {error && <div style={{ fontSize: 12, color: C.red, marginTop: 10 }}>{error}</div>}
@@ -136,16 +151,19 @@ export default function LiveView() {
             <Button onClick={() => setPlaying(p => !p)} disabled={index === last}>{playing ? "⏸" : "▶"}</Button>
             <Button onClick={() => step(Math.min(last, index + 1))} disabled={index === last} variant="secondary">▶</Button>
             <Button onClick={() => step(last)} disabled={index === last} variant="secondary">⏭</Button>
-            <span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>Step {index + 1} / {frames.length} — round {frame.round}</span>
-            <select value={speed} onChange={e => setSpeed(Number(e.target.value))} style={{ ...selectStyle, marginLeft: 8 }}>
-              <option value={1500}>Slow</option>
-              <option value={800}>Normal</option>
-              <option value={300}>Fast</option>
-            </select>
+            <span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>Step {index + 1} / {frames.length}</span>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: 8, fontSize: 12 }}>
+              Speed:
+              <select value={speed} onChange={e => setSpeed(Number(e.target.value))} style={selectStyle}>
+                <option value={1500}>Slow</option>
+                <option value={800}>Normal</option>
+                <option value={300}>Fast</option>
+              </select>
+            </label>
           </div>
 
           {frame.winner && (
-            <div style={{ fontSize: 14, fontWeight: 700, color: frame.winner === "party" ? C.party : C.enemy, marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: frame.winner === "party" ? C.party : C.enemy, marginBottom: 16, ...caps }}>
               {frame.winner === "party" ? "⚔ Party victory" : frame.winner === "enemies" ? "💀 Party defeated" : "Draw"}
             </div>
           )}
