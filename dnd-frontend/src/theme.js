@@ -1,5 +1,5 @@
 export const C = {
-  bg:        "#0d0f14",
+  bg:        "#383838",
   surface:   "#13161e",
   border:    "#1e2330",
   borderHi:  "#2e3550",
