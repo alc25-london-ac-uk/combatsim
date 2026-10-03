@@ -1,0 +1,14 @@
+.git
+.venv
+__pycache__
+*.pyc
+tests
+dnd-frontend
+node_modules
+dist
+.vscode
+package-lock.json
+package.json
+requirements-dev.txt
+Dockerfile
+.dockerignore

@@ -1,7 +1,4 @@
 # Runtime dependencies (needed to run api.py / evaluation.py)
+# For the test suite, install requirements-dev.txt instead.
 fastapi==0.141.1
 uvicorn==0.53.0
-
-# Test dependencies (needed to run the test suite in tests/)
-pytest==9.1.1
-httpx2==2.13.1
