@@ -113,7 +113,7 @@ def format_spell_result(combatant: Combatant, result: ActionResult) -> str:
 
     return f"{prefix}miss."
 
-def run_combat_live(party: list[Combatant], enemies: list[Combatant]):
+def run_combat_live(party: list[Combatant], enemies: list[Combatant], explain: bool = False):
     combat_state = CombatState(
         grid = Grid(10, 10),
         initiative_order = sorted(party + enemies,
@@ -129,9 +129,12 @@ def run_combat_live(party: list[Combatant], enemies: list[Combatant]):
     for c in combat_state.initiative_order:
         c.reset()
 
-    def snapshot(log_lines, winner = None):
+    def snapshot(log_lines, winner = None, decisions = None):
         return {
+            "round": round_num,
             "log": log_lines,
+            "winner": winner,
+            "decisions": decisions or [],
             "positions": [
                 {
                     "name": c.name,
@@ -140,7 +143,10 @@ def run_combat_live(party: list[Combatant], enemies: list[Combatant]):
                     "max_hp": c.max_hp,
                     "x": combat_state.grid.position_of(c).x,
                     "y": combat_state.grid.position_of(c).y,
-                    "alive": c.alive
+                    "alive": c.alive,
+                    "spell_slots": {str(level): count for level, count in c.spell_slots.items() if c.max_spell_slots.get(level, 0) > 0},
+                    "max_spell_slots": {str(level): count for level, count in c.max_spell_slots.items() if count > 0},
+                    "effects": [e.name for e in c.effects]
                 }
                 for c in combat_state.initiative_order
             ]
@@ -164,14 +170,23 @@ def run_combat_live(party: list[Combatant], enemies: list[Combatant]):
             # tick conditions
             combatant.start_turn()
 
-            results = combatant.ai.take_turn(combat_state)
+            policy = combatant.ai.policy
+            recording = explain and hasattr(policy, "explanations")
+            if recording:
+                policy.explanations = []
+            try:
+                results = combatant.ai.take_turn(combat_state)
+                decisions = policy.explanations if recording else []
+            finally:
+                if recording:
+                    policy.explanations = None
 
             combatant.end_turn()
 
             broadcast_observations(combatant, results, combat_state)
 
             log_lines = log_action(combatant, results)
-        
+
             party_alive = any(c.alive for c in party)
             enemies_alive = any(c.alive for c in enemies)
 
@@ -182,7 +197,7 @@ def run_combat_live(party: list[Combatant], enemies: list[Combatant]):
             elif not party_alive:
                 winner = "enemies"
         
-            yield(snapshot(log_lines, winner))
+            yield(snapshot(log_lines, winner, decisions))
 
             if winner:
                 return

@@ -1,16 +1,36 @@
-# React + Vite
+# D&D Combat Simulator — front end
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite client for the combat engine's FastAPI backend.
 
-Currently, two official plugins are available:
+## Running locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Backend (from the project root):
 
-## React Compiler
+```bash
+python3 -m uvicorn api:app --port 8000
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Front end (from `dnd-frontend`):
 
-## Expanding the ESLint configuration
+```bash
+npm install
+npm run dev
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Open http://localhost:5173.
+
+## Configuration
+
+| Variable | Where | Default | Purpose |
+|---|---|---|---|
+| `VITE_API_URL` | front end (build time) | `http://127.0.0.1:8000` | Base URL of the API |
+| `ALLOWED_ORIGINS` | backend (runtime) | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated CORS origins |
+
+## Views
+
+- **Monte Carlo** — build an encounter from dropdowns (any mix of the SRD monsters, up to 12) and run 100, 200 or 500 fights per policy. All four PC policies (Random, Greedy, BeliefUpdating, Omniscient) are shown side by side with standard errors. The monsters always play Greedy.
+- **Live combat** — step through one fight in each of the three named encounters (PCs on BeliefUpdating, monsters on Greedy). The decision panel shows the ranked candidate actions, what each score is made of, and the acting combatant's beliefs next to the truth. Seeds are echoed so a fight can be replayed.
+
+## Scripts
+
+`npm run dev`, `npm run build`, `npm run lint`.

@@ -80,3 +80,24 @@ def test_main_action_attack_uses_the_full_attack_count(make_player, make_monster
 
     attack_results = [r for r in results if r.action_type == ActionType.ATTACK]
     assert len(attack_results) == 2
+
+# --- the log says which effect a spell applied ---
+
+def test_a_spell_that_applies_an_effect_reports_it_in_the_action_result(make_player, make_combat_state):
+    from actions import Action
+    from effects import ShieldOfFaith
+    from spell import Spell
+    from enums import TargetType, Ability
+
+    cleric = make_player(name = "Cleric")
+    ally = make_player(name = "Ally")
+    shield = Spell(
+        name = "Shield of Faith", level = 1, target_type = TargetType.ALLY, damage_type = None, damage_dice = 0, damage_sides = 0,
+        range = 60, requires_attack_roll = False, save_allowed = False, save_attribute = Ability.WISDOM, effect = ShieldOfFaith
+    )
+    cleric.spell_slots = {1: 1}
+    combat_state = make_combat_state(cleric, ally)
+
+    results = cleric.ai.execute(Action(ActionType.SPELL, ally, spell = shield), combat_state)
+
+    assert results[0].effect_applied == "Shield of Faith"

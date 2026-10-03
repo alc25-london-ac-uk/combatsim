@@ -9,7 +9,7 @@ from actions import ActionType, Action, determine_targets, spell_flat_bonus
 from world import CombatState
 from combatant import Combatant
 from policy import Policy
-from belief import CombatantBelief
+from belief import CombatantBelief, belief_vs_truth
 
 HEALER_PRIORITY_WEIGHT = 1.5
 CONCENTRATION_PRIORITY_WEIGHT = 1.0
@@ -25,8 +25,15 @@ NEAREST_WEIGHT = 0.05
 WEAKEST_WEIGHT = 2.0
 HIGHEST_THREAT_WEIGHT = 1.0
 
+EXPLAINED_CANDIDATES = 5
+
 class UtilityPolicy(Policy):
     """Scores every candidate action by expected utility. Subclasses differ only in what they believe about opponents (see _belief_for)."""
+
+    # Set to a list to record, for each decision, the best-scoring candidates with their score components and the
+    # acting combatant's beliefs about its enemies. Left as None, nothing is recorded and nothing extra is computed.
+    explanations: Optional[list] = None
+    _candidate_log: Optional[list] = None
 
     @abstractmethod
     def _belief_for(self, target: Combatant, beliefs: dict[Combatant, CombatantBelief]) -> CombatantBelief:
@@ -92,12 +99,16 @@ class UtilityPolicy(Policy):
         return 0.0
 
     def decide(self, combatant: Combatant, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief], bonus_action: bool = False) -> Action:
+        self._candidate_log = [] if self.explanations is not None else None
+
         action_candidates = [
             self.best_spell(combatant, combat_state, beliefs, bonus_action),
             self.best_attack(combatant, combat_state, beliefs, bonus_action)
         ]
 
         best_score, best_action = max(action_candidates, key = lambda c: c[0])
+        if self.explanations is not None:
+            self.explanations.append(self._explain(combatant, combat_state, beliefs, bonus_action, best_action))
 
         if best_action is not None:
             combined_rationale = " | ".join(
@@ -109,6 +120,29 @@ class UtilityPolicy(Policy):
 
         return best_action or Action(ActionType.NONE, combatant)
 
+    def _explain(self, combatant: Combatant, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief], bonus_action: bool, chosen: Optional[Action]) -> dict:
+        chosen_key = None
+        if chosen is not None:
+            chosen_key = (chosen.target.name, chosen.weapon.name if chosen.weapon else chosen.spell.name)
+
+        usable = [c for c in self._candidate_log if c["total"] > -1.0] # -1 marks "cannot be done at all"
+        usable.sort(key = lambda c: c["total"], reverse = True)
+        candidates = [
+            {**c, "chosen": (c["target"], c["label"]) == chosen_key}
+            for c in usable[:EXPLAINED_CANDIDATES]
+        ]
+        if chosen_key is not None and not any(c["chosen"] for c in candidates):
+            candidates += [{**c, "chosen": True} for c in usable if (c["target"], c["label"]) == chosen_key]
+
+        enemies = [e for e in combat_state.initiative_order if e.alive and e.team != combatant.team]
+        return {
+            "combatant": combatant.name,
+            "bonus_action": bonus_action,
+            "chosen": None if chosen is None else {"kind": chosen.action_type.name.lower(), "target": chosen.target.name, "label": chosen_key[1]},
+            "candidates": candidates,
+            "beliefs": [belief_vs_truth(self._belief_for(enemy, beliefs), enemy) | {"name": enemy.name} for enemy in enemies],
+        }
+
     def best_attack(self, combatant: Combatant, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief], bonus_action: bool = False) -> tuple[float, Optional[Action]]:
         best_score = -1.0
         best_action = None
@@ -119,6 +153,9 @@ class UtilityPolicy(Policy):
                     for weapon in combatant.weapons:
                         if (isinstance(weapon, MeleeWeapon) and weapon.is_off_hand) == bonus_action:
                             score = self.score_attack(combatant, target, weapon, combat_state, beliefs)
+                            if self._candidate_log is not None:
+                                self._candidate_log.append({"kind": "attack", "label": weapon.name, "target": target.name, "total": score,
+                                                            "terms": self._attack_terms(combatant, target, weapon, combat_state, beliefs)})
                             if score > best_score:
                                 best_score = score
                                 best_action = Action(ActionType.ATTACK, target, rationale = f"attack score: {score:.2f}", weapon = weapon)
@@ -136,9 +173,13 @@ class UtilityPolicy(Policy):
         return -APPROACH_WEIGHT * movement_penalty
 
     def score_attack(self, combatant: Combatant, target: Combatant, weapon: Weapon, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief]) -> float:
+        return sum(self._attack_terms(combatant, target, weapon, combat_state, beliefs).values())
+
+    def _attack_terms(self, combatant: Combatant, target: Combatant, weapon: Weapon, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief]) -> dict[str, float]:
+        """The named components of an attack's score; the score is their sum, added in this order."""
         approach_score = self._approach_score(combatant, target, combat_state.grid.distance(combatant, target), weapon.range)
         if approach_score is not None:
-            return approach_score
+            return {"approach_penalty": approach_score}
 
         belief = self._view_of(combatant, target, beliefs)
         hit_probability = belief.hit_probability(combatant.get_attack_bonus(weapon))
@@ -161,7 +202,13 @@ class UtilityPolicy(Policy):
         if any(e.forbids_approaching(target) for e in combatant.effects):
             movement_penalty = 100
 
-        return expected_damage + kill_bonus + priority_bonus + target_priority_bonus - movement_penalty
+        return {
+            "expected_damage": expected_damage,
+            "kill_bonus": kill_bonus,
+            "priority_bonus": priority_bonus,
+            "target_priority_bonus": target_priority_bonus,
+            "movement_penalty": -movement_penalty,
+        }
 
     def best_spell(self, combatant: Combatant, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief], bonus_action: bool = False) -> tuple[float, Optional[Action]]:
         best_score = -1.0
@@ -173,6 +220,9 @@ class UtilityPolicy(Policy):
                     if spell.is_bonus_action == bonus_action:
                         if (spell.target_type == TargetType.ENEMY and target.team != combatant.team) or (spell.target_type == TargetType.ALLY and target.team == combatant.team):
                             score = self.score_spell(combatant, target, spell, combat_state, beliefs)
+                            if self._candidate_log is not None:
+                                self._candidate_log.append({"kind": "spell", "label": spell.name, "target": target.name, "total": score,
+                                                            "terms": self._spell_breakdown(combatant, target, spell, combat_state, beliefs)})
                             if score > best_score:
                                 best_score = score
                                 best_action = Action(ActionType.SPELL, target, rationale = f"spell score: {score:.2f}", spell = spell)
@@ -199,28 +249,55 @@ class UtilityPolicy(Policy):
 
         return total - movement_penalty - concentration_penalty
 
+    def _spell_breakdown(self, combatant: Combatant, target: Combatant, spell: Spell, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief]) -> dict[str, float]:
+        """Components of a spell's score, summed over everyone the spell affects. For display: score_spell keeps its own arithmetic."""
+        if not spell.is_cantrip and combatant.spell_slots.get(spell.level, 0) == 0:
+            return {"no_spell_slot": -1.0}
+
+        distance = combat_state.grid.distance(combatant, target)
+        approach_score = self._approach_score(combatant, target, distance, spell.range)
+        if approach_score is not None:
+            return {"approach_penalty": approach_score}
+
+        terms: dict[str, float] = {}
+        for affected in determine_targets(target, spell, combat_state):
+            for name, value in self._spell_hit_terms(combatant, affected, spell, combat_state, beliefs).items():
+                terms[name] = terms.get(name, 0.0) + value
+
+        terms["movement_penalty"] = -(max(0, distance - spell.range) / combatant.speed)
+        if any(e.forbids_approaching(target) for e in combatant.effects):
+            terms["movement_penalty"] = -100
+        if spell.concentration and combatant.has_effect(Concentrating):
+            terms["concentration_penalty"] = -3.0
+        return terms
+
     def score_spell_hit(self, combatant: Combatant, target: Combatant, spell: Spell, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief]) -> float:
+        return sum(self._spell_hit_terms(combatant, target, spell, combat_state, beliefs).values())
+
+    def _spell_hit_terms(self, combatant: Combatant, target: Combatant, spell: Spell, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief]) -> dict[str, float]:
         is_ally = target.team == combatant.team
         belief = self._view_of(combatant, target, beliefs)
         believed_hp_fraction = belief.expected_hp() / belief.believed_max_hp if belief.believed_max_hp > 0 else 0.0
 
         if spell.is_healing:
             if not is_ally:
-                return -1.0
+                return {"not_applicable": -1.0}
 
             expected_healing = spell.damage_dice * (spell.damage_sides + 1) / 2 + spell_flat_bonus(combatant, spell)
             urgency = 1 - believed_hp_fraction
 
-            return expected_healing * urgency
+            return {"healing_value": expected_healing * urgency}
 
         if spell.effect is not None and spell.damage_dice == 0 and spell.target_type == TargetType.ALLY:
-            return self._ally_buff_value(combatant, target, spell, combat_state)
+            return {"buff_value": self._ally_buff_value(combatant, target, spell, combat_state)}
 
         if spell.effect is not None and spell.damage_dice == 0:
             threat = believed_hp_fraction
             score = 5.0 * threat
 
-            return -score if is_ally else score + self._priority_bonus(belief)
+            if is_ally:
+                return {"control_value": -score}
+            return {"control_value": score, "priority_bonus": self._priority_bonus(belief)}
 
         if not spell.requires_attack_roll:
             hit_probability = 1
@@ -246,4 +323,6 @@ class UtilityPolicy(Policy):
         kill_bonus = belief.probability_at_or_below(round(expected_damage)) * 2.0
         priority_bonus = self._priority_bonus(belief)
 
-        return -expected_damage if is_ally else (expected_damage + kill_bonus + priority_bonus)
+        if is_ally:
+            return {"expected_damage": -expected_damage}
+        return {"expected_damage": expected_damage, "kill_bonus": kill_bonus, "priority_bonus": priority_bonus}

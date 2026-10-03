@@ -24,14 +24,17 @@ ENCOUNTERS: dict[str, list[str]] = {
     "mage_and_priest_with_gargoyles": ["Mage", "Priest", "Gargoyle", "Gargoyle", "Skeleton"],
 }
 
-def build_encounter(name: str, monster_registry: dict, policy: Optional[Policy] = None) -> list[Combatant]:
+def build_monsters(monster_names: list[str], monster_registry: dict, policy: Optional[Policy] = None) -> list[Combatant]:
     counts: dict[str, int] = {}
     monsters = []
-    for monster_name in ENCOUNTERS[name]:
+    for monster_name in monster_names:
         counts[monster_name] = counts.get(monster_name, 0) + 1
-        label = monster_name if ENCOUNTERS[name].count(monster_name) == 1 else f"{monster_name} {counts[monster_name]}"
+        label = monster_name if monster_names.count(monster_name) == 1 else f"{monster_name} {counts[monster_name]}"
         monsters.append(spawn(monster_registry, monster_name, label, policy = policy))
     return monsters
+
+def build_encounter(name: str, monster_registry: dict, policy: Optional[Policy] = None) -> list[Combatant]:
+    return build_monsters(ENCOUNTERS[name], monster_registry, policy)
 
 def configurations() -> list[tuple[str, str]]:
     """Every (encounter, policy name) combination, in a fixed order. The policy is always the PCs' policy: the monsters always play GreedyUtilityPolicy."""

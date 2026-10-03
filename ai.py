@@ -79,7 +79,7 @@ class CombatantAI:
                 if combat_state.grid.distance(self.combatant, action.target) <= action.required_range:
                     spell_hit_results = cast_spell(self.combatant, action.target, action.spell, combat_state)
                     for shr in spell_hit_results:
-                        results.append(self.make_result(action, shr.attack_result, shr.amount, combat_state, target = shr.target, save_made = shr.save_made, mitigated_amount = shr.mitigated_amount, attack_roll_bonus = shr.attack_roll_bonus, save_ability = shr.save_ability, save_dc = shr.save_dc, save_succeeded = shr.save_succeeded))
+                        results.append(self.make_result(action, shr.attack_result, shr.amount, combat_state, target = shr.target, save_made = shr.save_made, mitigated_amount = shr.mitigated_amount, attack_roll_bonus = shr.attack_roll_bonus, save_ability = shr.save_ability, save_dc = shr.save_dc, save_succeeded = shr.save_succeeded, effect_applied = shr.effect_applied))
 
             case ActionType.ATTACK:
                 number_of_attacks = 1

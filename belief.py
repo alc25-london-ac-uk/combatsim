@@ -269,3 +269,32 @@ class CombatantBelief:
             else:
                 probabilities["healthy"] += probability
         return probabilities
+
+def belief_vs_truth(belief: "CombatantBelief", truth: Combatant) -> dict:
+    """What a belief says about a combatant next to what is actually true, in a JSON-friendly form."""
+    truth_belief = CombatantBelief.ground_truth_for(truth)
+    true_multipliers = truth_belief.damage_multipliers
+
+    damage_types = []
+    for damage_type in DamageType:
+        believed = belief.damage_multipliers.get(damage_type)
+        actual = true_multipliers.get(damage_type, DEFAULT_DAMAGE_MULTIPLIER)
+        if believed is not None or actual != DEFAULT_DAMAGE_MULTIPLIER:
+            damage_types.append({"type": damage_type.name.lower(), "believed": believed, "true": actual})
+
+    return {
+        "hp": {"believed": belief.expected_hp(), "true": truth.hp, "max": truth.max_hp},
+        "ac": {"believed": belief.expected_armour_class(), "true": truth.ac},
+        "saves": [
+            {"ability": ability.value, "believed": sum(mod * p for mod, p in belief.save_modifier_distribution(ability).items()),
+             "true": truth.ability_scores.modifier_for(ability)}
+            for ability in Ability
+        ],
+        "damage_types": damage_types,
+        "flags": {
+            "offensive_caster": {"believed": belief.offensive_capable, "true": bool(truth_belief.offensive_capable)},
+            "healer": {"believed": belief.healer_capable, "true": bool(truth_belief.healer_capable)},
+            "concentrating": {"believed": belief.concentrating, "true": bool(truth_belief.concentrating)},
+            "slots_depleted": {"believed": belief.depleted, "true": bool(truth_belief.depleted) if any(truth.max_spell_slots.values()) else None},
+        },
+    }
