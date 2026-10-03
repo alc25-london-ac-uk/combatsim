@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 import { C, FONT, BORDER, headingStyle, panelStyle } from "./theme"
-import { CELL, GRID_SIZE } from "./CombatGrid"
+import { PANEL_HEIGHT } from "./CombatGrid"
 
 export default function CombatLog({ log }) {
   const bottomRef = useRef(null)
@@ -13,7 +13,7 @@ export default function CombatLog({ log }) {
   return (
     <div style={{
       width: 340,
-      height: CELL * GRID_SIZE + 32,
+      height: PANEL_HEIGHT,
       overflowY: "auto",
       ...panelStyle,
       padding: "10px 12px",
@@ -23,7 +23,7 @@ export default function CombatLog({ log }) {
       boxSizing: "border-box",
     }}>
       <div style={{ ...headingStyle, marginBottom: 8 }}>Combat log</div>
-      {lines.length === 0 && <div style={{ color: C.textMuted }}>Awaiting combat...</div>}
+      {lines.length === 0 && <div style={{ color: C.textDim }}>Awaiting combat...</div>}
       {lines.map((line, i) => {
         const isRound = line.startsWith("---")
         const isMiss  = line.includes("miss")

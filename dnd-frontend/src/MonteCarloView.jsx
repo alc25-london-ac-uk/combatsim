@@ -45,7 +45,7 @@ function Results({ data }) {
               <tr key={r.policy} style={{ borderTop: BORDER }}>
                 <td style={{ padding: "8px 8px 8px 0" }}>
                   <div style={{ color: C.text }}>{label?.name ?? r.policy}</div>
-                  <div style={{ color: C.textMuted, fontSize: 10 }}>{label?.note}</div>
+                  <div style={{ color: C.textDim, fontSize: 10 }}>{label?.note}</div>
                 </td>
                 <td style={{ paddingRight: 10 }}>
                   <div style={{ position: "relative", height: 14, backgroundColor: C.border }}>
@@ -65,7 +65,7 @@ function Results({ data }) {
           })}
         </tbody>
       </table>
-      <div style={{ fontSize: 10, color: C.textMuted, marginTop: 12, lineHeight: 1.6 }}>
+      <div style={{ fontSize: 10, color: C.textDim, marginTop: 12, lineHeight: 1.6 }}>
         The gold bar is one standard error either side of each win rate. At {data.runs.toLocaleString()} fights it is up to about ±{maxSe.toFixed(1)} points,
         so policies that differ by less than roughly {(2 * maxSe).toFixed(0)} points cannot be told apart here. The project's own evaluation uses
         10,000 fights per policy per encounter, where the standard error is about ±0.5.

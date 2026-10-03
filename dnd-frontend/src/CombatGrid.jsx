@@ -1,9 +1,12 @@
-import { C, T, FONT, BORDER, BORDER_HI, headingStyle, abbrev, hpColour } from "./theme"
+import { C, FONT, BORDER, BORDER_HI, headingStyle, panelStyle, abbrev, hpColour } from "./theme"
 
 const GRID_SIZE = 10
 const CELL = 44
 
-export { GRID_SIZE, CELL }
+// the grid box, the combat log and the decision panel share one height so they line up
+const PANEL_HEIGHT = 540
+
+export { GRID_SIZE, CELL, PANEL_HEIGHT }
 
 export default function CombatGrid({ positions, actingName }) {
   const occupants = {}
@@ -74,16 +77,12 @@ export default function CombatGrid({ positions, actingName }) {
   }
 
   return (
-    <div>
-      <div style={{ ...headingStyle, marginBottom: 8 }}>Combat grid</div>
-      <div style={{ fontSize: 11, color: C.textDim, lineHeight: 1.6, marginBottom: 8 }}>
-        {GRID_SIZE}×{GRID_SIZE}, each square 5 ft
-      </div>
+    <div style={{ ...panelStyle, height: PANEL_HEIGHT, boxSizing: "border-box" }}>
+      <div style={{ ...headingStyle, marginBottom: 12 }}>Combat grid</div>
       <div style={{
         display: "grid",
         gridTemplateColumns: `repeat(${GRID_SIZE}, ${CELL}px)`,
         border: BORDER_HI,
-        boxShadow: T.shadow,
         overflow: "hidden",
       }}>
         {cells}

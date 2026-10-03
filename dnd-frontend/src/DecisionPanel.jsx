@@ -1,4 +1,5 @@
 import { C, FONT, BORDER, labelStyle, headingStyle, panelStyle } from "./theme"
+import { PANEL_HEIGHT } from "./CombatGrid"
 
 const TERMS = {
   expected_damage:       { colour: C.party,  label: "damage",    help: "Expected damage: chance to hit (or the target failing its save) × average damage, scaled by how resistant or vulnerable the target is believed to be. Negative if the spell would hurt allies." },
@@ -71,7 +72,7 @@ function DecisionBlock({ decision }) {
       {decision.candidates.length > 0 && (
         <table style={{ borderCollapse: "collapse", fontSize: 11, fontFamily: FONT, width: "100%" }}>
           <thead>
-            <tr style={{ color: C.textMuted, textAlign: "left" }}>
+            <tr style={{ color: C.textDim, textAlign: "left" }}>
               <th style={{ fontWeight: 400 }}>#</th><th style={{ fontWeight: 400 }}>option</th>
               <th style={{ fontWeight: 400, textAlign: "right", paddingRight: 8 }}>score</th><th style={{ fontWeight: 400 }}>made up of</th>
             </tr>
@@ -103,13 +104,13 @@ function BeliefRow({ enemy, showOrdinary }) {
     <tr style={{ verticalAlign: "top", borderTop: BORDER }}>
       <td style={{ padding: "4px 6px 4px 0", color: C.text, maxWidth: 90 }}>{enemy.name}</td>
       <td style={{ padding: "4px 6px 4px 0", whiteSpace: "nowrap", color: hpOff ? C.gold : C.text }}>
-        {fmt(enemy.hp.believed, 0)} <span style={{ color: C.textMuted }}>/</span> <span style={{ color: C.textDim }}>{enemy.hp.true}</span>
+        {fmt(enemy.hp.believed, 0)} <span style={{ color: C.textDim }}>/</span> <span style={{ color: C.textDim }}>{enemy.hp.true}</span>
       </td>
       <td title={`Saving-throw modifiers, believed vs true:\n${saves}`} style={{ padding: "4px 6px 4px 0", whiteSpace: "nowrap", color: acOff ? C.gold : C.text }}>
-        {fmt(enemy.ac.believed)} <span style={{ color: C.textMuted }}>/</span> <span style={{ color: C.textDim }}>{enemy.ac.true}</span>
+        {fmt(enemy.ac.believed)} <span style={{ color: C.textDim }}>/</span> <span style={{ color: C.textDim }}>{enemy.ac.true}</span>
       </td>
       <td style={{ padding: "4px 8px 4px 0" }}>
-        {damageTypes.length === 0 && <span style={{ color: C.textMuted }}>{showOrdinary ? "nothing unusual" : "assumes no resistances"}</span>}
+        {damageTypes.length === 0 && <span style={{ color: C.textDim }}>{showOrdinary ? "nothing unusual" : "assumes no resistances"}</span>}
         {damageTypes.map(d => {
           const known = d.believed !== null
           const special = d.true !== 1
@@ -143,11 +144,11 @@ export default function DecisionPanel({ decisions, team, actingName }) {
   const beliefs = decisions[0]?.beliefs ?? []
 
   return (
-    <div style={{ ...panelStyle, flex: "1 1 520px", minWidth: 520, maxWidth: 820, maxHeight: 44 * 10 + 32, overflowY: "auto", boxSizing: "border-box", fontFamily: FONT }}>
+    <div style={{ ...panelStyle, flex: "1 1 520px", minWidth: 520, maxWidth: 820, height: PANEL_HEIGHT, overflowY: "auto", boxSizing: "border-box", fontFamily: FONT }}>
       <div style={{ ...headingStyle, marginBottom: 8 }}>Decision panel</div>
 
       {decisions.length === 0 && (
-        <div style={{ fontSize: 11, color: C.textMuted }}>
+        <div style={{ fontSize: 11, color: C.textDim, lineHeight: 1.6 }}>
           Step to a combatant's turn to see why it chose what it did: the best-scoring options, what each score is made of,
           and what the combatant believes about its enemies next to the truth.
         </div>
@@ -167,11 +168,11 @@ export default function DecisionPanel({ decisions, team, actingName }) {
             {isPc ? "What it believes about its enemies — belief / truth" : "What it assumes about its enemies — assumed / truth"}
           </div>
           {beliefs.length === 0
-            ? <div style={{ fontSize: 11, color: C.textMuted }}>No living enemies.</div>
+            ? <div style={{ fontSize: 11, color: C.textDim }}>No living enemies.</div>
             : (
               <table style={{ borderCollapse: "collapse", fontSize: 11, fontFamily: FONT, width: "100%" }}>
                 <thead>
-                  <tr style={{ color: C.textMuted, textAlign: "left" }}>
+                  <tr style={{ color: C.textDim, textAlign: "left" }}>
                     <th style={{ fontWeight: 400 }}>enemy</th><th style={{ fontWeight: 400 }}>HP</th><th style={{ fontWeight: 400 }}>AC</th>
                     <th style={{ fontWeight: 400 }}>damage types</th><th style={{ fontWeight: 400 }}>spellcasting</th>
                   </tr>
@@ -179,7 +180,7 @@ export default function DecisionPanel({ decisions, team, actingName }) {
                 <tbody>{beliefs.map(enemy => <BeliefRow key={enemy.name} enemy={enemy} showOrdinary={isPc} />)}</tbody>
               </table>
             )}
-          <div style={{ fontSize: 10, color: C.textMuted, marginTop: 8, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 10, color: C.textDim, marginTop: 8, lineHeight: 1.5 }}>
             Amber marks where the belief is wrong or undiscovered. Hover any chip for what it means.
             Damage-type multipliers: ×0.5 resistant, ×2 vulnerable, ×0 immune; "?" means that type has not been tried yet.
           </div>

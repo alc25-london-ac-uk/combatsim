@@ -12,26 +12,29 @@ function Roster({ positions, actingName }) {
   const slotText = p => Object.entries(p.max_spell_slots).map(([level, max]) => `L${level} ${p.spell_slots[level] ?? 0}/${max}`).join("  ")
 
   return (
-    <div style={{ display: "flex", gap: 16, marginTop: 14, fontFamily: FONT, fontSize: 11, flexWrap: "wrap" }}>
-      {[["party", "PCs", C.party], ["enemies", "Monsters", C.enemy]].map(([team, title, colour]) => (
-        <div key={team} style={{ width: 205 }}>
-          <div style={{ ...labelStyle, color: colour, marginBottom: 4 }}>{title}</div>
-          {side(team).map(p => (
-            <div key={p.name} style={{ marginBottom: 4, opacity: p.alive ? 1 : 0.4 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, color: p.name === actingName ? C.gold : C.text }}>
-                <span>{p.name}</span>
-                <span style={{ color: p.alive ? hpColour(p.hp, p.max_hp) : C.red }}>{p.alive ? `${p.hp}/${p.max_hp}` : "down"}</span>
-              </div>
-              {p.alive && (Object.keys(p.max_spell_slots).length > 0 || p.effects.length > 0) && (
-                <div style={{ color: C.textDim, fontSize: 10 }}>
-                  {slotText(p)}
-                  {p.effects.map(e => <span key={e} style={{ color: C.purple, marginLeft: 6 }}>[{e}]</span>)}
+    <div style={{ ...panelStyle, boxSizing: "border-box", marginTop: 16, fontFamily: FONT, fontSize: 11 }}>
+      <div style={{ ...headingStyle, marginBottom: 12 }}>Combatants</div>
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+        {[["party", "PCs", C.party], ["enemies", "Monsters", C.enemy]].map(([team, title, colour]) => (
+          <div key={team} style={{ width: 214 }}>
+            <div style={{ ...labelStyle, color: colour, marginBottom: 4 }}>{title}</div>
+            {side(team).map(p => (
+              <div key={p.name} style={{ marginBottom: 4, opacity: p.alive ? 1 : 0.4 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, color: p.name === actingName ? C.gold : C.text }}>
+                  <span>{p.name}</span>
+                  <span style={{ color: p.alive ? hpColour(p.hp, p.max_hp) : C.red }}>{p.alive ? `${p.hp}/${p.max_hp}` : "down"}</span>
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      ))}
+                {p.alive && (Object.keys(p.max_spell_slots).length > 0 || p.effects.length > 0) && (
+                  <div style={{ color: C.textDim, fontSize: 10 }}>
+                    {Object.keys(p.max_spell_slots).length > 0 && `Spell slots: ${slotText(p)}`}
+                    {p.effects.map(e => <span key={e} style={{ color: C.purple, marginLeft: 6 }}>[{e}]</span>)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -107,7 +110,8 @@ export default function LiveView() {
       <div style={{ ...panelStyle, marginBottom: 16 }}>
         <div style={{ ...headingStyle, marginBottom: 8 }}>Live combat</div>
         <div style={{ fontSize: 11, color: C.textDim, lineHeight: 1.6, marginBottom: 14 }}>
-          One fight, every decision explained.
+          <div>One fight, every decision explained.</div>
+          <div>The grid is a fixed 10×10 of 5 ft squares. Each combatant starts in a random square on its side's back row.</div>
         </div>
         <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap", fontSize: 12 }}>
           <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -169,7 +173,7 @@ export default function LiveView() {
           )}
 
           <div style={{ display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap" }}>
-            <div style={{ width: 444, flexShrink: 0 }}>
+            <div style={{ width: 480, flexShrink: 0 }}>
               <CombatGrid positions={frame.positions} actingName={actingName} />
               <Roster positions={frame.positions} actingName={actingName} />
             </div>
