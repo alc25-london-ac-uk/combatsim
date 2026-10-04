@@ -122,7 +122,7 @@ export default function MonteCarloView() {
       <div style={{ ...panelStyle, marginBottom: 16 }}>
         <div style={{ ...headingStyle, marginBottom: 8 }}>Build an encounter</div>
         <div style={{ fontSize: 11, color: C.textDim, lineHeight: 1.6, marginBottom: 14 }}>
-          <div>Choose the monsters below, or start from one of the three preset encounters.</div>
+          <div>Choose the monsters below, or start from one of the two preset encounters.</div>
           <div>The PCs will fight it using each of the four policies in turn: Random, Greedy, BeliefUpdating and Omniscient.</div>
           <div>Results appear underneath once all the fights have been run.</div>
         </div>

@@ -1,5 +1,7 @@
 from typing import Any
 
+import pytest
+
 from combatant import PlayerCharacter, AbilityScores
 from effects import Barkskin, Blind, Concentrating, Effect, Frightened, Paralysed, Prone, Stunned, Unconscious
 from dice import RollContext
@@ -200,6 +202,73 @@ def test_a_broken_concentration_removes_the_maintained_buff_exactly_once(make_pl
     ally.remove_effect(shield)
 
     assert ally.ac == 15
+
+@pytest.mark.parametrize("shield_added_first", [True, False])
+@pytest.mark.parametrize("shield_removed_first", [True, False])
+def test_shield_of_faith_and_barkskin_leave_armour_class_unchanged_in_every_order(make_player, shield_added_first, shield_removed_first):
+    # regression: Barkskin used to restore a saved absolute AC, so a Shield of Faith added or removed in between left a permanent +2 or -2
+    from effects import ShieldOfFaith
+
+    target = make_player(ac = 13)
+    shield, barkskin = ShieldOfFaith(), Barkskin()
+
+    for effect in ([shield, barkskin] if shield_added_first else [barkskin, shield]):
+        target.add_effect(effect)
+    for effect in ([shield, barkskin] if shield_removed_first else [barkskin, shield]):
+        target.remove_effect(effect)
+
+    assert target.ac == 13
+
+@pytest.mark.parametrize("shield_added_first", [True, False])
+def test_barkskin_is_a_floor_of_16_that_a_smaller_shield_of_faith_bonus_does_not_add_to(make_player, shield_added_first):
+    from effects import ShieldOfFaith
+
+    target = make_player(ac = 13) # 13 + 2 is still below the floor of 16
+    effects = [ShieldOfFaith(), Barkskin()]
+    for effect in (effects if shield_added_first else reversed(effects)):
+        target.add_effect(effect)
+
+    assert target.ac == 16
+
+def test_shield_of_faith_still_adds_to_an_armour_class_already_above_the_barkskin_floor(make_player):
+    from effects import ShieldOfFaith
+
+    target = make_player(ac = 15)
+    target.add_effect(Barkskin())
+    target.add_effect(ShieldOfFaith())
+
+    assert target.ac == 17
+
+def test_ending_barkskin_while_shield_of_faith_lasts_leaves_the_shield_bonus(make_player):
+    from effects import ShieldOfFaith
+
+    target = make_player(ac = 13)
+    barkskin = Barkskin()
+    target.add_effect(ShieldOfFaith())
+    target.add_effect(barkskin)
+    target.remove_effect(barkskin)
+
+    assert target.ac == 15
+
+def test_barkskin_does_nothing_for_a_creature_already_at_or_above_16(make_player):
+    target = make_player(ac = 18)
+    barkskin = Barkskin()
+
+    target.add_effect(barkskin)
+    assert target.ac == 18
+
+    target.remove_effect(barkskin)
+    assert target.ac == 18
+
+def test_the_armour_class_a_buff_would_add_accounts_for_what_the_target_already_has(make_player):
+    from effects import ShieldOfFaith
+
+    plain, barkskinned = make_player(ac = 13), make_player(ac = 13)
+    barkskinned.add_effect(Barkskin()) # already at the floor of 16
+
+    assert ShieldOfFaith().ac_gain(plain) == 2
+    assert Barkskin().ac_gain(plain) == 3
+    assert Barkskin().ac_gain(barkskinned) == 0
 
 def test_resetting_combatants_after_a_fight_restores_every_armour_class(make_player):
     from effects import ShieldOfFaith, Concentrating

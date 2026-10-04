@@ -32,6 +32,7 @@ class ActionType(Enum):
     ATTACK = auto()
     SPELL = auto()
     MOVE = auto()
+    BREAK_FREE = auto()
     NONE = auto()
 
 class TargetType(Enum):

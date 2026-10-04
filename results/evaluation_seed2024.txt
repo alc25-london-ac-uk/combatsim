@@ -1,0 +1,18 @@
+8 configurations x 10000 fights, base seed 2024, 14 workers
+
+priests_with_boars: policy on the PCs vs Greedy Monsters (higher PC win% = stronger PC policy)
+Policy            PC win%   +/- SE  Monster win%    Draw%  Avg rounds
+---------------------------------------------------------------------
+Random               0.4%     0.1         99.6%     0.0%         3.5
+Greedy              42.2%     0.5         57.4%     0.4%         3.2
+BeliefUpdating      45.5%     0.5         54.3%     0.2%         3.3
+Omniscient          49.9%     0.5         49.9%     0.3%         3.4
+
+resistant_horde_no_casters: policy on the PCs vs Greedy Monsters (higher PC win% = stronger PC policy)
+Policy            PC win%   +/- SE  Monster win%    Draw%  Avg rounds
+---------------------------------------------------------------------
+Random               0.1%     0.0         99.9%     0.0%         4.1
+Greedy              48.8%     0.5         51.1%     0.1%         4.7
+BeliefUpdating      56.0%     0.5         43.9%     0.1%         4.5
+Omniscient          73.8%     0.4         26.1%     0.0%         5.2
+

@@ -116,12 +116,15 @@ def parse_spell(entry: dict) -> Spell:
 
 def parse_monster(entry: dict, weapon_registry: dict[str, Weapon], spell_registry: dict[str, Spell]) -> Monster:
     weapons = []
+    weapon_attack_bonuses = {}
     for w in entry.get("weapons", []):
         weapon = copy.deepcopy(weapon_registry[w["id"]])
         if isinstance(weapon, MeleeWeapon):
             weapon.is_off_hand = w.get("is_off_hand", False)
         weapons.append(weapon)
-    
+        if "attack_bonus" in w:
+            weapon_attack_bonuses[weapon.name] = w["attack_bonus"]
+
     spells = [spell_registry[name] for name in entry.get("spells", [])]
 
     return Monster(
@@ -136,8 +139,10 @@ def parse_monster(entry: dict, weapon_registry: dict[str, Weapon], spell_registr
             wisdom = entry["wisdom"],
             charisma = entry["charisma"]
         ),
+        speed = entry["speed"], # a flyer records its fly speed
         attack_count = entry["attack_count"],
         attack_bonus = entry["attack_bonus"],
+        weapon_attack_bonuses = weapon_attack_bonuses,
         spell_bonus = entry.get("spell_bonus", 0),
         spellcaster_level = entry.get("spellcaster_level", 0),
         spellcasting_ability = Ability(entry.get("spellcasting_ability", "intelligence")),

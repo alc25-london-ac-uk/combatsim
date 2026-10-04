@@ -27,6 +27,8 @@ def log_action(combatant: Combatant, results: list[ActionResult]) -> list[str]:
             case ActionType.ATTACK:
                 log.append(format_attack_result(combatant, run[0]))
                 log.append(f" -> {run[0].rationale}")
+            case ActionType.BREAK_FREE:
+                log.append(format_struggle(run[0]))
     return log
 
 def end_of_run(results: list[ActionResult], start: int) -> int:
@@ -130,6 +132,10 @@ def format_movement(combatant: Combatant, moves: list[ActionResult]) -> str:
         line += f" (via {squares_passed})"
 
     return line
+
+def format_struggle(result: ActionResult) -> str:
+    outcome = "breaks free." if result.save_succeeded else "and fails."
+    return f"{result.actor} struggles against {result.effect_applied} - {outcome}"
 
 def format_skipped_turn(combatant: Combatant, result: ActionResult) -> str:
     # a turn lost to an effect such as Paralysed carries the effect's name as its rationale

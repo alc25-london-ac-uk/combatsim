@@ -44,13 +44,13 @@ def test_encounter_multiplier_matches_the_dmg_table():
 # --- classify_difficulty ---
 
 def test_classify_difficulty_trivial_below_easy_threshold(player_registry, monster_registry):
-    party = build_party(player_registry) # 3 level-5 PCs, easy threshold = 750 total
+    party = build_party(player_registry) # 4 level-5 PCs, easy threshold = 1000 total
     tier = classify_difficulty(["Goblin"], monster_registry, party) # CR 1/4 = 50 XP, x1 = 50
 
     assert tier == "Trivial"
 
 def test_classify_difficulty_deadly_above_deadly_threshold(player_registry, monster_registry):
-    party = build_party(player_registry) # deadly threshold = 3 * 1100 = 3300
+    party = build_party(player_registry) # deadly threshold = 4 * 1100 = 4400
     # 6 monsters at CR >= 2 (>= 450 XP each) = >= 2700 total, x2 multiplier = >= 5400 adjusted
     cr2_plus = next(name for name, m in monster_registry.items() if m.challenge_rating >= 2)
     tier = classify_difficulty([cr2_plus] * 6, monster_registry, party)
@@ -82,7 +82,7 @@ def test_adjusted_encounter_xp_applies_the_size_multiplier(monster_registry):
 def test_party_thresholds_sum_the_per_character_thresholds(player_registry):
     thresholds = party_thresholds(build_party(player_registry))
 
-    assert thresholds == {"easy": 750, "medium": 1500, "hard": 2250, "deadly": 3300}
+    assert thresholds == {"easy": 1000, "medium": 2000, "hard": 3000, "deadly": 4400}
 
 def test_the_printed_table_lists_every_named_encounter_with_a_tier(player_registry, monster_registry, capsys):
     from scenarios import ENCOUNTERS

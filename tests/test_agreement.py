@@ -118,7 +118,7 @@ def test_standard_error_needs_at_least_two_fights():
     assert stats.exact_standard_error() == 0.0
 
 def test_measure_agreement_records_one_entry_per_fight(player_registry, monster_registry):
-    stats = measure_agreement(player_registry, monster_registry, BeliefUpdatingPolicy, "mage_and_priest_with_gargoyles", n = 6, seed = 1)
+    stats = measure_agreement(player_registry, monster_registry, BeliefUpdatingPolicy, "priests_with_boars", n = 6, seed = 1)
 
     assert len(stats.per_fight) == 6
     assert sum(d for _, d in stats.per_fight) == stats.decisions
@@ -174,9 +174,9 @@ def test_agreement_with_the_same_seed_is_reproducible(player_registry, monster_r
     assert _summary(first) == _summary(second)
 
 def test_agreement_titles_name_the_encounter_and_the_pc_side():
-    title = agreement_title("five_casters_with_undead")
+    title = agreement_title("priests_with_boars")
 
-    assert "five_casters_with_undead" in title and "PCs" in title and "Greedy Monsters" in title
+    assert "priests_with_boars" in title and "PCs" in title and "Greedy Monsters" in title
 
 def test_print_all_agreement_prints_one_table_per_encounter(player_registry, monster_registry, capsys):
     print_all_agreement(measure_all_agreement(player_registry, monster_registry, n = 1, seed = 1, max_workers = 1))

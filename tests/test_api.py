@@ -39,7 +39,7 @@ def test_monsters_report_resistances_and_spells():
     assert "bludgeoning" in rows["Skeleton"]["vulnerabilities"] and "poison" in rows["Skeleton"]["immunities"]
     assert "fireball" in [s.lower() for s in rows["Mage"]["spells"]]
 
-def test_encounters_lists_the_three_named_encounters_with_their_monsters():
+def test_encounters_lists_the_named_encounters_with_their_monsters():
     rows = client.get("/encounters").json()
 
     assert [r["id"] for r in rows] == list(ENCOUNTERS)
@@ -103,10 +103,10 @@ def test_the_unknown_monster_error_names_the_monster():
 
 @pytest.fixture(scope = "module")
 def live_fight():
-    return TestClient(app).post("/simulate-live", json = {"encounter": "mage_and_priest_with_gargoyles", "seed": 5}).json()
+    return TestClient(app).post("/simulate-live", json = {"encounter": "priests_with_boars", "seed": 5}).json()
 
 def test_simulate_live_returns_the_encounter_the_seed_and_a_list_of_frames(live_fight):
-    assert live_fight["encounter"] == "mage_and_priest_with_gargoyles" and live_fight["seed"] == 5
+    assert live_fight["encounter"] == "priests_with_boars" and live_fight["seed"] == 5
     assert isinstance(live_fight["frames"], list) and len(live_fight["frames"]) > 1
 
 def test_every_frame_has_a_round_an_actor_a_log_and_positions(live_fight):
@@ -136,23 +136,23 @@ def test_decisions_explain_the_candidates_and_the_beliefs(live_fight):
     decisions = [d for f in live_fight["frames"] for d in f["decisions"]]
 
     assert decisions
-    pc_decision = next(d for d in decisions if d["combatant"] in ("Fighter", "Cleric", "Wizard") and d["chosen"] is not None)
+    pc_decision = next(d for d in decisions if d["combatant"] in ("Fighter 1", "Fighter 2", "Cleric", "Wizard") and d["chosen"] is not None)
     assert pc_decision["candidates"] and any(c["chosen"] for c in pc_decision["candidates"])
     assert pc_decision["beliefs"] and set(pc_decision["beliefs"][0]) >= {"name", "hp", "ac", "saves", "damage_types", "flags"}
 
 def test_a_live_fight_can_be_replayed_from_its_seed(live_fight):
-    replay = TestClient(app).post("/simulate-live", json = {"encounter": "mage_and_priest_with_gargoyles", "seed": 5}).json()
+    replay = TestClient(app).post("/simulate-live", json = {"encounter": "priests_with_boars", "seed": 5}).json()
 
     assert replay == live_fight
 
 def test_a_live_fight_without_a_seed_reports_the_seed_it_used():
-    first = client.post("/simulate-live", json = {"encounter": "mage_and_priest_with_gargoyles"}).json()
-    replay = client.post("/simulate-live", json = {"encounter": "mage_and_priest_with_gargoyles", "seed": first["seed"]}).json()
+    first = client.post("/simulate-live", json = {"encounter": "priests_with_boars"}).json()
+    replay = client.post("/simulate-live", json = {"encounter": "priests_with_boars", "seed": first["seed"]}).json()
 
     assert replay == first
 
 def test_the_live_response_is_plain_json():
-    response = client.post("/simulate-live", json = {"encounter": "five_casters_with_undead", "seed": 3})
+    response = client.post("/simulate-live", json = {"encounter": "resistant_horde_no_casters", "seed": 3})
 
     assert json.loads(response.text) == response.json()
 
@@ -167,7 +167,7 @@ def test_the_live_fight_puts_beliefupdating_on_the_pcs_and_greedy_on_the_monster
         return real(party, enemies, explain)
 
     monkeypatch.setattr(api, "run_combat_live", spy)
-    client.post("/simulate-live", json = {"encounter": "mage_and_priest_with_gargoyles", "seed": 1})
+    client.post("/simulate-live", json = {"encounter": "priests_with_boars", "seed": 1})
 
     assert seen == {"pcs": {api.BeliefUpdatingPolicy}, "monsters": {api.GreedyUtilityPolicy}, "explain": True}
 
@@ -175,6 +175,6 @@ def test_an_unknown_encounter_is_not_found():
     assert client.post("/simulate-live", json = {"encounter": "nope"}).status_code == 404
 
 def test_large_responses_are_compressed():
-    response = client.post("/simulate-live", json = {"encounter": "five_casters_with_undead", "seed": 3}, headers = {"Accept-Encoding": "gzip"})
+    response = client.post("/simulate-live", json = {"encounter": "resistant_horde_no_casters", "seed": 3}, headers = {"Accept-Encoding": "gzip"})
 
     assert response.headers.get("content-encoding") == "gzip"

@@ -41,6 +41,22 @@
         "upcastable_extra_target": true
     },
     {
+        "name": "Cone of Cold",
+        "level": 5,
+        "target_type": "Enemy",
+        "damage_type": "COLD",
+        "damage_dice": 8,
+        "damage_sides": 8,
+        "range": 60,
+        "aoe_radius": 20,
+        "requires_attack_roll": false,
+        "save_allowed": true,
+        "save_attribute": "constitution",
+        "damage_pct_on_save": 0.5,
+        "concentration": false,
+        "upcastable_extra_damage_die": true
+    },
+    {
         "name": "Cure Wounds",
         "level": 1,
         "target_type": "Ally",
@@ -55,6 +71,18 @@
         "upcastable_extra_damage_die": true
     },
     {
+        "name": "Entangle",
+        "level": 1,
+        "target_type": "Enemy",
+        "effect": "Restrained",
+        "range": 90,
+        "aoe_radius": 10,
+        "requires_attack_roll": false,
+        "save_allowed": true,
+        "save_attribute": "strength",
+        "concentration": true
+    },
+    {
         "name": "Fire Bolt",
         "level": 0,
         "target_type": "Enemy",
@@ -66,6 +94,22 @@
         "requires_attack_roll": true,
         "save_allowed": false,
         "concentration": false
+    },
+    {
+        "name": "Ice Storm",
+        "level": 4,
+        "target_type": "Enemy",
+        "damage_type": "COLD",
+        "damage_dice": 5,
+        "damage_sides": 8,
+        "range": 300,
+        "aoe_radius": 20,
+        "requires_attack_roll": false,
+        "save_allowed": true,
+        "save_attribute": "dexterity",
+        "damage_pct_on_save": 0.5,
+        "concentration": false,
+        "upcastable_extra_damage_die": true
     },
     {
         "name": "Magic Missile",

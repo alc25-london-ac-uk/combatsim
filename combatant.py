@@ -71,6 +71,7 @@ class Combatant(ABC):
     def __post_init__(self):
         self.movement = self.speed
         self.max_spell_slots = dict(self.spell_slots)
+        self.base_ac = self.ac # armour class is always derived from this and the active effects, so it cannot drift
 
     @property
     def alive(self) -> bool:
@@ -122,9 +123,14 @@ class Combatant(ABC):
 
         for e in list(self.effects):
             self.remove_effect(e)
+        self.ac = self.base_ac
+
+    @property
+    def is_immobilised(self) -> bool:
+        return any(e.immobilises for e in self.effects)
 
     def start_turn(self) -> None:
-        self.movement = self.speed
+        self.movement = 0 if self.is_immobilised else self.speed
 
         self.has_action = True
         self.has_bonus_action = True
@@ -145,16 +151,22 @@ class Combatant(ABC):
     def has_effect(self, effect_type: type) -> bool:
         return any(isinstance(e, effect_type) for e in self.effects)
 
+    def armour_class_with(self, effects: list[Effect]) -> int:
+        armour_class = self.base_ac + sum(e.ac_bonus for e in effects)
+        return max([armour_class] + [e.ac_floor for e in effects])
+
     def add_effect(self, effect: Effect) -> None:
         effect.on_apply(self)
         self.effects.append(effect)
+        self.ac = self.armour_class_with(self.effects)
 
     def remove_effect(self, effect: Effect) -> None:
         if not any(e is effect for e in self.effects):
-            return # removing an effect twice must not undo its on_remove side effects twice (e.g. an AC bonus)
+            return # removing an effect twice must not undo its on_remove side effects twice
 
         effect.on_remove(self)
         self.effects = [e for e in self.effects if e is not effect]
+        self.ac = self.armour_class_with(self.effects)
 
     def take_damage(self, amount: int, damage_type: DamageType) -> int:
         if self.immune_to(damage_type):
@@ -236,7 +248,6 @@ class PlayerCharacter(Combatant):
         else:
             return self.proficiency_bonus + self.ability_scores.str_mod
 
-# TODO: speed
 # TODO: feats: Charge
 # TODO: feats: Pack Tactics
 @dataclass(eq=False)
@@ -245,12 +256,13 @@ class Monster(Combatant):
     max_hp: int = 1
     attack_count: int = 1
     attack_bonus: int = 0
+    weapon_attack_bonuses: dict[str, int] = field(default_factory = dict) # for a weapon whose to-hit differs from attack_bonus (e.g. a gnoll's longbow), by weapon name
     spell_bonus: int = 0
     spellcaster_level: int = 0
     challenge_rating: float = 0.0
 
     def get_attack_bonus(self, weapon: Weapon) -> int:
-        return self.attack_bonus
+        return self.weapon_attack_bonuses.get(weapon.name, self.attack_bonus)
 
     @property
     def caster_level(self) -> int:

@@ -85,6 +85,130 @@ def test_a_weapon_made_for_one_creature_is_actually_used_by_it():
         if creature_name in monsters:
             assert weapon_id in {ref["id"] for ref in monsters[creature_name]["weapons"]}, f"{creature_name} does not use {weapon_id}"
 
+# Armour class, hit points and challenge rating of every creature in the evaluated encounters, as printed in the SRD 5.1 stat blocks
+# (checked against the dnd5eapi.co SRD data).
+EVALUATED_STAT_BLOCKS = {
+    "Awakened Tree": (13, 59, 2), "Dretch": (11, 18, 0.25), "Gargoyle": (15, 52, 2), "Giant Boar": (12, 42, 2),
+    "Magmin": (14, 9, 0.5), "Minotaur Skeleton": (12, 67, 2), "Priest": (13, 27, 2),
+}
+
+@pytest.mark.parametrize("name", sorted(EVALUATED_STAT_BLOCKS))
+def test_evaluated_creatures_match_their_srd_armour_class_hit_points_and_challenge_rating(monster_registry, name):
+    armour_class, hit_points, challenge_rating = EVALUATED_STAT_BLOCKS[name]
+    creature = monster_registry[name]
+
+    assert (creature.ac, creature.max_hp, creature.challenge_rating) == (armour_class, hit_points, challenge_rating)
+
+def test_every_creature_in_the_evaluated_encounters_has_a_checked_stat_block():
+    from scenarios import ENCOUNTERS
+
+    assert {name for names in ENCOUNTERS.values() for name in names} == set(EVALUATED_STAT_BLOCKS)
+
+# --- speed, flight, attack bonuses and multiattack, as in the SRD ---
+
+def test_every_monster_declares_a_speed_and_the_engine_uses_it(monster_registry):
+    for entry in _load_json("monsters.json"):
+        assert "speed" in entry, entry["name"]
+        assert monster_registry[entry["name"]].speed == entry["speed"], entry["name"]
+
+def test_a_monster_without_a_speed_is_rejected_rather_than_silently_given_one(weapon_registry, spell_registry):
+    entry = {"name": "Slowpoke", "hit_points": 5, "armor_class": 10, "strength": 10, "dexterity": 10, "constitution": 10,
+             "intelligence": 10, "wisdom": 10, "charisma": 10, "attack_count": 1, "attack_bonus": 2, "challenge_rating": 0}
+
+    with pytest.raises(KeyError):
+        parse_monster(entry, weapon_registry, spell_registry)
+
+@pytest.mark.parametrize("name, speed", [("Dretch", 20), ("Zombie", 20), ("Priest", 25), ("Minotaur Skeleton", 40), ("Wight", 30), ("Gargoyle", 60)])
+def test_evaluated_creatures_move_at_their_srd_speed(monster_registry, name, speed):
+    assert monster_registry[name].speed == speed
+
+def test_a_slower_creature_has_less_movement_to_spend_each_turn(monster_registry):
+    dretch = spawn(monster_registry, "Dretch")
+    dretch.reset()
+
+    assert dretch.movement == 20
+
+@pytest.mark.parametrize("name", ["Gargoyle", "Giant Bat", "Blink Dog"]) # the Blink Dog flies only as an approximation of its Teleport, so that it avoids opportunity attacks
+def test_these_creatures_avoid_opportunity_attacks_by_flying(monster_registry, name):
+    assert monster_registry[name].can_fly is True
+
+def test_creatures_that_do_not_fly_still_provoke_opportunity_attacks(monster_registry):
+    assert not any(monster_registry[name].can_fly for name in ("Wight", "Skeleton", "Ogre Zombie", "Dretch", "Brown Bear"))
+
+def test_bears_attack_with_the_srd_to_hit_bonus(monster_registry):
+    for name, bonus in (("Black Bear", 3), ("Brown Bear", 5)):
+        bear = monster_registry[name]
+        assert [bear.get_attack_bonus(weapon) for weapon in bear.weapons] == [bonus, bonus], name
+
+def test_a_gnolls_longbow_has_its_own_attack_bonus(monster_registry):
+    gnoll = monster_registry["Gnoll"]
+    bonuses = {weapon.name: gnoll.get_attack_bonus(weapon) for weapon in gnoll.weapons}
+
+    assert bonuses == {"Bite": 4, "Spear": 4, "Longbow": 3}
+
+def test_a_weapon_with_no_override_uses_the_creatures_attack_bonus(monster_registry):
+    skeleton = monster_registry["Minotaur Skeleton"]
+
+    assert skeleton.weapon_attack_bonuses == {}
+    assert all(skeleton.get_attack_bonus(weapon) == skeleton.attack_bonus for weapon in skeleton.weapons)
+
+@pytest.mark.parametrize("name", ["Black Bear", "Brown Bear", "Giant Eagle", "Giant Vulture", "Giant Badger", "Giant Crocodile"])
+def test_two_attack_multiattack_is_approximated_with_an_attack_count_of_two(monster_registry, name):
+    assert monster_registry[name].attack_count == 2
+
+def test_the_mummy_keeps_one_attack_because_its_other_multiattack_half_is_the_unmodelled_dreadful_glare(monster_registry):
+    assert monster_registry["Mummy"].attack_count == 1
+
+def test_the_wizard_has_the_unarmoured_armour_class_for_its_dexterity(player_registry):
+    wizard = player_registry["Wizard"]
+
+    assert wizard.ac == 10 + wizard.ability_scores.dex_mod
+
+# --- the Mage's high-level spells ---
+
+def test_ice_storm_is_a_level_4_area_cold_spell_with_a_dexterity_save(spell_registry):
+    ice_storm = spell_registry["Ice Storm"]
+
+    assert ice_storm.level == 4 and ice_storm.range == 300 and ice_storm.aoe_radius == 20
+    assert ice_storm.damage_type == DamageType.COLD and ice_storm.damage_dice * (ice_storm.damage_sides + 1) / 2 == 22.5 # the SRD's 2d8 + 4d6 averages 23
+    assert ice_storm.save_attribute.value == "dexterity" and ice_storm.damage_pct_on_save == 0.5
+    assert ice_storm.concentration is False
+
+def test_cone_of_cold_is_a_level_5_area_spell_modelled_as_a_circle(spell_registry):
+    cone = spell_registry["Cone of Cold"]
+
+    assert cone.level == 5 and cone.range == 60 and cone.aoe_radius == 20
+    assert (cone.damage_dice, cone.damage_sides, cone.damage_type) == (8, 8, DamageType.COLD)
+    assert cone.save_attribute.value == "constitution" and cone.damage_pct_on_save == 0.5
+
+def test_the_mage_has_the_full_srd_spell_slot_table(monster_registry):
+    assert monster_registry["Mage"].spell_slots == {1: 4, 2: 3, 3: 3, 4: 3, 5: 1}
+    assert monster_registry["Mage"].spellcaster_level == 9
+
+@pytest.mark.parametrize("slots, expected", [({5: 1}, "Cone of Cold"), ({4: 3}, "Ice Storm"), ({3: 3}, "Fireball"), ({3: 3, 4: 3, 5: 1}, "Cone of Cold")])
+def test_the_mage_opens_on_a_cluster_with_the_biggest_area_spell_its_slots_allow(player_registry, monster_registry, slots, expected):
+    from scenarios import build_party
+    from world import Grid, CombatState
+    from policy_greedyutility import GreedyUtilityPolicy
+
+    mage = spawn(monster_registry, "Mage", policy = GreedyUtilityPolicy())
+    mage.spell_slots = dict(slots)
+    mage.spells = [s for s in mage.spells if s.is_cantrip or s.level in slots] # only what its remaining slots can pay for
+    party = build_party(player_registry, GreedyUtilityPolicy())
+    grid = Grid(10, 10)
+    grid.place(mage, 5, 9)
+    for member, x in zip(party, (4, 5, 6, 5)): # a tight cluster of PCs in range of every spell
+        grid.place(member, x, 5)
+    state = CombatState(grid = grid, initiative_order = [mage, *party])
+    mage.start_turn()
+
+    action = mage.ai.policy.decide(mage, state, mage.ai.beliefs)
+
+    assert action.spell is not None and action.spell.name == expected
+
+def test_the_ogre_zombies_morningstar_does_bludgeoning_damage(weapon_registry):
+    assert weapon_registry["Morningstar - Ogre Zombie"].damage_type == DamageType.BLUDGEONING
+
 def test_the_elephants_gore_is_3d8(monster_registry):
     gore = monster_registry["Elephant"].weapons[0]
 
@@ -168,6 +292,7 @@ def test_duplicate_weapon_names_produce_independent_objects_for_monsters(weapon_
     entry = {
         "name": "Test Dual Wielding Monster",
         "hit_points": 10,
+        "speed": 30,
         "armor_class": 12,
         "strength": 10, "dexterity": 16, "constitution": 12,
         "intelligence": 10, "wisdom": 10, "charisma": 10,
@@ -361,9 +486,9 @@ def test_monster_casters_carry_only_their_srd_spells_that_the_engine_can_model(m
     names = lambda monster: {s.name for s in monster.spells}
 
     assert names(monster_registry["Priest"]) == {"Sacred Flame", "Cure Wounds", "Guiding Bolt", "Spirit Guardians"}
-    assert names(monster_registry["Mage"]) == {"Fire Bolt", "Magic Missile", "Fireball"}
+    assert names(monster_registry["Mage"]) == {"Fire Bolt", "Magic Missile", "Hold Person", "Fireball", "Ice Storm", "Cone of Cold"}
     assert names(monster_registry["Cult Fanatic"]) == {"Sacred Flame", "Inflict Wounds", "Shield of Faith", "Hold Person"}
-    assert names(monster_registry["Druid"]) == {"Produce Flame", "Thunderwave", "Barkskin"}
+    assert names(monster_registry["Druid"]) == {"Produce Flame", "Thunderwave", "Entangle", "Barkskin"}
     assert names(monster_registry["Acolyte"]) == {"Sacred Flame", "Cure Wounds"}
 
 def test_no_monster_caster_has_slots_at_a_level_where_it_has_no_modelled_spell(monster_registry):
@@ -426,7 +551,7 @@ def test_armour_class_does_not_drift_over_many_reused_fights(player_registry, mo
 
     random.seed(0)
     party = build_party(player_registry, GreedyUtilityPolicy())
-    enemies = build_encounter("five_casters_with_undead", monster_registry, GreedyUtilityPolicy()) # healers and concentration casters
+    enemies = build_encounter("priests_with_boars", monster_registry, GreedyUtilityPolicy()) # healers and concentration casters
     combatants = party + enemies
     original_ac = {c.name: c.ac for c in combatants}
 

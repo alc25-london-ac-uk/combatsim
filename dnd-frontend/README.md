@@ -29,7 +29,7 @@ Open http://localhost:5173.
 ## Views
 
 - **Monte Carlo** — build an encounter from dropdowns (any mix of the SRD monsters, up to 12) and run 100, 200 or 500 fights per policy. All four PC policies (Random, Greedy, BeliefUpdating, Omniscient) are shown side by side with standard errors. The monsters always play Greedy.
-- **Live combat** — step through one fight in each of the three named encounters (PCs on BeliefUpdating, monsters on Greedy). The decision panel shows the ranked candidate actions, what each score is made of, and the acting combatant's beliefs next to the truth. Seeds are echoed so a fight can be replayed.
+- **Live combat** — step through one fight in each of the two named encounters (PCs on BeliefUpdating, monsters on Greedy). The decision panel shows the ranked candidate actions, what each score is made of, and the acting combatant's beliefs next to the truth. Seeds are echoed so a fight can be replayed.
 
 ## Scripts
 

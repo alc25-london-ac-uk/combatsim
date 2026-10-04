@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from data import load_weapons, load_spells, load_players, load_monsters
-from scenarios import POLICIES, ENCOUNTERS
+from scenarios import POLICIES, ENCOUNTERS, configurations
 from evaluation import (
     run_policy_comparison, run_all_comparisons, comparison_title, print_all_comparisons, print_comparison, win_rate_standard_error,
 )
@@ -26,7 +26,7 @@ def monster_registry(weapon_registry, spell_registry):
 def player_registry(weapon_registry, spell_registry):
     return load_players(str(REPO_ROOT / "players.json"), weapon_registry, spell_registry)
 
-ENCOUNTER = "mage_and_priest_with_gargoyles"
+ENCOUNTER = "priests_with_boars"
 
 def test_run_policy_comparison_returns_one_result_per_policy(player_registry, monster_registry):
     results = run_policy_comparison(player_registry, monster_registry, ENCOUNTER, n = 5)
@@ -73,7 +73,7 @@ def test_print_all_comparisons_prints_one_table_per_encounter(player_registry, m
     output = capsys.readouterr().out
     for encounter in ENCOUNTERS:
         assert output.count(encounter) == 1
-    assert output.count("Omniscient") == 3
+    assert output.count("Omniscient") == len(ENCOUNTERS)
 
 # --- standard error of a win rate ---
 
@@ -132,4 +132,4 @@ def test_the_progress_lines_go_to_standard_error_not_into_the_tables(player_regi
 
     captured = capsys.readouterr()
     assert captured.out == ""
-    assert captured.err.count("jobs finished") == 12
+    assert captured.err.count("jobs finished") == len(configurations())

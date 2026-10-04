@@ -292,6 +292,9 @@ class UtilityPolicy(Policy):
             return {"buff_value": self._ally_buff_value(combatant, target, spell, combat_state)}
 
         if spell.effect is not None and spell.damage_dice == 0:
+            if target.has_effect(spell.effect):
+                return {"control_value": 0.0} # already under this effect, so casting it again changes nothing
+
             threat = believed_hp_fraction
             score = 5.0 * threat
 

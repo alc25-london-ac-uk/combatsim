@@ -15,13 +15,14 @@ POLICIES: dict[str, type[Policy]] = {
     "Omniscient": OmniscientPolicy,
 }
 
+PARTY: list[tuple[str, str]] = [("Fighter", "Fighter 1"), ("Fighter", "Fighter 2"), ("Cleric", "Cleric"), ("Wizard", "Wizard")] # (class, label): two Fighters, so their labels are numbered like the monsters'
+
 def build_party(player_registry: dict, policy: Optional[Policy] = None) -> list[Combatant]:
-    return [spawn(player_registry, name, policy = policy) for name in ("Fighter", "Cleric", "Wizard")]
+    return [spawn(player_registry, class_name, label, policy = policy) for class_name, label in PARTY]
 
 ENCOUNTERS: dict[str, list[str]] = {
-    "five_casters_with_undead": ["Priest", "Cult Fanatic", "Druid", "Acolyte", "Acolyte", "Minotaur Skeleton", "Ogre Zombie", "Wight"],
-    "resistant_horde_no_casters": ["Dretch"] * 4 + ["Grick"] * 2 + ["Magmin"] * 3 + ["Minotaur Skeleton", "Wight"],
-    "mage_and_priest_with_gargoyles": ["Mage", "Priest", "Gargoyle", "Gargoyle", "Skeleton"],
+    "priests_with_boars": ["Priest"] * 2 + ["Giant Boar"] * 7,
+    "resistant_horde_no_casters": ["Dretch"] * 4 + ["Magmin"] * 3 + ["Minotaur Skeleton"] * 3 + ["Gargoyle", "Awakened Tree"],
 }
 
 def build_monsters(monster_names: list[str], monster_registry: dict, policy: Optional[Policy] = None) -> list[Combatant]:

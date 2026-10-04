@@ -1,0 +1,18 @@
+8 configurations x 1000 fights, base seed 2024, 14 workers
+
+priests_with_boars: policy on the PCs vs Greedy Monsters
+  Policy           Decisions    Exact  +/- SE  Same type  Same target
+  -------------------------------------------------------------------
+  Random               14510    43.2%    0.2      92.5%        49.4%
+  Greedy               15146    83.0%    0.4     100.0%        83.0%
+  BeliefUpdating       15854    85.9%    0.3     100.0%        89.7%
+  Omniscient           15902   100.0%    0.0     100.0%       100.0%
+
+resistant_horde_no_casters: policy on the PCs vs Greedy Monsters
+  Policy           Decisions    Exact  +/- SE  Same type  Same target
+  -------------------------------------------------------------------
+  Random               18418    42.2%    0.1      92.5%        47.5%
+  Greedy               22160    65.3%    0.3     100.0%        82.3%
+  BeliefUpdating       21466    79.2%    0.3     100.0%        86.3%
+  Omniscient           25126   100.0%    0.0     100.0%       100.0%
+

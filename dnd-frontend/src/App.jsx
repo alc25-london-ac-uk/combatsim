@@ -30,7 +30,7 @@ export default function App() {
       <div style={{ marginBottom: 24 }}>
         <div style={{ fontSize: 22, fontWeight: 700, fontFamily: TITLE_FONT, ...caps }}>D&D Combat Simulator</div>
         <div style={{ fontSize: 11, color: C.textDim, marginTop: 4, lineHeight: 1.6 }}>
-          <div>Party: Fighter, Cleric, Wizard (all level 5).</div>
+          <div>Party: two Fighters, a Cleric and a Wizard (all level 5).</div>
           <div>Monsters use a greedy utility scorer.</div>
         </div>
       </div>

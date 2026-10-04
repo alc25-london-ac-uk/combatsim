@@ -173,19 +173,30 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: 
 
     targets = determine_targets(target, spell, combat_state)
 
+    # a concentration spell that holds several targets is held by one Concentrating, which replaces any earlier one
+    concentration = None
+    if spell.concentration and spell.effect is not None:
+        for existing in list(actor.effects):
+            if isinstance(existing, Concentrating):
+                actor.remove_effect(existing)
+        concentration = Concentrating()
+
     if spell.requires_attack_roll:
         for t in targets:
             for _ in range(spell.ray_count):
-                results.append(resolve_spell_against_target(actor, t, spell, combat_state))
+                results.append(resolve_spell_against_target(actor, t, spell, combat_state, concentration = concentration))
     else:
         damage_dice_used = spell.damage_dice + (1 if spell.is_cantrip and actor.caster_level >= 5 else 0)
         amount = damage_roll(damage_dice_used, spell.damage_sides, spell_flat_bonus(actor, spell), is_crit = False)
         for t in targets:
-            results.append(resolve_spell_against_target(actor, t, spell, combat_state, amount))
+            results.append(resolve_spell_against_target(actor, t, spell, combat_state, amount, concentration))
+
+    if concentration is not None and concentration.maintained_effect is not None:
+        actor.add_effect(concentration)
 
     return results
 
-def resolve_spell_against_target(actor: Combatant, target: Combatant, spell: Spell, combat_state: CombatState, amount: int = 0) -> SpellHitResult:
+def resolve_spell_against_target(actor: Combatant, target: Combatant, spell: Spell, combat_state: CombatState, amount: int = 0, concentration: Optional[Concentrating] = None) -> SpellHitResult:
     attack_bonus = actor.get_spell_attack_bonus()
     damage = 0
     mitigated_amount = 0
@@ -241,10 +252,13 @@ def resolve_spell_against_target(actor: Combatant, target: Combatant, spell: Spe
             target.add_effect(new_effect)
             effect_applied = spell.effect.name
             if spell.concentration:
-                for existing in list(actor.effects):
-                    if isinstance(existing, Concentrating):
-                        actor.remove_effect(existing)
-                actor.add_effect(Concentrating(maintained_effect = new_effect, maintained_target = target))
+                if concentration is not None:
+                    concentration.maintain(target, new_effect)
+                else:
+                    for existing in list(actor.effects):
+                        if isinstance(existing, Concentrating):
+                            actor.remove_effect(existing)
+                    actor.add_effect(Concentrating(maintained_effect = new_effect, maintained_target = target))
         else:
             save_made = True
 

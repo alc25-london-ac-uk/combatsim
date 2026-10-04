@@ -3,6 +3,7 @@ from typing import Optional
 from enums import AttackResult, ActionType, TargetType
 from combatant import Combatant, Monster, PlayerCharacter, Weapon, MeleeWeapon, RangedWeapon, Spell, Ability
 from effects import Effect, AcidArrow, Barkskin, Blind, Concentrating, Paralysed
+from dice import roll_d20
 from world import CombatState, Position
 from actions import Action, ActionResult, SpellHitResult, move_towards_target, attack, cast_spell, determine_targets, attack_roll_bonus_observed
 from policy import Policy
@@ -67,6 +68,30 @@ class CombatantAI:
 
         if combat_state.grid.distance(self.combatant, action.target) <= action.required_range:
             results.extend(self.execute(action, combat_state, bonus_action))
+        elif not bonus_action and self.combatant.is_immobilised:
+            results.extend(self.break_free(combat_state))
+
+    def break_free(self, combat_state: CombatState) -> list[ActionResult]:
+        """A creature held in place with nothing in reach spends its action on a check to get loose (e.g. Entangle: a Strength check against the spell's save DC)."""
+        held_by = next((e for e in self.combatant.effects if e.break_free_ability is not None), None)
+        if held_by is None:
+            return []
+
+        check = roll_d20() + self.combatant.ability_scores.modifier_for(held_by.break_free_ability)
+        freed = check >= held_by.save_dc
+        if freed:
+            self.combatant.remove_effect(held_by)
+
+        position = combat_state.grid.position_of(self.combatant)
+        return [ActionResult(
+            action_type = ActionType.BREAK_FREE,
+            target = self.combatant,
+            actor = self.combatant.name,
+            effect_applied = held_by.name,
+            save_succeeded = freed,
+            combatant_x = position.x,
+            combatant_y = position.y
+        )]
 
     def execute(self, action: Action, combat_state: CombatState, bonus_action: bool = False) -> list[ActionResult]:
         results = []

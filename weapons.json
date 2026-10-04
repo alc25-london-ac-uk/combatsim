@@ -922,7 +922,7 @@
         "name": "Morningstar",
         "damage_dice": 2,
         "damage_sides": 8,
-        "damage_type": "PIERCING",
+        "damage_type": "BLUDGEONING",
         "range": "melee",
         "reach": 5,
         "finesse": false
