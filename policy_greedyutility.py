@@ -4,8 +4,6 @@ from enums import Ability, DamageType
 from policy_utility import UtilityPolicy
 
 class GreedyUtilityPolicy(UtilityPolicy):
-    """Same scoring as BeliefUpdatingPolicy, but each opponent is assumed to be in a single fixed most-likely state that is never updated."""
-
     def __init__(self):
         self._fixed_guesses: dict[Combatant, CombatantBelief] = {}
 

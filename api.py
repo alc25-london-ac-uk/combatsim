@@ -22,7 +22,7 @@ DATA_DIRECTORY = Path(__file__).resolve().parent
 
 MAX_MONSTERS = 12 # limits on what one request may ask for, so a hosted server cannot be tied up
 MAX_RUNS = 500
-SIMULATE_WORKERS = int(os.environ.get("SIMULATE_WORKERS", 4)) # one process per policy; set lower on small hosts
+SIMULATE_WORKERS = int(os.environ.get("SIMULATE_WORKERS", 4)) # one process per policy
 
 weapon_registry = load_weapons(str(DATA_DIRECTORY / "weapons.json"))
 spell_registry = load_spells(str(DATA_DIRECTORY / "spells.json"))
@@ -143,7 +143,7 @@ def simulate(request: SimulateRequest):
         ],
     }
 
-_live_lock = threading.Lock() # the fight draws from the global random generator; one at a time keeps a seed replayable
+_live_lock = threading.Lock()
 
 @app.post("/simulate-live")
 def simulate_live(request: LiveRequest):

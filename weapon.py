@@ -3,8 +3,6 @@ from dataclasses import dataclass
 
 from enums import DamageType
 
-# TODO: magical
-# TODO: effects on hit (e.g. snake's constrict applying restrained)
 @dataclass
 class Weapon(ABC):
     name: str
@@ -17,7 +15,6 @@ class Weapon(ABC):
     def range(self) -> int:
         pass
 
-# TODO: natural weapons (disarming)
 @dataclass
 class MeleeWeapon(Weapon):
     reach: int

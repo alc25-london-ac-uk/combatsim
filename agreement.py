@@ -45,7 +45,6 @@ class AgreementStats:
         return count / self.decisions if self.decisions else 0.0
 
     def exact_standard_error(self) -> float:
-        """Standard error of the exact-agreement rate, treating each fight (not each decision) as the independent unit."""
         fights = len(self.per_fight)
         if fights < 2 or self.decisions == 0:
             return 0.0

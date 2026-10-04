@@ -38,14 +38,9 @@ def build_encounter(name: str, monster_registry: dict, policy: Optional[Policy] 
     return build_monsters(ENCOUNTERS[name], monster_registry, policy)
 
 def configurations() -> list[tuple[str, str]]:
-    """Every (encounter, policy name) combination, in a fixed order. The policy is always the PCs' policy: the monsters always play GreedyUtilityPolicy."""
     return [(encounter, policy_name) for encounter in ENCOUNTERS for policy_name in POLICIES]
 
 def configuration_seed(base_seed: Optional[int], encounter: str, policy_name: str) -> Optional[int]:
-    """A seed that depends only on the base seed and the configuration, never on scheduling order.
-
-    Each configuration uses one seed above the base, so base seeds for separate runs should be at least len(configurations()) apart to avoid sharing a stream.
-    """
     if base_seed is None:
         return None
     return base_seed + configurations().index((encounter, policy_name))

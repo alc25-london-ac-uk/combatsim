@@ -96,7 +96,7 @@ function BeliefRow({ enemy, showOrdinary }) {
   const hpOff = mismatch(enemy.hp.believed, enemy.hp.true, Math.max(3, enemy.hp.max * 0.15))
   const acOff = mismatch(enemy.ac.believed, enemy.ac.true, 1.5)
   const saves = enemy.saves.map(s => `${s.ability.slice(0, 3)} ${fmt(s.believed)} (true ${s.true})`).join("\n")
-  // a fixed guess "knows" every damage type is ordinary, which is noise; a learner's tested-and-ordinary types are worth showing
+  
   const damageTypes = enemy.damage_types.filter(d => showOrdinary || d.true !== 1 || (d.believed !== null && d.believed !== 1))
   const flagLabels = { healer: "healer", offensive_caster: "caster", concentrating: "concentrating", slots_depleted: "slots used up" }
 

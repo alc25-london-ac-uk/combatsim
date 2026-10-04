@@ -173,7 +173,6 @@ def cast_spell(actor: Combatant, target: Combatant, spell: Spell, combat_state: 
 
     targets = determine_targets(target, spell, combat_state)
 
-    # a concentration spell that holds several targets is held by one Concentrating, which replaces any earlier one
     concentration = None
     if spell.concentration and spell.effect is not None:
         for existing in list(actor.effects):

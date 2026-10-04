@@ -71,7 +71,7 @@ class Combatant(ABC):
     def __post_init__(self):
         self.movement = self.speed
         self.max_spell_slots = dict(self.spell_slots)
-        self.base_ac = self.ac # armour class is always derived from this and the active effects, so it cannot drift
+        self.base_ac = self.ac
 
     @property
     def alive(self) -> bool:
@@ -162,7 +162,7 @@ class Combatant(ABC):
 
     def remove_effect(self, effect: Effect) -> None:
         if not any(e is effect for e in self.effects):
-            return # removing an effect twice must not undo its on_remove side effects twice
+            return # removing an effect twice mustn't undo its on_remove side effects twice
 
         effect.on_remove(self)
         self.effects = [e for e in self.effects if e is not effect]

@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react"
 import { C, FONT, caps, headingStyle, panelStyle } from "./theme"
 import { PANEL_HEIGHT } from "./CombatGrid"
 
-// the per-decision score lines ("-> attack score ...") are shown in the decision panel instead
 const entries = lines => lines.filter(line => !line.trim().startsWith("->"))
 
 function lineColour(line) {

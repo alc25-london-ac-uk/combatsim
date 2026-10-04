@@ -24,10 +24,6 @@ class CombatantAI:
         self.profile = CreatureAIProfile() if isinstance(combatant, Monster) else None
 
     def reset(self) -> None:
-        # Beliefs are per-encounter learned state -- each new combat is a fresh encounter with no
-        # memory of unrelated previous ones, even when the same object instances are reused across
-        # repeated Monte Carlo trials. policy/profile are deliberate, persistent configuration and
-        # are left untouched.
         self.beliefs = {}
 
     def take_turn(self, combat_state: CombatState) -> list[ActionResult]:
@@ -72,7 +68,6 @@ class CombatantAI:
             results.extend(self.break_free(combat_state))
 
     def break_free(self, combat_state: CombatState) -> list[ActionResult]:
-        """A creature held in place with nothing in reach spends its action on a check to get loose (e.g. Entangle: a Strength check against the spell's save DC)."""
         held_by = next((e for e in self.combatant.effects if e.break_free_ability is not None), None)
         if held_by is None:
             return []

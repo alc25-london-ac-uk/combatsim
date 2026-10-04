@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# engine, API and game data (see .dockerignore for what is left out)
+# engine, API and game data
 COPY *.py *.json ./
 
 RUN useradd --create-home appuser

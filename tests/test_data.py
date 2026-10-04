@@ -86,7 +86,6 @@ def test_a_weapon_made_for_one_creature_is_actually_used_by_it():
             assert weapon_id in {ref["id"] for ref in monsters[creature_name]["weapons"]}, f"{creature_name} does not use {weapon_id}"
 
 # Armour class, hit points and challenge rating of every creature in the evaluated encounters, as printed in the SRD 5.1 stat blocks
-# (checked against the dnd5eapi.co SRD data).
 EVALUATED_STAT_BLOCKS = {
     "Awakened Tree": (13, 59, 2), "Dretch": (11, 18, 0.25), "Gargoyle": (15, 52, 2), "Giant Boar": (12, 42, 2),
     "Magmin": (14, 9, 0.5), "Minotaur Skeleton": (12, 67, 2), "Priest": (13, 27, 2),

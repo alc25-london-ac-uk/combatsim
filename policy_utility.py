@@ -28,10 +28,6 @@ HIGHEST_THREAT_WEIGHT = 1.0
 EXPLAINED_CANDIDATES = 5
 
 class UtilityPolicy(Policy):
-    """Scores every candidate action by expected utility. Subclasses differ only in what they believe about opponents (see _belief_for)."""
-
-    # Set to a list to record, for each decision, the best-scoring candidates with their score components and the
-    # acting combatant's beliefs about its enemies. Left as None, nothing is recorded and nothing extra is computed.
     explanations: Optional[list] = None
     _candidate_log: Optional[list] = None
 
@@ -63,13 +59,12 @@ class UtilityPolicy(Policy):
         return ac_gain / 20 * incoming_per_round / max(1, living_allies) * BUFF_HORIZON_ROUNDS
 
     def _view_of(self, combatant: Combatant, target: Combatant, beliefs: dict[Combatant, CombatantBelief]) -> CombatantBelief:
-        # Only opponents are hidden: a combatant knows the true state of itself and its allies.
+        # Only opponents are hidden: a combatant knows the true state of itself and its allies
         if target.team == combatant.team:
             return CombatantBelief.ground_truth_for(target)
         return self._belief_for(target, beliefs)
 
     def _expected_damage_multiplier(self, belief: CombatantBelief, damage_type, explore: bool = True) -> float:
-        # Optimism in the face of uncertainty: a damage type never tried on this creature type might be a vulnerability, which can only be discovered by trying it.
         if explore and not belief.has_tested(damage_type):
             return 1.0 + EXPLORATION_BONUS
         return belief.damage_multiplier(damage_type)
@@ -163,7 +158,6 @@ class UtilityPolicy(Policy):
         return best_score, best_action
 
     def _approach_score(self, combatant: Combatant, target: Combatant, distance: int, action_range: int) -> Optional[float]:
-        """None if the action can be made this turn; otherwise its value, which is no more than a small preference for the option needing the least movement."""
         if distance - action_range <= combatant.movement:
             return None
 
@@ -176,7 +170,6 @@ class UtilityPolicy(Policy):
         return sum(self._attack_terms(combatant, target, weapon, combat_state, beliefs).values())
 
     def _attack_terms(self, combatant: Combatant, target: Combatant, weapon: Weapon, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief]) -> dict[str, float]:
-        """The named components of an attack's score; the score is their sum, added in this order."""
         approach_score = self._approach_score(combatant, target, combat_state.grid.distance(combatant, target), weapon.range)
         if approach_score is not None:
             return {"approach_penalty": approach_score}
@@ -250,7 +243,6 @@ class UtilityPolicy(Policy):
         return total - movement_penalty - concentration_penalty
 
     def _spell_breakdown(self, combatant: Combatant, target: Combatant, spell: Spell, combat_state: CombatState, beliefs: dict[Combatant, CombatantBelief]) -> dict[str, float]:
-        """Components of a spell's score, summed over everyone the spell affects. For display: score_spell keeps its own arithmetic."""
         if not spell.is_cantrip and combatant.spell_slots.get(spell.level, 0) == 0:
             return {"no_spell_slot": -1.0}
 

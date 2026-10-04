@@ -484,7 +484,6 @@ def test_attack_roll_bonus_observed_is_none_for_an_automatic_melee_crit():
     target.add_effect(Paralysed())
     assert attack_roll_bonus_observed(attacker, target, weapon) is None
 
-
 # --- spell damage follows RAW: no caster bonus unless the spell has its own ---
 
 def _bonus_test_spell(**overrides):

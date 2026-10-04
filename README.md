@@ -25,4 +25,3 @@ docker build -t combatsim-api .                            # the API as a contai
 ```
 
 Results are deterministic for a given base seed (each configuration derives its own seed from it). The saved output of the final run is in `results/`.
-Live demo: https://icy-hill-0eb18cf03.4.azurestaticapps.net/ (a Monte Carlo tool with custom encounters, and a step-through live fight that explains every decision).

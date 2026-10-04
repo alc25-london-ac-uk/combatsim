@@ -55,8 +55,6 @@ def belief_for(beliefs: dict, target: Combatant) -> "CombatantBelief":
 
     belief = CombatantBelief.initial_prior_for(target)
     if target.type_name:
-        # Creatures of one type share identical defences, so what is learned about one applies to all of them.
-        # HP and spellcasting state stay individual: two Skeletons have the same AC, but a Skeleton and a Skeleton Mage do not share spells.
         for other, other_belief in beliefs.items():
             if other is not target and other.type_name == target.type_name:
                 belief.ac_distribution = other_belief._armour_class_distribution()
